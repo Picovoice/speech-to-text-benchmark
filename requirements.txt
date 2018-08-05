@@ -1,0 +1,6 @@
+deepspeech
+editdistance
+numpy
+pocketsphinx
+soundfile
+sox
