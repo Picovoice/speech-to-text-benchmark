@@ -12,41 +12,45 @@ logging.basicConfig(format='%(asctime)s %(message)s')
 logging.getLogger().setLevel(logging.INFO)
 
 
-def _word_error_rate(ref, decoded):
+def _word_error_info(ref, decoded):
     """
-    Computes the word error rate for a given decoded transcription.
+    Computes the number of errors for a given decoded transcription and the number of words in reference transcription.
 
     :param ref: Reference (true) transcription.
     :param decoded: Decoded (by speech-to-text engine) transcription.
-    :return: Word error rate.
+    :return: Tuple of number of word errors and number of words in reference transcription.
     """
 
     ref_words = ref.strip('\n ').lower().split()
     decoded_words = decoded.strip('\n ').lower().split()
 
-    error_count = editdistance.eval(ref_words, decoded_words)
+    word_error_count = editdistance.eval(ref_words, decoded_words)
 
-    return float(error_count) / len(ref_words)
+    return word_error_count, len(ref_words)
 
 
 def _process_chunk(engine_type, engine_params, data_chunk):
     """
-    Transcribes a chuck of data with a given engine and returns the average word error rate.
+    Transcribes a chuck of data with a given engine and returns number of word errors and total number of words
+    processed (number of words in reference transcriptions).
 
     :param engine_type: Type of speech-to-text engine.
     :param engine_params: Engine parameters.
     :param data_chunk: An array of tuples of path to a WAV file and its corresponding transcription.
-    :return: Average word error rate.
+    :return: Tuple of total number of word errors and total number of words processed.
     """
 
     engine = ASREngine.create(engine_type, **engine_params)
 
-    word_error_rates = []
+    sum_word_error_count = 0
+    sum_word_count = 0
     for path, ref_transcript in data_chunk:
         decoded = engine.transcribe(path)
-        word_error_rates.append(_word_error_rate(ref_transcript, decoded))
+        error_count, count = _word_error_info(ref_transcript, decoded)
+        sum_word_error_count += error_count
+        sum_word_count += count
 
-    return sum(word_error_rates) / len(data_chunk)
+    return sum_word_error_count, sum_word_count
 
 
 def _run():
@@ -57,12 +61,12 @@ def _run():
 
     engines_params = dict([(x, dict()) for x in ASREngines])
     engines_params[ASREngines.MOZILLA_DEEP_SPEECH].update(
-        model_path=args.deep_speech_model_path,
-        alphabet_path=args.deep_speech_alphabet_path,
-        language_model_path=args.deep_speech_language_model_path,
-        trie_path=args.deep_speech_trie_path)
+        model_path=os.path.expanduser(args.deep_speech_model_path),
+        alphabet_path=os.path.expanduser(args.deep_speech_alphabet_path),
+        language_model_path=os.path.expanduser(args.deep_speech_language_model_path),
+        trie_path=os.path.expanduser(args.deep_speech_trie_path))
 
-    dataset = Dataset.create(Datasets.COMMON_VOICE, args.dataset_root)
+    dataset = Dataset.create(args.dataset_type, os.path.expanduser(args.dataset_root))
     logging.info('loaded %s with %f hours of data' % (str(dataset), dataset.size_hours()))
 
     # NOTE: Depending on how much RAM you have you might need to reduce this when benchmarking DeepSpeech as it consumes
@@ -84,18 +88,21 @@ def _run():
                     data_chunk)
                 futures.append(future)
 
-        word_error_rates = [x.result() for x in futures]
+        word_error_info = [x.result() for x in futures]
+        word_error_count = sum([x[0] for x in word_error_info])
+        word_count = sum([x[1] for x in word_error_info])
 
-        logging.info('WER = %f' % (sum(word_error_rates) / len(word_error_rates)))
+        logging.info('WER = %f' % (float(word_error_count) / word_count))
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--dataset_type', type=str, required=True)
     parser.add_argument('--dataset_root', type=str, required=True)
     parser.add_argument('--deep_speech_model_path', type=str, required=True)
     parser.add_argument('--deep_speech_alphabet_path', type=str, required=True)
-    parser.add_argument('--deep_speech_language_model_path', type=str, default=None, required=False)
-    parser.add_argument('--deep_speech_trie_path', type=str, default=None, required=False)
+    parser.add_argument('--deep_speech_language_model_path', type=str, required=True)
+    parser.add_argument('--deep_speech_trie_path', type=str, required=True)
 
     args = parser.parse_args()
 

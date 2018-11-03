@@ -4,7 +4,7 @@ from enum import Enum
 
 import numpy as np
 import soundfile
-from deepspeech.model import Model
+from deepspeech import Model
 from pocketsphinx import get_model_path
 from pocketsphinx.pocketsphinx import Decoder
 
@@ -108,24 +108,8 @@ class MozillaDeepSpeechASREngine(ASREngine):
         """
 
         # https://github.com/mozilla/DeepSpeech/blob/master/native_client/python/client.py
-        self._model = Model(
-            aModelPath=model_path,
-            aNCep=26,
-            aNContext=9,
-            aAlphabetConfigPath=alphabet_path,
-            aBeamWidth=500)
-
-        if language_model_path is not None and trie_path is not None:
-            self._model.enableDecoderWithLM(
-                aAlphabetConfigPath=alphabet_path,
-                aLMPath=language_model_path,
-                aTriePath=trie_path,
-                aLMWeight=1.75,
-                aWordCountWeight=1.0,
-                aValidWordCountWeight=1.0)
-            self._with_language_model = True
-        else:
-            self._with_language_model = False
+        self._model = Model(model_path, 26, 9, alphabet_path, 500)
+        self._model.enableDecoderWithLM(alphabet_path, language_model_path, trie_path, 1.5, 2.1)
 
     def transcribe(self, path):
         pcm, sample_rate = soundfile.read(path)
@@ -134,10 +118,7 @@ class MozillaDeepSpeechASREngine(ASREngine):
         return self._model.stt(pcm, aSampleRate=sample_rate)
 
     def __str__(self):
-        if self._with_language_model:
-            return 'Mozilla DeepSpeech (with language model)'
-        else:
-            return 'Mozilla DeepSpeech'
+        return 'Mozilla DeepSpeech'
 
 
 class PicovoiceCheetahASREngine(ASREngine):
@@ -145,17 +126,29 @@ class PicovoiceCheetahASREngine(ASREngine):
 
     def transcribe(self, path):
         cheetah_dir = os.path.join(os.path.dirname(__file__), 'resources/cheetah')
-        cheetah_app_path = os.path.join(cheetah_dir, 'pv_cheetah_app')
-        cheetah_param_path = os.path.join(cheetah_dir, 'cheetah_params.pv')
-        cheetah_license_path = os.path.join(cheetah_dir, 'cheetah_linux_eval.lic')
+        cheetah_demo_path = os.path.join(cheetah_dir, 'cheetah_demo')
+        cheetah_library_path = os.path.join(cheetah_dir, 'libpv_cheetah.so')
+        cheetah_acoustic_model_path = os.path.join(cheetah_dir, 'acoustic_model.pv')
+        cheetah_language_model_path = os.path.join(cheetah_dir, 'language_model.pv')
+        cheetah_license_path = os.path.join(cheetah_dir, 'cheetah_eval_linux_public.lic')
 
-        args = [cheetah_app_path, path, cheetah_param_path, cheetah_license_path]
+        args = [
+            cheetah_demo_path,
+            cheetah_library_path,
+            cheetah_acoustic_model_path,
+            cheetah_language_model_path,
+            cheetah_license_path,
+            path]
         res = subprocess.run(args, stdout=subprocess.PIPE).stdout.decode('utf-8')
 
-        if 'ERROR' in res:
+        if '[ERROR]' in res:
             raise Exception("transcription failed with message:\n'%s'" % res)
 
-        return res.strip('\n ')
+        # Remove license notice
+        filtered_res = [x for x in res.split('\n') if '[' not in x]
+        filtered_res = '\n'.join(filtered_res)
+
+        return filtered_res.strip('\n ')
 
     def __str__(self):
         return 'Picovoice Cheetah'
