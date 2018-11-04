@@ -158,11 +158,11 @@ Below results are obtained by following the steps above. The benchmarking is per
 Ubuntu 18.04 with 8 GB of RAM and Intel i7-4510U CPU running at 2GHz. WER refers to word error rate and RTF refers to
 real time factor.
 
-| Engine | WER (LibriSpeech)| WER (Common Voice) | RTF | Memory |
-:---:|:---:|:---:|:---:|:---:
-Mozilla DeepSpeech (0.3.0) | 0.15 | 0.2 | 0.97  | 1521 MB |
-Picovoice Cheetah (v1.0.0) | **0.10** | **0.19** | **0.07** | **71.05 MB** |
-PocketSphinx (0.1.15) | 0.33 | 0.55 | 0.32 | 97.8 MB |
+| Engine | WER (LibriSpeech)| WER (Common Voice) | RTF (Laptop) | RTF (Raspberry Pi 3) | RTF (Raspberry Pi Zero) | Memory |
+:---:|:---:|:---:|:---:|:---:|:---:|:---:
+Mozilla DeepSpeech (0.3.0) | 0.15 | 0.2 | 0.97  | -- | -- | 1521 MB |
+Picovoice Cheetah (v1.0.0) | **0.10** | **0.19** | **0.07** | **0.41** | 2.33 | **71.05 MB** |
+PocketSphinx (0.1.15) | 0.33 | 0.55 | 0.32 | 1.87 | **2.04** | 97.8 MB |
 
 Cheetah achieves higher accuracy compared to any other engine on both datasets. Compared to second best performing engine,
 Mozilla DeepSpeech, it is 13.9 times faster and consumes 21.4 times less memory. This enables Cheetah to run on small
