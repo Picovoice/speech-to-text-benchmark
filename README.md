@@ -38,11 +38,9 @@ solutions.
 
 ## Data
 
-[Mozilla Common Voice](https://voice.mozilla.org/en) and [LibriSpeech](http://www.openslr.org/12/) datasets are used for
-benchmarking. Only the cv-valid-test portion of Common Voice dataset is used to allow engines to use the train portion
-of the dataset. Since the Common Voice dataset is community-verified we only use examples that have no downvotes and at
-least two upvotes. Similarly, We use the [test-clean](http://www.openslr.org/resources/12/test-clean.tar.gz) portion
-of LibriSpeech dataset to allow engines use the train portions.
+[LibriSpeech](http://www.openslr.org/12/) dataset is used for benchmarking. We use the
+[test-clean](http://www.openslr.org/resources/12/test-clean.tar.gz) portion of LibriSpeech dataset to allow engines use
+the train portions.
 
 ## Metrics
 
@@ -87,14 +85,13 @@ Raspberry Pi.
 
 Below is information on how to use this framework to benchmark engines mentioned above. First, make sure that you have
 already installed DeepSpeech and PocketSphinx on your machine following instructions on their official pages. Then
-download Common Voice dataset and [test-clean](http://www.openslr.org/resources/12/test-clean.tar.gz) portion of
-LibriSpeech.
+download [test-clean](http://www.openslr.org/resources/12/test-clean.tar.gz) portion of LibriSpeech.
 
 ### Word Error Rate Measurement
 
-WER can be measured by running the following command from the root of the repository.
-`DATASET_TYPE` is either `commonvoice` or `librispeech`. `DATASET_PATH` is the absolute path to the root directory of
-dataset. `DEEP_SPEECH_MODELS_PATH` is the absolute path to Mozilla DeepSpeech's model folder.
+WER can be measured by running the following command from the root of the repository. `DATASET_TYPE` is `librispeech`.
+`DATASET_PATH` is the absolute path to the root directory of dataset. `DEEP_SPEECH_MODELS_PATH` is the absolute path
+to Mozilla DeepSpeech's model folder.
 
 ```bash
 python benchmark.py --dataset_type DATASET_TYPE --dataset_root DATASET_PATH --deep_speech_model_path DEEP_SPEECH_MODELS_PATH/output_graph.pbmm \
@@ -154,18 +151,18 @@ ms_print massif.out.XXXX
 
 ## Results
 
-Below results are obtained by following the steps above. The benchmarking is performed on a laptop running
-Ubuntu 18.04 with 8 GB of RAM and Intel i7-4510U CPU running at 2GHz. WER refers to word error rate and RTF refers to
+Below results are obtained by following the steps above. The benchmarking is performed on a linux box running
+Ubuntu 16.04 with 32 GB of RAM and Intel i5-6500 CPU running at 3.2 GHz. WER refers to word error rate and RTF refers to
 real time factor.
 
-| Engine | WER (LibriSpeech)| WER (Common Voice) | RTF (Laptop) | RTF (Raspberry Pi 3) | RTF (Raspberry Pi Zero) | Memory |
-:---:|:---:|:---:|:---:|:---:|:---:|:---:
-Mozilla DeepSpeech (0.3.0) | 0.15 | 0.2 | 0.97  | -- | -- | 1521 MB |
-Picovoice Cheetah (v1.0.0) | **0.10** | **0.19** | **0.07** | **0.41** | 2.33 | **71.05 MB** |
-PocketSphinx (0.1.15) | 0.33 | 0.55 | 0.32 | 1.87 | **2.04** | 97.8 MB |
+| Engine | WER | RTF (Laptop) | RTF (Raspberry Pi 3) | RTF (Raspberry Pi Zero) | Model Size (Acoustic and Language) |
+:---:|:---:|:---:|:---:|:---:|:---:
+Mozilla DeepSpeech (0.4.1) | 0.12 | 0.46  | -- | -- | 2000 MB |
+Picovoice Cheetah (v1.0.0) | **0.10** | **0.06** | **0.35** | **1.45** | **71.3 MB** |
+PocketSphinx (0.1.15) | 0.33 | 0.32 | 1.87 | 2.04 | 97.8 MB |
 
-Cheetah achieves higher accuracy compared to any other engine on both datasets. Compared to second best performing engine,
-Mozilla DeepSpeech, it is 13.9 times faster and consumes 21.4 times less memory. This enables Cheetah to run on small
+Cheetah achieves higher accuracy compared to any other engine. Compared to second best performing engine,
+Mozilla DeepSpeech, it is 7.7 times faster and consumes 28 times less memory storage. This enables Cheetah to run on small
 commodity embedded platforms such as Raspberry Pi while delivering the benefits of large models that need much more
 compute/memory resources.
 

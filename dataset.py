@@ -40,56 +40,10 @@ class Dataset(object):
         :return: Dataset object.
         """
 
-        if dataset_type == 'commonvoice':
-            return CommonVoiceDataset(root)
         if dataset_type == 'librispeech':
             return LibriSpeechDataset(root)
         else:
             raise ValueError("cannot create %s of type '%s'" % (cls.__name__, dataset_type))
-
-
-class CommonVoiceDataset(Dataset):
-    """https://voice.mozilla.org/en"""
-
-    def __init__(self, root):
-        """
-        Constructor. It converts MP3 files into WAV files as Cheetah can only consume WAV.
-
-        :param root: root of dataset.
-        """
-
-        self._data = []
-
-        metadata_path = os.path.join(root, 'cv-valid-test.csv')
-        with open(metadata_path) as f:
-            reader = csv.DictReader(f)
-
-            for row in reader:
-                text = row['text'].lower()
-                up_votes = int(row['up_votes'])
-                down_votes = int(row['down_votes'])
-
-                # NOTE: perform some basics checks to ensure the validity of data
-                if up_votes < 2 or down_votes > 0 or len(text) == 0:
-                    continue
-
-                mp3_path = os.path.join(root, row['filename'])
-                wav_path = mp3_path.replace('.mp3', '.wav')
-                if not os.path.exists(wav_path):
-                    transformer = sox.Transformer()
-                    transformer.convert(samplerate=16000, bitdepth=16, n_channels=1)
-                    transformer.build(mp3_path, wav_path)
-
-                self._data.append((wav_path, text))
-
-    def size(self):
-        return len(self._data)
-
-    def get(self, index):
-        return self._data[index]
-
-    def __str__(self):
-        return 'Common Voice Dataset'
 
 
 class LibriSpeechDataset(Dataset):
