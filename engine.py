@@ -1,10 +1,19 @@
+import json
 import os
+import string
 import subprocess
+import time
+import uuid
 from enum import Enum
 
+import boto3
 import numpy as np
+import requests
 import soundfile
 from deepspeech import Model
+from google.cloud import speech
+from google.cloud.speech import enums
+from google.cloud.speech import types
 from pocketsphinx import get_model_path
 from pocketsphinx.pocketsphinx import Decoder
 
@@ -12,6 +21,8 @@ from pocketsphinx.pocketsphinx import Decoder
 class ASREngines(Enum):
     """Speech recognition engines"""
 
+    AMAZON_TRANSCRIBE = "AmazonTranscribe"
+    GOOGLE_SPEECH_TO_TEXT = "GoogleSpeechToText"
     MOZILLA_DEEP_SPEECH = 'DeepSpeech'
     PICOVOICE_CHEETAH = "Cheetah"
     POCKET_SPHINX = 'PocketSphinx'
@@ -43,7 +54,11 @@ class ASREngine(object):
         :return: Speech recognition object.
         """
 
-        if engine_type is ASREngines.MOZILLA_DEEP_SPEECH:
+        if engine_type is ASREngines.AMAZON_TRANSCRIBE:
+            return AmazonTranscribe(**kwargs)
+        elif engine_type is ASREngines.GOOGLE_SPEECH_TO_TEXT:
+            return GoogleSpeechToText(**kwargs)
+        elif engine_type is ASREngines.MOZILLA_DEEP_SPEECH:
             return MozillaDeepSpeechASREngine(**kwargs)
         elif engine_type is ASREngines.PICOVOICE_CHEETAH:
             return PicovoiceCheetahASREngine()
@@ -51,6 +66,86 @@ class ASREngine(object):
             return PocketSphinxASREngine()
         else:
             raise ValueError("cannot create %s of type '%s'" % (cls.__name__, engine_type))
+
+
+class AmazonTranscribe(ASREngine):
+    def __init__(self, dataset_root):
+        self._dataset_root = dataset_root
+        self._transcribe = boto3.client('transcribe')
+        self._s3 = boto3.client('s3')
+
+    def transcribe(self, path):
+        trans_path = path.replace('.wav', '.aws')
+
+        if os.path.exists(trans_path):
+            with open(trans_path) as f:
+                return f.read()
+
+        job_name = str(uuid.uuid4())
+        s3_path = path.replace(self._dataset_root, 'https://s3-us-west-2.amazonaws.com/stt-benchmark/test-clean/')
+        # print(os.path.basename(path))
+
+        self._transcribe.start_transcription_job(
+            TranscriptionJobName=job_name,
+            Media={'MediaFileUri': s3_path},
+            MediaFormat='wav',
+            LanguageCode='en-US'
+        )
+        while True:
+            status = self._transcribe.get_transcription_job(TranscriptionJobName=job_name)
+            if status['TranscriptionJob']['TranscriptionJobStatus'] in ['COMPLETED', 'FAILED']:
+                break
+            # print("Not ready yet...")
+            time.sleep(5)
+        # print(status)
+
+        res = requests.get(status['TranscriptionJob']['Transcript']['TranscriptFileUri'])
+        # self._s3.download_file(
+        #     'stt-benchmark',
+        #     status['TranscriptionJob']['Transcript']['TranscriptFileUri'],
+        #     os.path.expanduser('~/%s.json' % job_name))
+        # with open(os.path.expanduser('~/%s.json' % job_name)) as json_file:
+        #     data = json.load(json_file)
+
+        # trans = json.loads(res.content.decode('utf8').replace("'", '"'))['results']['transcripts'][0]['transcript']
+        trans = json.loads(res.content.decode('utf8'))['results']['transcripts'][0]['transcript']
+        trans = trans.translate(str.maketrans('', '', string.punctuation))
+        print(trans)
+
+        with open(trans_path, 'w') as f:
+            f.write(trans)
+
+        return trans
+
+    def __str__(self):
+        return 'Amazon Transcribe'
+
+
+class GoogleSpeechToText(ASREngine):
+    def __init__(self):
+        self._client = speech.SpeechClient()
+
+    def transcribe(self, path):
+        with open(path, 'rb') as f:
+            content = f.read()
+
+        audio = types.RecognitionAudio(content=content)
+        config = types.RecognitionConfig(
+            encoding=enums.RecognitionConfig.AudioEncoding.LINEAR16,
+            sample_rate_hertz=16000,
+            language_code='en-US')
+
+        response = self._client.recognize(config, audio)
+        final = ' '.join(result.alternatives[0].transcript for result in response.results)
+        final = final.translate(str.maketrans('', '', string.punctuation))
+        # for result in response.results:
+        #     print(u'Transcript: {}'.format(result.alternatives[0].transcript))
+        print(final)
+
+        return final
+
+    def __str__(self):
+        return 'Google Speech-to-Text'
 
 
 class PocketSphinxASREngine(ASREngine):

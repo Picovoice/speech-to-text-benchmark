@@ -1,8 +1,6 @@
-import csv
 import os
 
 import soundfile
-import sox
 
 
 class Dataset(object):
