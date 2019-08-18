@@ -56,7 +56,10 @@ class AmazonTranscribe(ASREngine):
     def __init__(self):
         self._s3 = boto3.client('s3')
         self._s3_bucket = str(uuid.uuid4())
-        self._s3.create_bucket(self._s3_bucket)
+        self._s3.create_bucket(
+            ACL='private',
+            Bucket=self._s3_bucket,
+            CreateBucketConfiguration={'LocationConstraint': 'us-west-2'})
 
         self._transcribe = boto3.client('transcribe')
 
