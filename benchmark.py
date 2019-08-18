@@ -24,11 +24,11 @@ def run():
     dataset = Dataset.create('librispeech')
     logging.info('loaded %s with %.2f hours of data' % (str(dataset), dataset.size_hours()))
 
-    engine = ASREngine.create(args.engine_type)
+    engine = ASREngine.create(ASREngines[args.engine_type])
     logging.info('created %s engine' % str(engine))
 
     futures = list()
-    with ThreadPoolExecutor(max_workers=4) as executor:
+    with ThreadPoolExecutor(max_workers=128) as executor:
         for i in range(dataset.size()):
             path, ref_transcript = dataset.get(i)
             futures.append((executor.submit(engine.transcribe, path), ref_transcript))

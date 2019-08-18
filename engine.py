@@ -19,11 +19,12 @@ from pocketsphinx.pocketsphinx import Decoder
 
 
 class ASREngines(Enum):
-    AMAZON_TRANSCRIBE = "AmazonTranscribe"
-    GOOGLE_SPEECH_TO_TEXT = "GoogleSpeechToText"
-    MOZILLA_DEEP_SPEECH = 'MozillaDeepSpeech'
-    PICOVOICE_CHEETAH = "PicovoiceCheetah"
-    CMU_POCKET_SPHINX = 'PocketSphinx'
+    AMAZON_TRANSCRIBE = "AMAZON_TRANSCRIBE"
+    GOOGLE_SPEECH_TO_TEXT = "GOOGLE_SPEECH_TO_TEXT"
+    MOZILLA_DEEP_SPEECH = 'MOZILLA_DEEP_SPEECH'
+    PICOVOICE_CHEETAH = "PICOVOICE_CHEETAH"
+    PICOVOICE_CHEETAH_LIBRISPEECH_LM = "PICOVOICE_CHEETAH_LIBRISPEECH_LM"
+    CMU_POCKET_SPHINX = 'CMU_POCKET_SPHINX'
 
 
 class ASREngine(object):
@@ -43,6 +44,8 @@ class ASREngine(object):
             return MozillaDeepSpeechASREngine()
         elif engine_type is ASREngines.PICOVOICE_CHEETAH:
             return PicovoiceCheetahASREngine()
+        elif engine_type is ASREngines.PICOVOICE_CHEETAH_LIBRISPEECH_LM:
+            return PicovoiceCheetahASREngine(lm='language_model_librispeech.pv')
         elif engine_type is ASREngines.CMU_POCKET_SPHINX:
             return CMUPocketSphinxASREngine()
         else:
@@ -99,6 +102,11 @@ class GoogleSpeechToText(ASREngine):
         self._client = speech.SpeechClient()
 
     def transcribe(self, path):
+        cache_path = path.replace('.wav', '.ggl')
+        if os.path.exists(cache_path):
+            with open(cache_path) as f:
+                return f.read()
+
         with open(path, 'rb') as f:
             content = f.read()
 
@@ -112,6 +120,10 @@ class GoogleSpeechToText(ASREngine):
 
         res = ' '.join(result.alternatives[0].transcript for result in response.results)
         res = res.translate(str.maketrans('', '', string.punctuation))
+        print(res)
+
+        with open(cache_path, 'w') as f:
+            f.write(res)
 
         return res
 
@@ -143,13 +155,13 @@ class MozillaDeepSpeechASREngine(ASREngine):
 
 
 class PicovoiceCheetahASREngine(ASREngine):
-    def __init__(self):
+    def __init__(self, lm='language_model.pv'):
         cheetah_dir = os.path.join(os.path.dirname(__file__), 'resources/cheetah')
         self._cheetah_demo_path = os.path.join(cheetah_dir, 'cheetah_demo')
         self._cheetah_library_path = os.path.join(cheetah_dir, 'libpv_cheetah.so')
         self._cheetah_acoustic_model_path = os.path.join(cheetah_dir, 'acoustic_model.pv')
-        self._cheetah_language_model_path = os.path.join(cheetah_dir, 'language_model.pv')
-        self._cheetah_license_path = os.path.join(cheetah_dir, 'cheetah_eval_linux_public.lic')
+        self._cheetah_language_model_path = os.path.join(cheetah_dir, lm)
+        self._cheetah_license_path = os.path.join(cheetah_dir, 'cheetah_eval_linux.lic')
 
     def transcribe(self, path):
         args = [
