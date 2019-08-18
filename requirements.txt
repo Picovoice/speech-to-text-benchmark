@@ -1,6 +1,7 @@
+boto3
 deepspeech
 editdistance
 numpy
 pocketsphinx
+requests
 soundfile
-sox
