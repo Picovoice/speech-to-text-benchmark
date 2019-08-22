@@ -151,14 +151,14 @@ Below results are obtained by following the steps above. The benchmarking is per
 Ubuntu 16.04 with 64 GB of RAM and Intel i5-6500 CPU running at 3.2 GHz. WER refers to word error rate and RTF refers to
 real time factor.
 
-| Engine | WER | RTF (Laptop) | RTF (Raspberry Pi 3) | RTF (Raspberry Pi Zero) | Model Size (Acoustic and Language) |
+| Engine | WER (test-clean) | RTF (Desktop) | RTF (Raspberry Pi 3) | RTF (Raspberry Pi Zero) | Model Size (Acoustic and Language) |
 :---:|:---:|:---:|:---:|:---:|:---:
-Amazon Transcribe | 8.2% | N/A | N/A | N/A | N/A |
-Google Speech-to-Text | 12.2% | N/A | N/A | N/A | N/A |
-Mozilla DeepSpeech (0.5.1) | 12% | 0.462  | N/A | N/A | 2010.5 MB |
-Picovoice Cheetah (v1.1.0) | 13.2% | 0.022 | - | - | 46.6 MB |
-Picovoice Cheetah LibriSpeech LM (v1.1.0) | 9.43% | 0.027 | - | - | 194.6 MB |
-PocketSphinx (0.1.15) | 33% | 0.32 | 1.87 | 2.04 | 97.8 MB |
+Amazon Transcribe | 8.21% | N/A | N/A | N/A | N/A |
+Google Speech-to-Text | 12.23% | N/A | N/A | N/A | N/A |
+Mozilla DeepSpeech (0.5.1) | 8.3% | 0.46  | N/A | N/A | 2010.5 MB |
+Picovoice Cheetah (v1.1.0) | 13.28% | 0.02 | 0.22 | 1.69 | 46.6 MB |
+Picovoice Cheetah LibriSpeech LM (v1.1.0) | 10.47% | 0.02 | 0.22 | 1.69 | 38.2 MB |
+PocketSphinx (0.1.15) | 31.82% | 0.32 | 1.87 | 2.04 | 97.8 MB |
 
 Cheetah achieves higher accuracy compared to any other engine. Compared to second best performing engine,
 Mozilla DeepSpeech, it is 7.7 times faster and consumes 28 times less memory storage. This enables Cheetah to run on small

@@ -28,7 +28,7 @@ def run():
     logging.info('created %s engine' % str(engine))
 
     futures = list()
-    with ThreadPoolExecutor(max_workers=128) as executor:
+    with ThreadPoolExecutor(max_workers=1) as executor:
         for i in range(dataset.size()):
             path, ref_transcript = dataset.get(i)
             futures.append((executor.submit(engine.transcribe, path), ref_transcript))
