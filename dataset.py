@@ -8,7 +8,7 @@ class Dataset(object):
         raise NotImplementedError()
 
     def size_hours(self):
-        return sum([soundfile.read(self.get(i)[0])[0].size / (16000 * 3600) for i in range(self.size())])
+        return sum(soundfile.read(self.get(i)[0])[0].size / (16000 * 3600) for i in range(self.size()))
 
     def get(self, index):
         raise NotImplementedError()
@@ -36,7 +36,7 @@ class LibriSpeechDataset(Dataset):
 
                 transcript_path = os.path.join(chapter_dir, '%s-%s.trans.txt' % (speaker_id, chapter_id))
                 with open(transcript_path, 'r') as f:
-                    transcripts = dict(tuple(x.split(' ', maxsplit=1)) for x in f.readlines())
+                    transcripts = dict(x.split(' ', maxsplit=1) for x in f.readlines())
 
                 for flac_file in os.listdir(chapter_dir):
                     if flac_file.endswith('.flac'):

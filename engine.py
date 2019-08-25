@@ -20,11 +20,11 @@ from pocketsphinx.pocketsphinx import Decoder
 
 class ASREngines(Enum):
     AMAZON_TRANSCRIBE = "AMAZON_TRANSCRIBE"
+    CMU_POCKET_SPHINX = 'CMU_POCKET_SPHINX'
     GOOGLE_SPEECH_TO_TEXT = "GOOGLE_SPEECH_TO_TEXT"
     MOZILLA_DEEP_SPEECH = 'MOZILLA_DEEP_SPEECH'
     PICOVOICE_CHEETAH = "PICOVOICE_CHEETAH"
     PICOVOICE_CHEETAH_LIBRISPEECH_LM = "PICOVOICE_CHEETAH_LIBRISPEECH_LM"
-    CMU_POCKET_SPHINX = 'CMU_POCKET_SPHINX'
 
 
 class ASREngine(object):
@@ -38,6 +38,8 @@ class ASREngine(object):
     def create(cls, engine_type):
         if engine_type is ASREngines.AMAZON_TRANSCRIBE:
             return AmazonTranscribe()
+        elif engine_type is ASREngines.CMU_POCKET_SPHINX:
+            return CMUPocketSphinxASREngine()
         elif engine_type is ASREngines.GOOGLE_SPEECH_TO_TEXT:
             return GoogleSpeechToText()
         elif engine_type is ASREngines.MOZILLA_DEEP_SPEECH:
@@ -46,8 +48,6 @@ class ASREngine(object):
             return PicovoiceCheetahASREngine()
         elif engine_type is ASREngines.PICOVOICE_CHEETAH_LIBRISPEECH_LM:
             return PicovoiceCheetahASREngine(lm='language_model_librispeech.pv')
-        elif engine_type is ASREngines.CMU_POCKET_SPHINX:
-            return CMUPocketSphinxASREngine()
         else:
             raise ValueError("cannot create %s of type '%s'" % (cls.__name__, engine_type))
 
@@ -82,7 +82,7 @@ class AmazonTranscribe(ASREngine):
 
         while True:
             status = self._transcribe.get_transcription_job(TranscriptionJobName=job_name)
-            if status['TranscriptionJob']['TranscriptionJobStatus'] in ['COMPLETED', 'FAILED']:
+            if status['TranscriptionJob']['TranscriptionJobStatus'] is 'COMPLETED':
                 break
             time.sleep(5)
 
@@ -98,95 +98,6 @@ class AmazonTranscribe(ASREngine):
 
     def __str__(self):
         return 'Amazon Transcribe'
-
-
-class GoogleSpeechToText(ASREngine):
-    def __init__(self):
-        self._client = speech.SpeechClient()
-
-    def transcribe(self, path):
-        cache_path = path.replace('.wav', '.ggl')
-        if os.path.exists(cache_path):
-            with open(cache_path) as f:
-                return f.read()
-
-        with open(path, 'rb') as f:
-            content = f.read()
-
-        audio = types.RecognitionAudio(content=content)
-        config = types.RecognitionConfig(
-            encoding=enums.RecognitionConfig.AudioEncoding.LINEAR16,
-            sample_rate_hertz=16000,
-            language_code='en-US')
-
-        response = self._client.recognize(config, audio)
-
-        res = ' '.join(result.alternatives[0].transcript for result in response.results)
-        res = res.translate(str.maketrans('', '', string.punctuation))
-        print(res)
-
-        with open(cache_path, 'w') as f:
-            f.write(res)
-
-        return res
-
-    def __str__(self):
-        return 'GoogleSpeechToText'
-
-
-class MozillaDeepSpeechASREngine(ASREngine):
-    def __init__(self):
-        deepspeech_dir = os.path.join(os.path.dirname(__file__), 'resources/deepspeech')
-        model_path = os.path.join(deepspeech_dir, 'output_graph.pbmm')
-        alphabet_path = os.path.join(deepspeech_dir, 'alphabet.txt')
-        language_model_path = os.path.join(deepspeech_dir, 'lm.binary')
-        trie_path = os.path.join(deepspeech_dir, 'trie')
-
-        # https://github.com/mozilla/DeepSpeech/blob/master/native_client/python/client.py
-        self._model = Model(model_path, 26, 9, alphabet_path, 500)
-        self._model.enableDecoderWithLM(alphabet_path, language_model_path, trie_path, 0.75, 1.85)
-
-    def transcribe(self, path):
-        pcm, sample_rate = soundfile.read(path)
-        pcm = (np.iinfo(np.int16).max * pcm).astype(np.int16)
-        res = self._model.stt(pcm, aSampleRate=sample_rate)
-
-        return res
-
-    def __str__(self):
-        return 'MozillaDeepSpeech'
-
-
-class PicovoiceCheetahASREngine(ASREngine):
-    def __init__(self, lm='language_model.pv'):
-        cheetah_dir = os.path.join(os.path.dirname(__file__), 'resources/cheetah')
-        self._cheetah_demo_path = os.path.join(cheetah_dir, 'cheetah_demo')
-        self._cheetah_library_path = os.path.join(cheetah_dir, 'libpv_cheetah.so')
-        self._cheetah_acoustic_model_path = os.path.join(cheetah_dir, 'acoustic_model.pv')
-        self._cheetah_language_model_path = os.path.join(cheetah_dir, lm)
-        self._cheetah_license_path = os.path.join(cheetah_dir, 'cheetah_eval_linux.lic')
-
-    def transcribe(self, path):
-        args = [
-            self._cheetah_demo_path,
-            self._cheetah_library_path,
-            self._cheetah_acoustic_model_path,
-            self._cheetah_language_model_path,
-            self._cheetah_license_path,
-            path]
-        res = subprocess.run(args, stdout=subprocess.PIPE).stdout.decode('utf-8')
-
-        if '[ERROR]' in res:
-            raise Exception("transcription failed with message:\n'%s'" % res)
-
-        # Remove license notice
-        filtered_res = [x for x in res.split('\n') if '[' not in x]
-        filtered_res = '\n'.join(filtered_res)
-
-        return filtered_res.strip('\n ')
-
-    def __str__(self):
-        return 'PicovoiceCheetah'
 
 
 class CMUPocketSphinxASREngine(ASREngine):
@@ -225,3 +136,88 @@ class CMUPocketSphinxASREngine(ASREngine):
 
     def __str__(self):
         return 'CMUPocketSphinx'
+
+
+class GoogleSpeechToText(ASREngine):
+    def __init__(self):
+        self._client = speech.SpeechClient()
+
+    def transcribe(self, path):
+        cache_path = path.replace('.wav', '.ggl')
+        if os.path.exists(cache_path):
+            with open(cache_path) as f:
+                return f.read()
+
+        with open(path, 'rb') as f:
+            content = f.read()
+
+        audio = types.RecognitionAudio(content=content)
+        config = types.RecognitionConfig(
+            encoding=enums.RecognitionConfig.AudioEncoding.LINEAR16,
+            sample_rate_hertz=16000,
+            language_code='en-US')
+
+        response = self._client.recognize(config, audio)
+
+        res = ' '.join(result.alternatives[0].transcript for result in response.results)
+        res = res.translate(str.maketrans('', '', string.punctuation))
+
+        with open(cache_path, 'w') as f:
+            f.write(res)
+
+        return res
+
+    def __str__(self):
+        return 'Google Speech-to-Text'
+
+
+class MozillaDeepSpeechASREngine(ASREngine):
+    def __init__(self):
+        deepspeech_dir = os.path.join(os.path.dirname(__file__), 'resources/deepspeech')
+        model_path = os.path.join(deepspeech_dir, 'output_graph.pbmm')
+        alphabet_path = os.path.join(deepspeech_dir, 'alphabet.txt')
+        language_model_path = os.path.join(deepspeech_dir, 'lm.binary')
+        trie_path = os.path.join(deepspeech_dir, 'trie')
+
+        # https://github.com/mozilla/DeepSpeech/blob/master/native_client/python/client.py
+        self._model = Model(model_path, 26, 9, alphabet_path, 500)
+        self._model.enableDecoderWithLM(alphabet_path, language_model_path, trie_path, 0.75, 1.85)
+
+    def transcribe(self, path):
+        pcm, sample_rate = soundfile.read(path)
+        pcm = (np.iinfo(np.int16).max * pcm).astype(np.int16)
+        res = self._model.stt(pcm, aSampleRate=sample_rate)
+
+        return res
+
+    def __str__(self):
+        return 'Mozilla DeepSpeech'
+
+
+class PicovoiceCheetahASREngine(ASREngine):
+    def __init__(self, lm='language_model.pv'):
+        cheetah_dir = os.path.join(os.path.dirname(__file__), 'resources/cheetah')
+        self._cheetah_demo_path = os.path.join(cheetah_dir, 'cheetah_demo')
+        self._cheetah_library_path = os.path.join(cheetah_dir, 'libpv_cheetah.so')
+        self._cheetah_acoustic_model_path = os.path.join(cheetah_dir, 'acoustic_model.pv')
+        self._cheetah_language_model_path = os.path.join(cheetah_dir, lm)
+        self._cheetah_license_path = os.path.join(cheetah_dir, 'cheetah_eval_linux.lic')
+
+    def transcribe(self, path):
+        args = [
+            self._cheetah_demo_path,
+            self._cheetah_library_path,
+            self._cheetah_acoustic_model_path,
+            self._cheetah_language_model_path,
+            self._cheetah_license_path,
+            path]
+        res = subprocess.run(args, stdout=subprocess.PIPE).stdout.decode('utf-8')
+
+        # Remove license notice
+        filtered_res = [x for x in res.split('\n') if '[' not in x]
+        filtered_res = '\n'.join(filtered_res)
+
+        return filtered_res.strip('\n ')
+
+    def __str__(self):
+        return 'Picovoice Cheetah'
