@@ -27,12 +27,10 @@ and tested on Ubuntu using Python3.
 
 ## Background
 
-This framework has been developed by [Picovoice](http://picovoice.ai/) as part of the project
-[Cheetah](https://github.com/Picovoice/cheetah). Cheetah is Picovoice's speech-to-text engine specifically designed to
-run efficiently on the edge (offline). Deep learning has been the main driver in recent improvements in speech recognition.
-But due to stringent compute/storage limitations of IoT platforms it is mostly beneficial to the cloud-based engines. Picovoice's
-proprietary deep learning technology enables transferring these improvements to IoT platforms with much lower CPU/memory
-footprint.
+This framework has been developed by [Picovoice](http://picovoice.ai/) as part of the
+[Cheetah](https://github.com/Picovoice/cheetah) project. Cheetah is Picovoice's speech-to-text engine, specifically designed to
+run efficiently on the edge (offline). Deep learning has been the main driver in recent improvements in speech recognition but due to stringent compute/storage limitations of IoT platforms, it is mostly beneficial to cloud-based engines. Picovoice's
+proprietary deep learning technology enables transferring these improvements to IoT platforms with significantly lower CPU/memory footprint.
 
 ## Data
 
@@ -41,28 +39,28 @@ footprint.
 
 ## Metrics
 
-Three different metrics are measured.
+This benchmark considers three metrics: word error rate, real-time factor, and model size.
 
 ### Word Error Rate
 
-Word error rate is defined as the ratio of [Levenstein distance](https://en.wikipedia.org/wiki/Levenshtein_distance)
-between words in reference transcript and words in the output of the speech-to-text engine to the number of
-words in reference transcript.
+Word error rate (WER) is defined as the ratio of [Levenstein distance](https://en.wikipedia.org/wiki/Levenshtein_distance)
+between words in a reference transcript and words in the output of the speech-to-text engine, to the number of
+words in the reference transcript.
 
 ### Real Time Factor
 
 Real time factor (RTF) is measured as the ratio of CPU (processing) time to the length of the input speech file. A
-speech-to-text engine with lower RTF is computationally more efficient. We omit this metric for cloud-based engines.
+speech-to-text engine with lower RTF is more computationally efficient. We omit this metric for cloud-based engines.
 
 ### Model Size
 
-The aggregate size of models (acoustic and language) in MB. We omit this metric for cloud-based engines.
+The aggregate size of models (acoustic and language), in MB. We omit this metric for cloud-based engines.
 
 ## Speech-to-Text Engines
 
 ### Amazon Transcribe
 
-A cloud-based speceh recognition engine offered by AWS. Find more information [here](https://aws.amazon.com/transcribe/).
+Amazon Transcribe is a cloud-based speceh recognition engine, offered by AWS. Find more information [here](https://aws.amazon.com/transcribe/).
 
 ### CMU PocketSphinx
 
@@ -71,7 +69,7 @@ Raspberry Pi.
 
 ### Google Speech-to-Text
 
-A cloud-based speech recognition engine offerred by Google Cloud Platform. Find more information
+A cloud-based speech recognition engine offered by Google Cloud Platform. Find more information
 [here](https://cloud.google.com/speech-to-text/).
 
 ### Mozilla DeepSpeech
@@ -87,19 +85,19 @@ growing number of mobile/embedded platforms including Android, iOS, and Raspberr
 
 ## Usage
 
-Below is information on how to use this framework to benchmark engines mentioned above. First, make sure that you have
-already installed DeepSpeech and PocketSphinx on your machine following instructions on their official pages. Then unpack
+Below is information on how to use this framework to benchmark the speech-to-text engines. First, make sure that you have
+already installed DeepSpeech and PocketSphinx on your machine by following the instructions on their official pages. Then unpack
 DeepSpeech's models under [resources/deepspeech](/resources/deepspeech).
 
-Download [test-clean](http://www.openslr.org/resources/12/test-clean.tar.gz) portion of LibriSpeech and unpack it under
+Download the [test-clean](http://www.openslr.org/resources/12/test-clean.tar.gz) portion of LibriSpeech and unpack it under
 [resources/data](/resources/data).
 
-For running Google Speech-to-Text and Amazon Transcribe engines you need to sign up for the respective cloud provider
-and setup permissions / credentials according to their documentation. Running these services might incur fees. 
+For running Google Speech-to-Text and Amazon Transcribe engines, you need to sign up for the respective cloud provider
+and setup permissions / credentials according to their documentation. Running these services may incur fees. 
 
 ### Word Error Rate Measurement
 
-WER can be measured by running the following command from the root of the repository. The valid options for `engine_type`
+Word Error Rate can be measured by running the following command from the root of the repository. The valid options for `engine_type`
 parameter are `AMAZON_TRANSCRIBE`, `CMU_POCKET_SPHINX`, `GOOGLE_SPEECH_TO_TEXT`, `MOZILLA_DEEP_SPEECH`,
 `PICOVOICE_CHEETAH`, and `PICOVOICE_CHEETAH_LIBRISPEECH_LM`. `PICOVOICE_CHEETAH_LIBRISPEECH_LM` is the same as `PICOVOICE_CHEETAH`
 except that the language model is trained on LibriSpeech training text similar to
@@ -113,8 +111,8 @@ python benchmark.py --engine_type AN_ENGINE_TYPE
 
 ### Real Time Factor Measurement
 
-`time` command is used to measure execution time of different engines for a given audio file and then divide
-the CPU time by audio length. In order to measure execution time for Cheetah run
+The `time` command is used to measure the execution time of different engines for a given audio file, and then divide
+the CPU time by audio length. To measure the execution time for Cheetah, run:
 
 ```bash
 time resources/cheetah/cheetah_demo \
@@ -125,7 +123,7 @@ resources/cheetah/cheetah_eval_linux.lic \
 PATH_TO_WAV_FILE
 ```
 
-The output should have the following format (values will be different)
+The output should have the following format (values may be different):
 
 ```bash
 real	0m4.961s
@@ -133,9 +131,9 @@ user	0m4.936s
 sys	0m0.024s
 ```
 
-then divide `user` by length of the audio file in seconds. The user is the actual CPU time spent in the program.
+Then, divide the `user` value by the length of the audio file, in seconds. The user value is the actual CPU time spent in the program.
 
-For DeepSpeech
+For DeepSpeech:
 
 ```bash
 time deepspeech \
@@ -146,7 +144,7 @@ time deepspeech \
 --audio PATH_TO_WAV_FILE
 ```
 
-Finally, for PocketSphinx
+Finally, for PocketSphinx:
 
 ```bash
 time pocketsphinx_continuous -infile PATH_TO_WAV_FILE
@@ -154,8 +152,8 @@ time pocketsphinx_continuous -infile PATH_TO_WAV_FILE
 
 ## Results
 
-Below results are obtained by following the steps above. The benchmarking is performed on a linux box running
-Ubuntu 16.04 with 64 GB of RAM and Intel i5-6500 CPU running at 3.2 GHz. WER refers to word error rate and RTF refers to
+The below results are obtained by following the previous steps. The benchmarking was performed on a Linux machine running
+Ubuntu 16.04 with 64GB of RAM and an Intel i5-6500 CPU running at 3.2 GHz. WER refers to word error rate and RTF refers to
 real time factor.
 
 | Engine | WER (test-clean) | RTF (Desktop) | RTF (Raspberry Pi 3) | RTF (Raspberry Pi Zero) | Model Size (Acoustic and Language) |
@@ -167,23 +165,23 @@ Mozilla DeepSpeech (0.5.1) | 8.3% | 0.46  | N/A | N/A | 2010.5 MB |
 Picovoice Cheetah (v1.1.0) | 13.25% | **0.02** | **0.22** | **1.69** | 46.6 MB |
 Picovoice Cheetah LibriSpeech LM (v1.1.0) | 10.47% | **0.02** | **0.22** | **1.69** | **38.2 MB** |
 
-Figure below compares the word error rate of speech-to-text engines. For Picovoice we included the engine that was
+The figure below compares the word error rate of speech-to-text engines. For Picovoice, we included the engine that was
 trained on LibriSpeech training data similar to Mozilla DeepSpeech.
 
 ![](resources/doc/word_error_rate_comparison.png)
 
-Figure below compares accuracy and runtime metrics of offline speech-to-text engines. For Picovoice we included the engine that was
-trained on LibriSpeech training data similar to Mozilla DeepSpeech. Cheetah achieves a performance very close to most accurate
+The figure below compares accuracy and runtime metrics of offline speech-to-text engines. For Picovoice we included the engine that was
+trained on LibriSpeech training data similar to Mozilla DeepSpeech. Cheetah achieves a performance close to the most accurate
 engine (Mozilla DeepSpeech) while being 23X faster and 53X smaller in size.
 
 ![](resources/doc/offline_stt_comparison.png)
 
 ## License
 
-The benchmarking framework is freely-available and can be used under the Apache 2.0 license. Regarding Mozilla DeepSpeech
-and PocketSphinx please refer to their respective pages.
+The benchmarking framework is freely available and can be used under the Apache 2.0 license. Regarding Mozilla DeepSpeech
+and PocketSphinx usage, please refer to their respective documentation.
 
 The provided Cheetah resources (binary, model, and license file) are the property of Picovoice. They are
 only to be used for evaluation purposes and their use in any commercial product is strictly prohibited.
 
-For commercial inquiries regarding Cheetah please contact us by filling out this [form](https://picovoice.ai/contact.html).
+For commercial enquiries regarding Cheetah, please contact us via this [form](https://picovoice.ai/contact.html).
