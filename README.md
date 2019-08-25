@@ -85,28 +85,31 @@ growing number of mobile/embedded platforms including Android, iOS, and Raspberr
 
 ## Usage
 
-Below is information on how to use this framework to benchmark the speech-to-text engines. First, make sure that you have
-already installed DeepSpeech and PocketSphinx on your machine by following the instructions on their official pages. Then unpack
+Below is information on how to use this framework to benchmark the speech-to-text engines. 
+
+1. Make sure that you have installed DeepSpeech and PocketSphinx on your machine by following the instructions on their official pages.
+1. Unpack
 DeepSpeech's models under [resources/deepspeech](/resources/deepspeech).
-
-Download the [test-clean](http://www.openslr.org/resources/12/test-clean.tar.gz) portion of LibriSpeech and unpack it under
+1. Download the [test-clean](http://www.openslr.org/resources/12/test-clean.tar.gz) portion of LibriSpeech and unpack it under
 [resources/data](/resources/data).
-
-For running Google Speech-to-Text and Amazon Transcribe, you need to sign up for the respective cloud provider
+1. For running Google Speech-to-Text and Amazon Transcribe, you need to sign up for the respective cloud provider
 and setup permissions / credentials according to their documentation. Running these services may incur fees.
 
 ### Word Error Rate Measurement
 
-Word Error Rate can be measured by running the following command from the root of the repository. The valid options for `engine_type`
-parameter are `AMAZON_TRANSCRIBE`, `CMU_POCKET_SPHINX`, `GOOGLE_SPEECH_TO_TEXT`, `MOZILLA_DEEP_SPEECH`,
-`PICOVOICE_CHEETAH`, and `PICOVOICE_CHEETAH_LIBRISPEECH_LM`. `PICOVOICE_CHEETAH_LIBRISPEECH_LM` is the same as `PICOVOICE_CHEETAH`
-except that the language model is trained on LibriSpeech training text similar to
-[Mozilla DeepSpeech](https://github.com/mozilla/DeepSpeech/tree/master/data/lm).
-
+Word Error Rate can be measured by running the following command from the root of the repository: 
 
 ```bash
 python benchmark.py --engine_type AN_ENGINE_TYPE
 ```
+
+The valid options for the `engine_type`
+parameter are: `AMAZON_TRANSCRIBE`, `CMU_POCKET_SPHINX`, `GOOGLE_SPEECH_TO_TEXT`, `MOZILLA_DEEP_SPEECH`,
+`PICOVOICE_CHEETAH`, and `PICOVOICE_CHEETAH_LIBRISPEECH_LM`.
+
+`PICOVOICE_CHEETAH_LIBRISPEECH_LM` is the same as `PICOVOICE_CHEETAH`
+except that the language model is trained on LibriSpeech training text similar to
+[Mozilla DeepSpeech](https://github.com/mozilla/DeepSpeech/tree/master/data/lm).
 
 
 ### Real Time Factor Measurement
