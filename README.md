@@ -92,8 +92,8 @@ DeepSpeech's models under [resources/deepspeech](/resources/deepspeech).
 Download the [test-clean](http://www.openslr.org/resources/12/test-clean.tar.gz) portion of LibriSpeech and unpack it under
 [resources/data](/resources/data).
 
-For running Google Speech-to-Text and Amazon Transcribe engines, you need to sign up for the respective cloud provider
-and setup permissions / credentials according to their documentation. Running these services may incur fees. 
+For running Google Speech-to-Text and Amazon Transcribe, you need to sign up for the respective cloud provider
+and setup permissions / credentials according to their documentation. Running these services may incur fees.
 
 ### Word Error Rate Measurement
 
@@ -101,7 +101,7 @@ Word Error Rate can be measured by running the following command from the root o
 parameter are `AMAZON_TRANSCRIBE`, `CMU_POCKET_SPHINX`, `GOOGLE_SPEECH_TO_TEXT`, `MOZILLA_DEEP_SPEECH`,
 `PICOVOICE_CHEETAH`, and `PICOVOICE_CHEETAH_LIBRISPEECH_LM`. `PICOVOICE_CHEETAH_LIBRISPEECH_LM` is the same as `PICOVOICE_CHEETAH`
 except that the language model is trained on LibriSpeech training text similar to
-[Mozilla DpeeSpeech](https://github.com/mozilla/DeepSpeech/tree/master/data/lm).
+[Mozilla DeepSpeech](https://github.com/mozilla/DeepSpeech/tree/master/data/lm).
 
 
 ```bash
