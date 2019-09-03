@@ -159,7 +159,7 @@ The below results are obtained by following the previous steps. The benchmarking
 Ubuntu 16.04 with 64GB of RAM and an Intel i5-6500 CPU running at 3.2 GHz. WER refers to word error rate and RTF refers to
 real time factor.
 
-| Engine | WER (test-clean) | RTF (Desktop) | RTF (Raspberry Pi 3) | RTF (Raspberry Pi Zero) | Model Size (Acoustic and Language) |
+| Engine | WER | RTF (Desktop) | RTF (Raspberry Pi 3) | RTF (Raspberry Pi Zero) | Model Size (Acoustic and Language) |
 :---:|:---:|:---:|:---:|:---:|:---:
 Amazon Transcribe | **8.21%** | N/A | N/A | N/A | N/A |
 CMU PocketSphinx (0.1.15) | 31.82% | 0.32 | 1.87 | 2.04 | 97.8 MB |
@@ -181,10 +181,8 @@ engine (Mozilla DeepSpeech) while being 23X faster and 53X smaller in size.
 
 ## License
 
-The benchmarking framework is freely available and can be used under the Apache 2.0 license. Regarding Mozilla DeepSpeech
-and PocketSphinx usage, please refer to their respective documentation.
+The benchmarking framework is freely available and can be used under the Apache 2.0 license. The provided Cheetah
+resources (binary, model, and license file) are the property of Picovoice. They are only to be used for evaluation
+purposes and their use in any commercial product is strictly prohibited.
 
-The provided Cheetah resources (binary, model, and license file) are the property of Picovoice. They are
-only to be used for evaluation purposes and their use in any commercial product is strictly prohibited.
-
-For commercial enquiries regarding Cheetah, please contact us via this [form](https://picovoice.ai/contact.html).
+For commercial enquiries contact us via this [form](https://picovoice.ai/contact.html).
