@@ -165,8 +165,8 @@ Amazon Transcribe | **8.21%** | N/A | N/A | N/A | N/A |
 CMU PocketSphinx (0.1.15) | 31.82% | 0.32 | 1.87 | 2.04 | 97.8 MB |
 Google Speech-to-Text | 12.23% | N/A | N/A | N/A | N/A |
 Mozilla DeepSpeech (0.5.1) | 8.3% | 0.46  | N/A | N/A | 2010.5 MB |
-Picovoice Cheetah (v1.1.0) | 13.25% | **0.02** | **0.22** | **1.69** | 46.6 MB |
-Picovoice Cheetah LibriSpeech LM (v1.1.0) | 10.47% | **0.02** | **0.22** | **1.69** | **38.2 MB** |
+Picovoice Cheetah (v1.1.0) | 11.58% | **0.02** | **0.22** | **1.69** | 45.1 MB |
+Picovoice Cheetah LibriSpeech LM (v1.1.0) | 8.80% | **0.02** | **0.22** | **1.69** | **42.1 MB** |
 
 The figure below compares the word error rate of speech-to-text engines. For Picovoice, we included the engine that was
 trained on LibriSpeech training data similar to Mozilla DeepSpeech.
