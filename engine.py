@@ -25,6 +25,8 @@ class ASREngines(Enum):
     MOZILLA_DEEP_SPEECH = 'MOZILLA_DEEP_SPEECH'
     PICOVOICE_CHEETAH = "PICOVOICE_CHEETAH"
     PICOVOICE_CHEETAH_LIBRISPEECH_LM = "PICOVOICE_CHEETAH_LIBRISPEECH_LM"
+    PICOVOICE_LEOPARD = "PICOVOICE_LEOPARD"
+    PICOVOICE_LEOPARD_LIBRISPEECH_LM = "PICOVOICE_LEOPARD_LIBRISPEECH_LM"
 
 
 class ASREngine(object):
@@ -48,6 +50,10 @@ class ASREngine(object):
             return PicovoiceCheetahASREngine()
         elif engine_type is ASREngines.PICOVOICE_CHEETAH_LIBRISPEECH_LM:
             return PicovoiceCheetahASREngine(lm='language_model_librispeech.pv')
+        elif engine_type is ASREngines.PICOVOICE_LEOPARD:
+            return PicovoiceLeopardASREngine()
+        elif engine_type is ASREngines.PICOVOICE_LEOPARD_LIBRISPEECH_LM:
+            return PicovoiceLeopardASREngine(lm='language_model_librispeech.pv')
         else:
             raise ValueError("cannot create %s of type '%s'" % (cls.__name__, engine_type))
 
@@ -180,13 +186,13 @@ class MozillaDeepSpeechASREngine(ASREngine):
         trie_path = os.path.join(deepspeech_dir, 'trie')
 
         # https://github.com/mozilla/DeepSpeech/blob/master/native_client/python/client.py
-        self._model = Model(model_path, 26, 9, alphabet_path, 500)
-        self._model.enableDecoderWithLM(alphabet_path, language_model_path, trie_path, 0.75, 1.85)
+        self._model = Model(model_path, 500)
+        self._model.enableDecoderWithLM(language_model_path, trie_path, 0.75, 1.85)
 
     def transcribe(self, path):
         pcm, sample_rate = soundfile.read(path)
         pcm = (np.iinfo(np.int16).max * pcm).astype(np.int16)
-        res = self._model.stt(pcm, aSampleRate=sample_rate)
+        res = self._model.stt(pcm)
 
         return res
 
@@ -221,3 +227,32 @@ class PicovoiceCheetahASREngine(ASREngine):
 
     def __str__(self):
         return 'Picovoice Cheetah'
+
+
+class PicovoiceLeopardASREngine(ASREngine):
+    def __init__(self, lm='language_model.pv'):
+        leopard_dir = os.path.join(os.path.dirname(__file__), 'resources/leopard')
+        self._demo_path = os.path.join(leopard_dir, 'leopard_demo')
+        self._library_path = os.path.join(leopard_dir, 'libpv_leopard.so')
+        self._acoustic_model_path = os.path.join(leopard_dir, 'acoustic_model.pv')
+        self._language_model_path = os.path.join(leopard_dir, lm)
+        self._license_path = os.path.join(leopard_dir, 'leopard_eval_linux.lic')
+
+    def transcribe(self, path):
+        args = [
+            self._demo_path,
+            self._library_path,
+            self._acoustic_model_path,
+            self._language_model_path,
+            self._license_path,
+            path]
+        res = subprocess.run(args, stdout=subprocess.PIPE).stdout.decode('utf-8')
+
+        # Remove license notice
+        filtered_res = [x for x in res.split('\n') if '[' not in x]
+        filtered_res = '\n'.join(filtered_res)
+
+        return filtered_res.strip('\n ')
+
+    def __str__(self):
+        return 'Picovoice Leopard'

@@ -3,7 +3,7 @@
 Made in Vancouver, Canada by [Picovoice](https://picovoice.ai)
 
 This is a minimalist and extensible framework for benchmarking different speech-to-text engines. It has been developed
-and tested on Ubuntu using Python3.
+and tested on Ubuntu 18.04 (x86_64) using Python3.6.
 
 ## Table of Contents
 
@@ -19,6 +19,7 @@ and tested on Ubuntu using Python3.
     * [Google Speech-to-Text](#google-speech-to-text)
     * [Mozilla DeepSpeech](#mozilla-deepspeech)
     * [Picovoice Cheetah](#picovoice-cheetah)
+    * [Picovoice Leopard](#picovoice-leopard)
 * [Usage](#usage)
     * [Word Error Rate Measurement](#word-error-rate-measurement)
     * [Real Time Factor Measurement](#real-time-factor-measurement)
@@ -28,9 +29,11 @@ and tested on Ubuntu using Python3.
 ## Background
 
 This framework has been developed by [Picovoice](http://picovoice.ai/) as part of the
-[Cheetah](https://github.com/Picovoice/cheetah) project. Cheetah is Picovoice's speech-to-text engine, specifically designed to
-run efficiently on the edge (offline). Deep learning has been the main driver in recent improvements in speech recognition but due to stringent compute/storage limitations of IoT platforms, it is mostly beneficial to cloud-based engines. Picovoice's
-proprietary deep learning technology enables transferring these improvements to IoT platforms with significantly lower CPU/memory footprint.
+[Cheetah](https://github.com/Picovoice/cheetah) project. Cheetah is Picovoice's streaming speech-to-text engine,
+specifically designed to run efficiently on the edge (offline). Deep learning has been the main driver in recent
+improvements in speech recognition but due to stringent compute/storage limitations of IoT platforms, it is mostly
+beneficial to cloud-based engines. Picovoice's proprietary deep learning technology enables transferring these
+improvements to IoT platforms with significantly lower CPU/memory footprint.
 
 ## Data
 
@@ -79,9 +82,15 @@ A cloud-based speech recognition engine offered by Google Cloud Platform. Find m
 
 ### Picovoice Cheetah
 
-[Cheetah](https://github.com/Picovoice/cheetah) is a speech-to-text engine developed using
+[Cheetah](https://github.com/Picovoice/cheetah) is a streaming speech-to-text engine developed using
 [Picovoice's](http://picovoice.ai/) proprietary deep learning technology. It works offline and is supported on a
-growing number of mobile/embedded platforms including Android, iOS, and Raspberry Pi.
+growing number of platforms including Android, iOS, and Raspberry Pi.
+
+### Picovoice Leopard
+
+[Leopard](https://github.com/Picovoice/leopard) is a speech-to-text engine developed using
+[Picovoice's](http://picovoice.ai/) proprietary deep learning technology. It works offline and is supported on a
+growing number of platforms including Android, iOS, and Raspberry Pi.
 
 ## Usage
 
@@ -105,11 +114,11 @@ python benchmark.py --engine_type AN_ENGINE_TYPE
 
 The valid options for the `engine_type`
 parameter are: `AMAZON_TRANSCRIBE`, `CMU_POCKET_SPHINX`, `GOOGLE_SPEECH_TO_TEXT`, `MOZILLA_DEEP_SPEECH`,
-`PICOVOICE_CHEETAH`, and `PICOVOICE_CHEETAH_LIBRISPEECH_LM`.
+`PICOVOICE_CHEETAH`, `PICOVOICE_CHEETAH_LIBRISPEECH_LM`, `PICOVOICE_LEOPARD`, and `PICOVOICE_LEOPARD_LIBRISPEECH_LM`.
 
 `PICOVOICE_CHEETAH_LIBRISPEECH_LM` is the same as `PICOVOICE_CHEETAH`
 except that the language model is trained on LibriSpeech training text similar to
-[Mozilla DeepSpeech](https://github.com/mozilla/DeepSpeech/tree/master/data/lm).
+[Mozilla DeepSpeech](https://github.com/mozilla/DeepSpeech/tree/master/data/lm). The same applies to Leopard.
 
 
 ### Real Time Factor Measurement
@@ -136,12 +145,22 @@ sys	0m0.024s
 
 Then, divide the `user` value by the length of the audio file, in seconds. The user value is the actual CPU time spent in the program.
 
+To measure the execution time for Leopard, run:
+
+```bash
+time resources/leopard/leopard_demo \
+resources/leopard/libpv_leopard.so \
+resources/leopard/acoustic_model.pv \
+resources/leopard/language_model.pv \
+resources/leopard/leopard_eval_linux.lic \
+PATH_TO_WAV_FILE
+```
+
 For DeepSpeech:
 
 ```bash
 time deepspeech \
 --model resources/deepspeech/output_graph.pbmm \
---alphabet resources/deepspeech/alphabet.txt \
 --lm resources/deepspeech/lm.binary \
 --trie resources/deepspeech/trie \
 --audio PATH_TO_WAV_FILE
@@ -156,32 +175,34 @@ time pocketsphinx_continuous -infile PATH_TO_WAV_FILE
 ## Results
 
 The below results are obtained by following the previous steps. The benchmarking was performed on a Linux machine running
-Ubuntu 16.04 with 64GB of RAM and an Intel i5-6500 CPU running at 3.2 GHz. WER refers to word error rate and RTF refers to
+Ubuntu 18.04 with 64GB of RAM and an Intel i5-6500 CPU running at 3.2 GHz. WER refers to word error rate and RTF refers to
 real time factor.
 
 | Engine | WER | RTF (Desktop) | RTF (Raspberry Pi 3) | RTF (Raspberry Pi Zero) | Model Size (Acoustic and Language) |
 :---:|:---:|:---:|:---:|:---:|:---:
-Amazon Transcribe | **8.21%** | N/A | N/A | N/A | N/A |
-CMU PocketSphinx (0.1.15) | 31.82% | 0.32 | 1.87 | 2.04 | 97.8 MB |
+Amazon Transcribe | 8.21% | N/A | N/A | N/A | N/A |
+CMU PocketSphinx (0.1.15) | 31.82% | 0.32 | 1.87 | **2.04** | 97.8 MB |
 Google Speech-to-Text | 12.23% | N/A | N/A | N/A | N/A |
-Mozilla DeepSpeech (0.5.1) | 8.3% | 0.46  | N/A | N/A | 2010.5 MB |
-Picovoice Cheetah (v1.1.0) | 11.58% | **0.02** | **0.22** | **1.69** | 45.1 MB |
-Picovoice Cheetah LibriSpeech LM (v1.1.0) | 8.80% | **0.02** | **0.22** | **1.69** | **42.1 MB** |
+Mozilla DeepSpeech (0.6.1) | 7.55% | 0.46  | N/A | N/A | 1146.8 MB |
+Picovoice Cheetah (v1.2.0) | 10.49% | 0.04 | 0.62 | 3.11 | 47.9 MB |
+Picovoice Cheetah LibriSpeech LM (v1.2.0) | 8.25% | 0.04 | 0.62 | 3.11 | **45.0 MB** |
+Picovoice Leopard (v1.0.0) | 8.34% | **0.02** | **0.55** | 2.55 | 47.9 MB |
+Picovoice Leopard LibriSpeech LM (v1.0.0) | **6.58%** | **0.02** | **0.55** | 2.55 | **45.0 MB** |
 
 The figure below compares the word error rate of speech-to-text engines. For Picovoice, we included the engine that was
 trained on LibriSpeech training data similar to Mozilla DeepSpeech.
 
 ![](resources/doc/word_error_rate_comparison.png)
 
-The figure below compares accuracy and runtime metrics of offline speech-to-text engines. For Picovoice we included the engine that was
-trained on LibriSpeech training data similar to Mozilla DeepSpeech. Cheetah achieves a performance close to the most accurate
-engine (Mozilla DeepSpeech) while being 23X faster and 53X smaller in size.
+The figure below compares accuracy and runtime metrics of offline speech-to-text engines. For Picovoice we included the
+engines that were trained on LibriSpeech training data similar to Mozilla DeepSpeech. Leopard achieves the highest accuracy
+while being 23X faster and 27X smaller in size compared to second most accurate engine (Mozilla DeepSpeech).
 
 ![](resources/doc/offline_stt_comparison.png)
 
 ## License
 
-The benchmarking framework is freely available and can be used under the Apache 2.0 license. The provided Cheetah
+The benchmarking framework is freely available and can be used under the Apache 2.0 license. The provided Cheetah and Leopard
 resources (binary, model, and license file) are the property of Picovoice. They are only to be used for evaluation
 purposes and their use in any commercial product is strictly prohibited.
 

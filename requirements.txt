@@ -1,3 +1,5 @@
+matplotlib
+google
 boto3
 deepspeech
 editdistance
