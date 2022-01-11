@@ -39,7 +39,7 @@ class Engine(object):
         elif x is Engines.GOOGLE_SPEECH_TO_TEXT:
             return GoogleSpeechToTextEngine()
         elif x is Engines.MOZILLA_DEEP_SPEECH:
-            return MozillaDeepSpeechEngine()
+            return MozillaDeepSpeechEngine(**kwargs)
         elif x is Engines.PICOVOICE_CHEETAH:
             return PicovoiceCheetahEngine(**kwargs)
         elif x is Engines.PICOVOICE_LEOPARD:
@@ -144,7 +144,7 @@ class MozillaDeepSpeechEngine(Engine):
 
     def transcribe(self, path):
         start_sec = time.time()
-        res = self._model.stt(soundfile.read(path, dtype='int16'))
+        res = self._model.stt(soundfile.read(path, dtype='int16')[0])
         self._proc_sec += time.time() - start_sec
 
         return res

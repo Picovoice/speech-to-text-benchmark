@@ -14,6 +14,7 @@ def main():
     parser.add_argument('--picovoice-access-key')
     parser.add_argument('--deepspeech-pbmm')
     parser.add_argument('--deepspeech-scorer')
+    parser.add_argument('--num-examples', type=int, default=None)
     args = parser.parse_args()
 
     args.engine = Engines[args.engine]
@@ -35,7 +36,7 @@ def main():
 
     word_error_count = 0
     word_count = 0
-    for i in range(dataset.size()):
+    for i in range(dataset.size() if args.num_examples is None else min(dataset.size(), args.num_examples)):
         audio_path, ref_transcript = dataset.get(i)
 
         transcript = engine.transcribe(audio_path)
@@ -46,7 +47,8 @@ def main():
         word_error_count += editdistance.eval(ref_words, words)
         word_count += len(ref_words)
 
-    print('word error rate : %.2f' % (100 * float(word_error_count) / word_count))
+    print(f'WER : {(100 * float(word_error_count) / word_count):.2f}')
+    print(f'proc took {engine.proc_sec()} sec')
 
 
 if __name__ == '__main__':
