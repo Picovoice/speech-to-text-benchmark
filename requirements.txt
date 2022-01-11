@@ -4,5 +4,6 @@ editdistance
 google-cloud-speech==2.11.1
 matplotlib
 numpy
+pvleopard==1.0.0
 requests
 soundfile

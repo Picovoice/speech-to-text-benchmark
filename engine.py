@@ -8,6 +8,7 @@ from enum import Enum
 
 import boto3
 import numpy as np
+import pvleopard
 import requests
 import soundfile
 from deepspeech import Model
@@ -23,14 +24,17 @@ class Engines(Enum):
 
 
 class Engine(object):
-    def transcribe(self, path):
+    def transcribe(self, path: str) -> str:
         raise NotImplementedError()
 
-    def __str__(self):
+    def proc_sec(self) -> float:
+        raise NotImplementedError()
+
+    def __str__(self) -> str:
         raise NotImplementedError()
 
     @classmethod
-    def create(cls, x):
+    def create(cls, x, **kwargs):
         if x is Engines.AMAZON_TRANSCRIBE:
             return AmazonTranscribe()
         elif x is Engines.GOOGLE_SPEECH_TO_TEXT:
@@ -40,7 +44,7 @@ class Engine(object):
         elif x is Engines.PICOVOICE_CHEETAH:
             return PicovoiceCheetahASREngine()
         elif x is Engines.PICOVOICE_LEOPARD:
-            return PicovoiceLeopardASREngine()
+            return PicovoiceLeopardEngine(**kwargs)
         else:
             raise ValueError(f"Cannot create {cls.__name__} of type `{x}`")
 
@@ -178,30 +182,20 @@ class PicovoiceCheetahASREngine(Engine):
         return 'Picovoice Cheetah'
 
 
-class PicovoiceLeopardASREngine(Engine):
-    def __init__(self, lm='language_model.pv'):
-        leopard_dir = os.path.join(os.path.dirname(__file__), 'res/leopard')
-        self._demo_path = os.path.join(leopard_dir, 'leopard_demo')
-        self._library_path = os.path.join(leopard_dir, 'libpv_leopard.so')
-        self._acoustic_model_path = os.path.join(leopard_dir, 'acoustic_model.pv')
-        self._language_model_path = os.path.join(leopard_dir, lm)
-        self._license_path = os.path.join(leopard_dir, 'leopard_eval_linux.lic')
+class PicovoiceLeopardEngine(Engine):
+    def __init__(self, access_key: str):
+        self._proc_sec = 0.
+        self._leopard = pvleopard.create(access_key=access_key)
 
-    def transcribe(self, path):
-        args = [
-            self._demo_path,
-            self._library_path,
-            self._acoustic_model_path,
-            self._language_model_path,
-            self._license_path,
-            path]
-        res = subprocess.run(args, stdout=subprocess.PIPE).stdout.decode('utf-8')
+    def transcribe(self, path: str) -> str:
+        start_sec = time.time()
+        res = self._leopard.process_file(path)
+        self._proc_sec += time.time() - start_sec
 
-        # Remove license notice
-        filtered_res = [x for x in res.split('\n') if '[' not in x]
-        filtered_res = '\n'.join(filtered_res)
+        return res
 
-        return filtered_res.strip('\n ')
+    def proc_sec(self) -> float:
+        return self._proc_sec
 
     def __str__(self):
         return 'Picovoice Leopard'
