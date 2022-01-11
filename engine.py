@@ -1,7 +1,6 @@
 import json
 import os
 import string
-import subprocess
 import time
 import uuid
 from enum import Enum
@@ -36,20 +35,20 @@ class Engine(object):
     @classmethod
     def create(cls, x, **kwargs):
         if x is Engines.AMAZON_TRANSCRIBE:
-            return AmazonTranscribe()
+            return AmazonTranscribeEngine()
         elif x is Engines.GOOGLE_SPEECH_TO_TEXT:
-            return GoogleSpeechToText()
+            return GoogleSpeechToTextEngine()
         elif x is Engines.MOZILLA_DEEP_SPEECH:
-            return MozillaDeepSpeechASREngine()
+            return MozillaDeepSpeechEngine()
         elif x is Engines.PICOVOICE_CHEETAH:
-            return PicovoiceCheetahASREngine()
+            return PicovoiceCheetahEngine(**kwargs)
         elif x is Engines.PICOVOICE_LEOPARD:
             return PicovoiceLeopardEngine(**kwargs)
         else:
             raise ValueError(f"Cannot create {cls.__name__} of type `{x}`")
 
 
-class AmazonTranscribe(Engine):
+class AmazonTranscribeEngine(Engine):
     def __init__(self):
         self._s3 = boto3.client('s3')
         self._s3_bucket = str(uuid.uuid4())
@@ -93,92 +92,89 @@ class AmazonTranscribe(Engine):
 
         return res
 
+    def proc_sec(self) -> float:
+        raise NotImplementedError()
+
     def __str__(self):
         return 'Amazon Transcribe'
 
 
-class GoogleSpeechToText(Engine):
+class GoogleSpeechToTextEngine(Engine):
     def __init__(self):
         self._client = speech.SpeechClient()
 
     def transcribe(self, path):
-        cache_path = path.replace('.wav', '.ggl')
-        if os.path.exists(cache_path):
-            with open(cache_path) as f:
-                return f.read()
+        pass
+        # cache_path = path.replace('.wav', '.ggl')
+        # if os.path.exists(cache_path):
+        #     with open(cache_path) as f:
+        #         return f.read()
+        #
+        # with open(path, 'rb') as f:
+        #     content = f.read()
+        #
+        # audio = types.RecognitionAudio(content=content)
+        # config = types.RecognitionConfig(
+        #     encoding=enums.RecognitionConfig.AudioEncoding.LINEAR16,
+        #     sample_rate_hertz=16000,
+        #     language_code='en-US')
+        #
+        # response = self._client.recognize(config, audio)
+        #
+        # res = ' '.join(result.alternatives[0].transcript for result in response.results)
+        # res = res.translate(str.maketrans('', '', string.punctuation))
+        #
+        # with open(cache_path, 'w') as f:
+        #     f.write(res)
+        #
+        # return res
 
-        with open(path, 'rb') as f:
-            content = f.read()
-
-        audio = types.RecognitionAudio(content=content)
-        config = types.RecognitionConfig(
-            encoding=enums.RecognitionConfig.AudioEncoding.LINEAR16,
-            sample_rate_hertz=16000,
-            language_code='en-US')
-
-        response = self._client.recognize(config, audio)
-
-        res = ' '.join(result.alternatives[0].transcript for result in response.results)
-        res = res.translate(str.maketrans('', '', string.punctuation))
-
-        with open(cache_path, 'w') as f:
-            f.write(res)
-
-        return res
+    def proc_sec(self) -> float:
+        raise NotImplementedError()
 
     def __str__(self):
         return 'Google Speech-to-Text'
 
 
-class MozillaDeepSpeechASREngine(Engine):
+class MozillaDeepSpeechEngine(Engine):
     def __init__(self):
-        deepspeech_dir = os.path.join(os.path.dirname(__file__), 'res/deepspeech')
-        model_path = os.path.join(deepspeech_dir, 'output_graph.pbmm')
-        alphabet_path = os.path.join(deepspeech_dir, 'alphabet.txt')
-        language_model_path = os.path.join(deepspeech_dir, 'lm.binary')
-        trie_path = os.path.join(deepspeech_dir, 'trie')
-
-        # https://github.com/mozilla/DeepSpeech/blob/master/native_client/python/client.py
-        self._model = Model(model_path, 500)
-        self._model.enableDecoderWithLM(language_model_path, trie_path, 0.75, 1.85)
+        pass
+        # deepspeech_dir = os.path.join(os.path.dirname(__file__), 'res/deepspeech')
+        # model_path = os.path.join(deepspeech_dir, 'output_graph.pbmm')
+        # alphabet_path = os.path.join(deepspeech_dir, 'alphabet.txt')
+        # language_model_path = os.path.join(deepspeech_dir, 'lm.binary')
+        # trie_path = os.path.join(deepspeech_dir, 'trie')
+        #
+        # # https://github.com/mozilla/DeepSpeech/blob/master/native_client/python/client.py
+        # self._model = Model(model_path, 500)
+        # self._model.enableDecoderWithLM(language_model_path, trie_path, 0.75, 1.85)
 
     def transcribe(self, path):
-        pcm, sample_rate = soundfile.read(path)
-        pcm = (np.iinfo(np.int16).max * pcm).astype(np.int16)
-        res = self._model.stt(pcm)
+        pass
+        # pcm, sample_rate = soundfile.read(path)
+        # pcm = (np.iinfo(np.int16).max * pcm).astype(np.int16)
+        # res = self._model.stt(pcm)
+        #
+        # return res
 
-        return res
+    def proc_sec(self) -> float:
+        raise NotImplementedError()
 
     def __str__(self):
         return 'Mozilla DeepSpeech'
 
 
-class PicovoiceCheetahASREngine(Engine):
-    def __init__(self, lm='language_model.pv'):
-        cheetah_dir = os.path.join(os.path.dirname(__file__), 'res/cheetah')
-        self._cheetah_demo_path = os.path.join(cheetah_dir, 'cheetah_demo')
-        self._cheetah_library_path = os.path.join(cheetah_dir, 'libpv_cheetah.so')
-        self._cheetah_acoustic_model_path = os.path.join(cheetah_dir, 'acoustic_model.pv')
-        self._cheetah_language_model_path = os.path.join(cheetah_dir, lm)
-        self._cheetah_license_path = os.path.join(cheetah_dir, 'cheetah_eval_linux.lic')
+class PicovoiceCheetahEngine(Engine):
+    def __init__(self, access_key: str):
+        pass
 
-    def transcribe(self, path):
-        args = [
-            self._cheetah_demo_path,
-            self._cheetah_library_path,
-            self._cheetah_acoustic_model_path,
-            self._cheetah_language_model_path,
-            self._cheetah_license_path,
-            path]
-        res = subprocess.run(args, stdout=subprocess.PIPE).stdout.decode('utf-8')
+    def transcribe(self, path: str) -> str:
+        raise NotImplementedError()
 
-        # Remove license notice
-        filtered_res = [x for x in res.split('\n') if '[' not in x]
-        filtered_res = '\n'.join(filtered_res)
+    def proc_sec(self) -> float:
+        raise NotImplementedError()
 
-        return filtered_res.strip('\n ')
-
-    def __str__(self):
+    def __str__(self) -> str:
         return 'Picovoice Cheetah'
 
 
