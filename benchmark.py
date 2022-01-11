@@ -18,7 +18,6 @@ def main():
     parser.add_argument('--deepspeech-scorer')
     parser.add_argument('--picovoice-access-key')
     parser.add_argument('--num-examples', type=int, default=None)
-    parser.add_argument('--num-process', type=int, default=os.cpu_count())
     args = parser.parse_args()
 
     args.engine = Engines[args.engine]

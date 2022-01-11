@@ -92,7 +92,7 @@ class AmazonTranscribeEngine(Engine):
         return res
 
     def rtf(self) -> float:
-        raise -1.
+        return -1.
 
     def __str__(self):
         return 'Amazon Transcribe'
@@ -128,7 +128,7 @@ class GoogleSpeechToTextEngine(Engine):
         return res
 
     def rtf(self) -> float:
-        raise -1.
+        return -1.
 
     def __str__(self):
         return 'Google Speech-to-Text'
