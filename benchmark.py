@@ -9,10 +9,12 @@ from engine import *
 def main():
     parser = ArgumentParser()
     parser.add_argument('--engine', required=True, choices=[x.value for x in Engines])
+    parser.add_argument('--dataset', required=True, choices=[x.value for x in Datasets])
+    parser.add_argument('--dataset-folder', required=True)
     parser.add_argument('--picovoice-access-key')
     args = parser.parse_args()
 
-    dataset = Dataset.create(Datasets.LIBRI_SPEECH)
+    dataset = Dataset.create(Datasets.LIBRI_SPEECH, folder=args.dataset_folder)
     print(f'loaded {dataset} with {dataset.size()} utterances')
 
     if args.engine == Engines.PICOVOICE_LEOPARD.value:

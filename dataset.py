@@ -18,9 +18,9 @@ class Dataset(object):
         raise NotImplementedError()
 
     @classmethod
-    def create(cls, x: Datasets):
+    def create(cls, x: Datasets, folder: str):
         if x == Datasets.LIBRI_SPEECH:
-            return LibriSpeechDataset(os.path.join(os.path.dirname(__file__), 'res/LibriSpeech/test-clean'))
+            return LibriSpeechDataset(folder)
         else:
             raise ValueError(f"Cannot create {cls.__name__} of type `{x}`")
 
@@ -34,7 +34,7 @@ class LibriSpeechDataset(Dataset):
             for chapter_id in os.listdir(speaker_folder):
                 chapter_folder = os.path.join(speaker_folder, chapter_id)
 
-                with open(os.path.join(chapter_folder, '%s-%s.trans.txt' % (speaker_id, chapter_id)), 'r') as f:
+                with open(os.path.join(chapter_folder, f'{speaker_id}-{chapter_id}.trans.txt'), 'r') as f:
                     transcripts = dict(x.split(' ', maxsplit=1) for x in f.readlines())
 
                 for x in os.listdir(chapter_folder):
