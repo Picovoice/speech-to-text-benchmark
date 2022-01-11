@@ -6,20 +6,18 @@ This repo is a minimalist and extensible framework for benchmarking different sp
 
 ## Table of Contents
 
-* [Data](#data)
-* [Metrics](#metrics)
-* [Speech-to-Text Engines](#speech-to-text-engines)
-    * [Amazon Transcribe](#amazon-transcribe)
-    * [CMU PocketSphinx](#cmu-pocketsphinx)
-    * [Google Speech-to-Text](#google-speech-to-text)
-    * [Mozilla DeepSpeech](#mozilla-deepspeech)
-    * [Picovoice Cheetah](#picovoice-cheetah)
-    * [Picovoice Leopard](#picovoice-leopard)
-* [Usage](#usage)
-    * [Word Error Rate Measurement](#word-error-rate-measurement)
-    * [Real Time Factor Measurement](#real-time-factor-measurement)
-* [Results](#results)
-* [License](#license)
+-[Data](#data)
+-[Metrics](#metrics)
+-[Engines](#engines)
+    - [Amazon Transcribe](#amazon-transcribe)
+    - [Google Speech-to-Text](#google-speech-to-text)
+    - [Mozilla DeepSpeech](#mozilla-deepspeech)
+    - [Picovoice Cheetah](#picovoice-cheetah)
+    - [Picovoice Leopard](#picovoice-leopard)
+-[Usage](#usage)
+    - [Word Error Rate Measurement](#word-error-rate-measurement)
+    - [Real Time Factor Measurement](#real-time-factor-measurement)
+-[Results](#results)
 
 ## Data
 
@@ -29,51 +27,42 @@ This repo is a minimalist and extensible framework for benchmarking different sp
 
 ### Word Error Rate
 
-Word error rate (WER) is defined as the ratio of [Levenstein distance](https://en.wikipedia.org/wiki/Levenshtein_distance)
-between words in a reference transcript and words in the output of the speech-to-text engine, to the number of
-words in the reference transcript.
+Word error rate (WER) is the ratio of Levenstein distance between words in a reference transcript and the words in the
+output of the speech-to-text engine to the number of words in the reference transcript.
 
 ### Real Time Factor
 
-Real time factor (RTF) is measured as the ratio of CPU (processing) time to the length of the input speech file. A
-speech-to-text engine with lower RTF is more computationally efficient. We omit this metric for cloud-based engines.
+Real-time factor (RTF) is the ratio of CPU (processing) time to the length of the input speech file. A speech-to-text
+engine with lower RTF is more computationally efficient. We omit this metric for cloud-based engines.
 
 ### Model Size
 
 The aggregate size of models (acoustic and language), in MB. We omit this metric for cloud-based engines.
 
-## Speech-to-Text Engines
+## Engines
 
 ### Amazon Transcribe
 
-Amazon Transcribe is a cloud-based speceh recognition engine, offered by AWS. Find more information [here](https://aws.amazon.com/transcribe/).
-
-### CMU PocketSphinx
-
-[PocketSphinx](https://github.com/cmusphinx/pocketsphinx) works offline and can run on embedded platforms such as
-Raspberry Pi.
+Amazon Transcribe is a cloud-based speech recognition engine, offered by AWS.
 
 ### Google Speech-to-Text
 
-A cloud-based speech recognition engine offered by Google Cloud Platform. Find more information
-[here](https://cloud.google.com/speech-to-text/).
+A cloud-based speech recognition engine offered by Google Cloud Platform.
 
 ### Mozilla DeepSpeech
 
 [Mozilla DeepSpeech](https://github.com/mozilla/DeepSpeech) is an open-source implementation of
-[Baidu's DeepSpeech](https://arxiv.org/abs/1412.5567) by Mozilla.
+[Baidu's DeepSpeech](https://arxiv.org/abs/1412.5567) by Mozilla. The version used in this benchmark is `0.9.3`.
 
 ### Picovoice Cheetah
 
-[Cheetah](https://github.com/Picovoice/cheetah) is a streaming speech-to-text engine developed using
-[Picovoice's](http://picovoice.ai/) proprietary deep learning technology. It works offline and is supported on a
-growing number of platforms including Android, iOS, and Raspberry Pi.
+[Cheetah](https://github.com/Picovoice/cheetah) is a streaming speech-to-text engine developed by
+[Picovoice](http://picovoice.ai/).
 
 ### Picovoice Leopard
 
-[Leopard](https://github.com/Picovoice/leopard) is a speech-to-text engine developed using
-[Picovoice's](http://picovoice.ai/) proprietary deep learning technology. It works offline and is supported on a
-growing number of platforms including Android, iOS, and Raspberry Pi.
+[Leopard](https://github.com/Picovoice/leopard) is a speech-to-text engine developed by
+[Picovoice](http://picovoice.ai/).
 
 ## Usage
 
@@ -179,11 +168,3 @@ engines that were trained on LibriSpeech training data similar to Mozilla DeepSp
 while being 23X faster and 27X smaller in size compared to second most accurate engine (Mozilla DeepSpeech).
 
 ![](res/doc/offline_stt_comparison.png)
-
-## License
-
-The benchmarking framework is freely available and can be used under the Apache 2.0 license. The provided Cheetah and Leopard
-resources (binary, model, and license file) are the property of Picovoice. They are only to be used for evaluation
-purposes and their use in any commercial product is strictly prohibited.
-
-For commercial enquiries contact us via this [form](https://picovoice.ai/contact.html).
