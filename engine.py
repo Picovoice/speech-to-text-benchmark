@@ -6,7 +6,6 @@ import uuid
 from enum import Enum
 
 import boto3
-import numpy as np
 import pvleopard
 import requests
 import soundfile
@@ -104,30 +103,31 @@ class GoogleSpeechToTextEngine(Engine):
         self._client = speech.SpeechClient()
 
     def transcribe(self, path):
-        pass
-        # cache_path = path.replace('.wav', '.ggl')
-        # if os.path.exists(cache_path):
-        #     with open(cache_path) as f:
-        #         return f.read()
-        #
-        # with open(path, 'rb') as f:
-        #     content = f.read()
-        #
-        # audio = types.RecognitionAudio(content=content)
-        # config = types.RecognitionConfig(
-        #     encoding=enums.RecognitionConfig.AudioEncoding.LINEAR16,
-        #     sample_rate_hertz=16000,
-        #     language_code='en-US')
-        #
-        # response = self._client.recognize(config, audio)
-        #
-        # res = ' '.join(result.alternatives[0].transcript for result in response.results)
-        # res = res.translate(str.maketrans('', '', string.punctuation))
-        #
-        # with open(cache_path, 'w') as f:
-        #     f.write(res)
-        #
-        # return res
+        cache_path = path.replace('.flac', '.ggl')
+        if os.path.exists(cache_path):
+            with open(cache_path) as f:
+                return f.read()
+
+        with open(path, 'rb') as f:
+            content = f.read()
+
+        audio = speech.RecognitionAudio(content=content)
+        config = speech.RecognitionConfig(
+            encoding=speech.RecognitionConfig.AudioEncoding.FLAC,
+            sample_rate_hertz=16000,
+            language_code="en-US")
+
+        response = self._client.recognize(config=config, audio=audio)
+
+        res = ' '.join(result.alternatives[0].transcript for result in response.results)
+        res = res.translate(str.maketrans('', '', string.punctuation))
+
+        print(res)
+
+        with open(cache_path, 'w') as f:
+            f.write(res)
+
+        return res
 
     def proc_sec(self) -> float:
         raise NotImplementedError()

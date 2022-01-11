@@ -1,3 +1,4 @@
+import os
 from argparse import ArgumentParser
 
 import editdistance
@@ -14,6 +15,7 @@ def main():
     parser.add_argument('--picovoice-access-key')
     parser.add_argument('--deepspeech-pbmm')
     parser.add_argument('--deepspeech-scorer')
+    parser.add_argument('--google-application-credentials')
     parser.add_argument('--num-examples', type=int, default=None)
     args = parser.parse_args()
 
@@ -30,6 +32,11 @@ def main():
         if args.deepspeech_pbmm is None or args.deepspeech_scorer is None:
             raise ValueError()
         engine = Engine.create(args.engine, pbmm_path=args.deepspeech_pbmm, scorer_path=args.deepspeech_scorer)
+    elif args.engine == Engines.GOOGLE_SPEECH_TO_TEXT:
+        if args.google_application_credentials is None:
+            raise ValueError()
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.google_application_credentials
+        engine = Engine.create(args.engine)
     else:
         raise ValueError()
     print(f'created `{engine}` engine')
