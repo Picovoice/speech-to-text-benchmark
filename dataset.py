@@ -20,7 +20,7 @@ class Dataset(object):
     @classmethod
     def create(cls, x: Datasets):
         if x == Datasets.LIBRI_SPEECH:
-            return LibriSpeechDataset(os.path.join(os.path.dirname(__file__), 'res/data/LibriSpeech/test-clean'))
+            return LibriSpeechDataset(os.path.join(os.path.dirname(__file__), 'res/LibriSpeech/test-clean'))
         else:
             raise ValueError(f"Cannot create {cls.__name__} of type `{x}`")
 
