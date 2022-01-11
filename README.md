@@ -145,21 +145,18 @@ The below results are obtained by following the previous steps. The benchmarking
 running Ubuntu 18.04 with 64GB of RAM and an Intel i5-6500 CPU running at 3.2 GHz. WER refers to word error rate and RTF
 refers to real time factor.
 
-| Engine | WER | RTF (Desktop) | RTF (Raspberry Pi 3) | RTF (Raspberry Pi Zero) | Model Size (Acoustic and Language) |
-:---:|:---:|:---:|:---:|:---:|:---:
-Amazon Transcribe | 8.21% | N/A | N/A | N/A | N/A |
-CMU PocketSphinx (0.1.15) | 31.82% | 0.32 | 1.87 | **2.04** | 97.8 MB |
-Google Speech-to-Text | 12.02% | N/A | N/A | N/A | N/A |
-Mozilla DeepSpeech | 7.55% | 0.46  | N/A | N/A | 1146.8 MB |
-Picovoice Leopard | 5.73% | **0.05** | **0.55** | 2.55 | 47.9 MB |
+| Engine | WER | RTF | Model Size |
+:---:|:---:|:---:|:---:
+Amazon Transcribe | --- | N/A | N/A |
+Google Speech-to-Text | 12.02% | N/A | N/A |
+Mozilla DeepSpeech | --- | --- | 1142.3 MB |
+Picovoice Cheetah | --- | --- | --- |
+Picovoice Leopard | 5.73% | **0.05** | 18.2 MB |
 
-The figure below compares the word error rate of speech-to-text engines. For Picovoice, we included the engine that was
-trained on LibriSpeech training data similar to Mozilla DeepSpeech.
+The figure below compares the word error rate of speech-to-text engines.
 
 ![](res/doc/word_error_rate_comparison.png)
 
-The figure below compares accuracy and runtime metrics of offline speech-to-text engines. For Picovoice we included the
-engines that were trained on LibriSpeech training data similar to Mozilla DeepSpeech. Leopard achieves the highest
-accuracy while being 23X faster and 27X smaller in size compared to second most accurate engine (Mozilla DeepSpeech).
+The figure below compares accuracy and runtime metrics of offline speech-to-text engines.
 
 ![](res/doc/offline_stt_comparison.png)
