@@ -12,22 +12,17 @@ import requests
 import soundfile
 from deepspeech import Model
 from google.cloud import speech
-from google.cloud.speech import enums
-from google.cloud.speech import types
 
 
-class ASREngines(Enum):
+class Engines(Enum):
     AMAZON_TRANSCRIBE = "AMAZON_TRANSCRIBE"
-    CMU_POCKET_SPHINX = 'CMU_POCKET_SPHINX'
     GOOGLE_SPEECH_TO_TEXT = "GOOGLE_SPEECH_TO_TEXT"
     MOZILLA_DEEP_SPEECH = 'MOZILLA_DEEP_SPEECH'
     PICOVOICE_CHEETAH = "PICOVOICE_CHEETAH"
-    PICOVOICE_CHEETAH_LIBRISPEECH_LM = "PICOVOICE_CHEETAH_LIBRISPEECH_LM"
     PICOVOICE_LEOPARD = "PICOVOICE_LEOPARD"
-    PICOVOICE_LEOPARD_LIBRISPEECH_LM = "PICOVOICE_LEOPARD_LIBRISPEECH_LM"
 
 
-class ASREngine(object):
+class Engine(object):
     def transcribe(self, path):
         raise NotImplementedError()
 
@@ -35,28 +30,22 @@ class ASREngine(object):
         raise NotImplementedError()
 
     @classmethod
-    def create(cls, engine_type):
-        if engine_type is ASREngines.AMAZON_TRANSCRIBE:
+    def create(cls, x):
+        if x is Engines.AMAZON_TRANSCRIBE:
             return AmazonTranscribe()
-        elif engine_type is ASREngines.CMU_POCKET_SPHINX:
-            return CMUPocketSphinxASREngine()
-        elif engine_type is ASREngines.GOOGLE_SPEECH_TO_TEXT:
+        elif x is Engines.GOOGLE_SPEECH_TO_TEXT:
             return GoogleSpeechToText()
-        elif engine_type is ASREngines.MOZILLA_DEEP_SPEECH:
+        elif x is Engines.MOZILLA_DEEP_SPEECH:
             return MozillaDeepSpeechASREngine()
-        elif engine_type is ASREngines.PICOVOICE_CHEETAH:
+        elif x is Engines.PICOVOICE_CHEETAH:
             return PicovoiceCheetahASREngine()
-        elif engine_type is ASREngines.PICOVOICE_CHEETAH_LIBRISPEECH_LM:
-            return PicovoiceCheetahASREngine(lm='language_model_librispeech.pv')
-        elif engine_type is ASREngines.PICOVOICE_LEOPARD:
+        elif x is Engines.PICOVOICE_LEOPARD:
             return PicovoiceLeopardASREngine()
-        elif engine_type is ASREngines.PICOVOICE_LEOPARD_LIBRISPEECH_LM:
-            return PicovoiceLeopardASREngine(lm='language_model_librispeech.pv')
         else:
-            raise ValueError("cannot create %s of type '%s'" % (cls.__name__, engine_type))
+            raise ValueError(f"Cannot create {cls.__name__} of type `{x}`")
 
 
-class AmazonTranscribe(ASREngine):
+class AmazonTranscribe(Engine):
     def __init__(self):
         self._s3 = boto3.client('s3')
         self._s3_bucket = str(uuid.uuid4())
@@ -104,45 +93,7 @@ class AmazonTranscribe(ASREngine):
         return 'Amazon Transcribe'
 
 
-class CMUPocketSphinxASREngine(ASREngine):
-    def __init__(self):
-        # https://github.com/cmusphinx/pocketsphinx-python/blob/master/example.py
-        config = Decoder.default_config()
-        config.set_string('-logfn', '/dev/null')
-        config.set_string('-hmm', os.path.join(get_model_path(), 'en-us'))
-        config.set_string('-lm', os.path.join(get_model_path(), 'en-us.lm.bin'))
-        config.set_string('-dict', os.path.join(get_model_path(), 'cmudict-en-us.dict'))
-
-        self._decoder = Decoder(config)
-
-    def transcribe(self, path):
-        pcm, sample_rate = soundfile.read(path)
-        assert sample_rate == 16000
-        pcm = (np.iinfo(np.int16).max * pcm).astype(np.int16).tobytes()
-
-        self._decoder.start_utt()
-        self._decoder.process_raw(pcm, no_search=False, full_utt=True)
-        self._decoder.end_utt()
-
-        words = []
-        for seg in self._decoder.seg():
-            word = seg.word
-
-            # Remove special tokens.
-            if word == '<sil>' or word == '<s>' or word == '</s>':
-                continue
-
-            word = ''.join([x for x in word if x.isalpha()])
-
-            words.append(word)
-
-        return ' '.join(words)
-
-    def __str__(self):
-        return 'CMUPocketSphinx'
-
-
-class GoogleSpeechToText(ASREngine):
+class GoogleSpeechToText(Engine):
     def __init__(self):
         self._client = speech.SpeechClient()
 
@@ -175,7 +126,7 @@ class GoogleSpeechToText(ASREngine):
         return 'Google Speech-to-Text'
 
 
-class MozillaDeepSpeechASREngine(ASREngine):
+class MozillaDeepSpeechASREngine(Engine):
     def __init__(self):
         deepspeech_dir = os.path.join(os.path.dirname(__file__), 'resources/deepspeech')
         model_path = os.path.join(deepspeech_dir, 'output_graph.pbmm')
@@ -198,7 +149,7 @@ class MozillaDeepSpeechASREngine(ASREngine):
         return 'Mozilla DeepSpeech'
 
 
-class PicovoiceCheetahASREngine(ASREngine):
+class PicovoiceCheetahASREngine(Engine):
     def __init__(self, lm='language_model.pv'):
         cheetah_dir = os.path.join(os.path.dirname(__file__), 'resources/cheetah')
         self._cheetah_demo_path = os.path.join(cheetah_dir, 'cheetah_demo')
@@ -227,7 +178,7 @@ class PicovoiceCheetahASREngine(ASREngine):
         return 'Picovoice Cheetah'
 
 
-class PicovoiceLeopardASREngine(ASREngine):
+class PicovoiceLeopardASREngine(Engine):
     def __init__(self, lm='language_model.pv'):
         leopard_dir = os.path.join(os.path.dirname(__file__), 'resources/leopard')
         self._demo_path = os.path.join(leopard_dir, 'leopard_demo')

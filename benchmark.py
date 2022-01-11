@@ -14,7 +14,7 @@ def main():
     dataset = Dataset.create('librispeech')
     print('loaded %s with %.2f hours of data' % (str(dataset), dataset.size_hours()))
 
-    engine = ASREngine.create(ASREngines[args.engine_type])
+    engine = Engine.create(Engines[args.engine_type])
     print('created %s engine' % str(engine))
 
     word_error_count = 0
