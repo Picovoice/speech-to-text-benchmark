@@ -137,28 +137,20 @@ class GoogleSpeechToTextEngine(Engine):
 
 
 class MozillaDeepSpeechEngine(Engine):
-    def __init__(self):
-        pass
-        # deepspeech_dir = os.path.join(os.path.dirname(__file__), 'res/deepspeech')
-        # model_path = os.path.join(deepspeech_dir, 'output_graph.pbmm')
-        # alphabet_path = os.path.join(deepspeech_dir, 'alphabet.txt')
-        # language_model_path = os.path.join(deepspeech_dir, 'lm.binary')
-        # trie_path = os.path.join(deepspeech_dir, 'trie')
-        #
-        # # https://github.com/mozilla/DeepSpeech/blob/master/native_client/python/client.py
-        # self._model = Model(model_path, 500)
-        # self._model.enableDecoderWithLM(language_model_path, trie_path, 0.75, 1.85)
+    def __init__(self, pbmm_path: str, scorer_path: str):
+        self._model = Model(pbmm_path)
+        self._model.enableExternalScorer(scorer_path)
+        self._proc_sec = 0.
 
     def transcribe(self, path):
-        pass
-        # pcm, sample_rate = soundfile.read(path)
-        # pcm = (np.iinfo(np.int16).max * pcm).astype(np.int16)
-        # res = self._model.stt(pcm)
-        #
-        # return res
+        start_sec = time.time()
+        res = self._model.stt(soundfile.read(path, dtype='int16'))
+        self._proc_sec += time.time() - start_sec
+
+        return res
 
     def proc_sec(self) -> float:
-        raise NotImplementedError()
+        return self._proc_sec
 
     def __str__(self):
         return 'Mozilla DeepSpeech'

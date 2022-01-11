@@ -12,15 +12,23 @@ def main():
     parser.add_argument('--dataset', required=True, choices=[x.value for x in Datasets])
     parser.add_argument('--dataset-folder', required=True)
     parser.add_argument('--picovoice-access-key')
+    parser.add_argument('--deepspeech-pbmm')
+    parser.add_argument('--deepspeech-scorer')
     args = parser.parse_args()
+
+    args.engine = Engines[args.engine]
 
     dataset = Dataset.create(Datasets.LIBRI_SPEECH, folder=args.dataset_folder)
     print(f'loaded {dataset} with {dataset.size()} utterances')
 
-    if args.engine == Engines.PICOVOICE_LEOPARD.value:
+    if args.engine == Engines.PICOVOICE_LEOPARD:
         if args.picovoice_access_key is None:
             raise ValueError()
-        engine = Engine.create(Engines[args.engine], access_key=args.picovoice_access_key)
+        engine = Engine.create(args.engine, access_key=args.picovoice_access_key)
+    elif args.engine == Engines.MOZILLA_DEEP_SPEECH:
+        if args.deepspeech_pbmm is None or args.deepspeech_scorer is None:
+            raise ValueError()
+        engine = Engine.create(args.engine, pbmm_path=args.deepspeech_pbmm, scorer_path=args.deepspeech_scorer)
     else:
         raise ValueError()
     print(f'created `{engine}` engine')
