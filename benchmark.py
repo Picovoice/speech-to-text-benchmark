@@ -65,8 +65,8 @@ def main():
         error_count += editdistance.eval(ref_words, words)
         word_count += len(ref_words)
 
-    print(f'WER : {(100 * float(error_count) / word_count):.2f}')
-    print(f'proc took {engine.proc_sec()} sec')
+    print(f'WER: {(100 * float(error_count) / word_count):.2f}')
+    print(f'RTF: {engine.rtf()} sec')
 
 
 if __name__ == '__main__':

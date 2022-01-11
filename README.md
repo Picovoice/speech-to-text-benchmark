@@ -2,17 +2,12 @@
 
 Made in Vancouver, Canada by [Picovoice](https://picovoice.ai)
 
-This is a minimalist and extensible framework for benchmarking different speech-to-text engines. It has been developed
-and tested on Ubuntu 18.04 (x86_64) using Python3.6.
+This repo is a minimalist and extensible framework for benchmarking different speech-to-text engines.
 
 ## Table of Contents
 
-* [Background](#background)
 * [Data](#data)
 * [Metrics](#metrics)
-    * [Word Error Rate](#word-error-rate)
-    * [Real Time Factor](#real-time-factor)
-    * [Model Size](#model-size)
 * [Speech-to-Text Engines](#speech-to-text-engines)
     * [Amazon Transcribe](#amazon-transcribe)
     * [CMU PocketSphinx](#cmu-pocketsphinx)
@@ -26,23 +21,11 @@ and tested on Ubuntu 18.04 (x86_64) using Python3.6.
 * [Results](#results)
 * [License](#license)
 
-## Background
-
-This framework has been developed by [Picovoice](http://picovoice.ai/) as part of the
-[Cheetah](https://github.com/Picovoice/cheetah) project. Cheetah is Picovoice's streaming speech-to-text engine,
-specifically designed to run efficiently on the edge (offline). Deep learning has been the main driver in recent
-improvements in speech recognition but due to stringent compute/storage limitations of IoT platforms, it is mostly
-beneficial to cloud-based engines. Picovoice's proprietary deep learning technology enables transferring these
-improvements to IoT platforms with significantly lower CPU/memory footprint.
-
 ## Data
 
-[LibriSpeech](http://www.openslr.org/12/) dataset is used for benchmarking. We use the
-[test-clean](http://www.openslr.org/resources/12/test-clean.tar.gz) portion.
+[LibriSpeech](http://www.openslr.org/12/) dataset is used for benchmarking.
 
 ## Metrics
-
-This benchmark considers three metrics: word error rate, real-time factor, and model size.
 
 ### Word Error Rate
 
