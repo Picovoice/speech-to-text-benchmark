@@ -12,40 +12,45 @@ def main():
     parser.add_argument('--engine', required=True, choices=[x.value for x in Engines])
     parser.add_argument('--dataset', required=True, choices=[x.value for x in Datasets])
     parser.add_argument('--dataset-folder', required=True)
-    parser.add_argument('--picovoice-access-key')
+    parser.add_argument('--aws-profile')
+    parser.add_argument('--google-application-credentials')
     parser.add_argument('--deepspeech-pbmm')
     parser.add_argument('--deepspeech-scorer')
-    parser.add_argument('--google-application-credentials')
-    parser.add_argument('--aws-profile')
+    parser.add_argument('--picovoice-access-key')
     parser.add_argument('--num-examples', type=int, default=None)
+    parser.add_argument('--num-process', type=int, default=os.cpu_count())
     args = parser.parse_args()
 
     args.engine = Engines[args.engine]
 
     dataset = Dataset.create(Datasets.LIBRI_SPEECH, folder=args.dataset_folder)
-    print(f'loaded {dataset} with {dataset.size()} utterances')
+    print(f'Loaded {dataset} with {dataset.size()} utterances')
 
-    if args.engine == Engines.PICOVOICE_LEOPARD:
-        if args.picovoice_access_key is None:
-            raise ValueError()
-        engine = Engine.create(args.engine, access_key=args.picovoice_access_key)
-    elif args.engine == Engines.MOZILLA_DEEP_SPEECH:
-        if args.deepspeech_pbmm is None or args.deepspeech_scorer is None:
-            raise ValueError()
-        engine = Engine.create(args.engine, pbmm_path=args.deepspeech_pbmm, scorer_path=args.deepspeech_scorer)
+    kwargs = dict()
+    if args.engine is Engines.AMAZON_TRANSCRIBE:
+        if args.aws_profile is None:
+            raise ValueError("`aws_profile` is required")
+        os.environ['AWS_PROFILE'] = args.aws_profile
     elif args.engine == Engines.GOOGLE_SPEECH_TO_TEXT:
         if args.google_application_credentials is None:
-            raise ValueError()
+            raise ValueError("`google_application_credentials` is required")
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.google_application_credentials
-        engine = Engine.create(args.engine)
-    elif args.engine is Engines.AMAZON_TRANSCRIBE:
-        if args.aws_profile is None:
-            raise ValueError()
-        os.environ['AWS_PROFILE'] = args.aws_profile
-        engine = Engine.create(args.engine)
-    else:
-        raise ValueError()
-    print(f'created `{engine}` engine')
+    elif args.engine == Engines.MOZILLA_DEEP_SPEECH:
+        if args.deepspeech_pbmm is None or args.deepspeech_scorer is None:
+            raise ValueError("`deepspeech_pbmm` and `deepspeech_scorer` are required")
+        kwargs['pbmm_path'] = args.deepspeech_pbmm
+        kwargs['scorer_path'] = args.deepspeech_scorer
+    elif args.engine == Engines.PICOVOICE_CHEETAH:
+        if args.picovoice_access_key is None:
+            raise ValueError("`picovoice_access_key` is required")
+        kwargs['access_key'] = args.picovoice_access_key
+    elif args.engine == Engines.PICOVOICE_LEOPARD:
+        if args.picovoice_access_key is None:
+            raise ValueError("`picovoice_access_key` is required")
+        kwargs['access_key'] = args.picovoice_access_key
+
+    engine = Engine.create(args.engine, **kwargs)
+    print(f'Created {engine} engine')
 
     word_error_count = 0
     word_count = 0
