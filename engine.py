@@ -25,7 +25,7 @@ class Engine(object):
     def transcribe(self, path: str) -> str:
         raise NotImplementedError()
 
-    def proc_sec(self) -> float:
+    def rtf(self) -> float:
         raise NotImplementedError()
 
     def __str__(self) -> str:
@@ -91,8 +91,8 @@ class AmazonTranscribeEngine(Engine):
 
         return res
 
-    def proc_sec(self) -> float:
-        raise NotImplementedError()
+    def rtf(self) -> float:
+        raise -1.
 
     def __str__(self):
         return 'Amazon Transcribe'
@@ -127,8 +127,8 @@ class GoogleSpeechToTextEngine(Engine):
 
         return res
 
-    def proc_sec(self) -> float:
-        raise NotImplementedError()
+    def rtf(self) -> float:
+        raise -1.
 
     def __str__(self):
         return 'Google Speech-to-Text'
@@ -138,17 +138,22 @@ class MozillaDeepSpeechEngine(Engine):
     def __init__(self, pbmm_path: str, scorer_path: str):
         self._model = Model(pbmm_path)
         self._model.enableExternalScorer(scorer_path)
+        self._audio_sec = 0.
         self._proc_sec = 0.
 
     def transcribe(self, path):
+        audio, sample_rate = soundfile.read(path, dtype='int16')
+        assert sample_rate == self._model.sampleRate()
+        self._audio_sec += audio.size / sample_rate
+
         start_sec = time.time()
-        res = self._model.stt(soundfile.read(path, dtype='int16')[0])
+        res = self._model.stt(audio)
         self._proc_sec += time.time() - start_sec
 
         return res
 
-    def proc_sec(self) -> float:
-        return self._proc_sec
+    def rtf(self) -> float:
+        return self._proc_sec / self._audio_sec
 
     def __str__(self):
         return 'Mozilla DeepSpeech'
@@ -161,7 +166,7 @@ class PicovoiceCheetahEngine(Engine):
     def transcribe(self, path: str) -> str:
         raise NotImplementedError()
 
-    def proc_sec(self) -> float:
+    def rtf(self) -> float:
         raise NotImplementedError()
 
     def __str__(self) -> str:
@@ -170,18 +175,23 @@ class PicovoiceCheetahEngine(Engine):
 
 class PicovoiceLeopardEngine(Engine):
     def __init__(self, access_key: str):
-        self._proc_sec = 0.
         self._leopard = pvleopard.create(access_key=access_key)
+        self._audio_sec = 0.
+        self._proc_sec = 0.
 
     def transcribe(self, path: str) -> str:
+        audio, sample_rate = soundfile.read(path, dtype='int16')
+        assert sample_rate == self._leopard.sample_rate
+        self._audio_sec += audio.size / sample_rate
+
         start_sec = time.time()
-        res = self._leopard.process_file(path)
+        res = self._leopard.process(audio)
         self._proc_sec += time.time() - start_sec
 
         return res
 
-    def proc_sec(self) -> float:
-        return self._proc_sec
+    def rtf(self) -> float:
+        return self._proc_sec / self._audio_sec
 
     def __str__(self):
         return 'Picovoice Leopard'

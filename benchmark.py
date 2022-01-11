@@ -52,7 +52,7 @@ def main():
     engine = Engine.create(args.engine, **kwargs)
     print(f'Created {engine} engine')
 
-    word_error_count = 0
+    error_count = 0
     word_count = 0
     for i in range(dataset.size() if args.num_examples is None else min(dataset.size(), args.num_examples)):
         audio_path, ref_transcript = dataset.get(i)
@@ -62,10 +62,10 @@ def main():
         ref_words = ref_transcript.strip('\n ').lower().split()
         words = transcript.strip('\n ').lower().split()
 
-        word_error_count += editdistance.eval(ref_words, words)
+        error_count += editdistance.eval(ref_words, words)
         word_count += len(ref_words)
 
-    print(f'WER : {(100 * float(word_error_count) / word_count):.2f}')
+    print(f'WER : {(100 * float(error_count) / word_count):.2f}')
     print(f'proc took {engine.proc_sec()} sec')
 
 
