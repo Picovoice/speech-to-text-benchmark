@@ -15,8 +15,6 @@ This repo is a minimalist and extensible framework for benchmarking different sp
     - [Picovoice Cheetah](#picovoice-cheetah)
     - [Picovoice Leopard](#picovoice-leopard)
 -[Usage](#usage)
-    - [Word Error Rate Measurement](#word-error-rate-measurement)
-    - [Real Time Factor Measurement](#real-time-factor-measurement)
 -[Results](#results)
 
 ## Data
@@ -76,8 +74,6 @@ DeepSpeech's models under [resources/deepspeech](/res/deepspeech).
 1. For running Google Speech-to-Text and Amazon Transcribe, you need to sign up for the respective cloud provider
 and setup permissions / credentials according to their documentation. Running these services may incur fees.
 
-### Word Error Rate Measurement
-
 Word Error Rate can be measured by running the following command from the root of the repository: 
 
 ```bash
@@ -91,58 +87,6 @@ parameter are: `AMAZON_TRANSCRIBE`, `CMU_POCKET_SPHINX`, `GOOGLE_SPEECH_TO_TEXT`
 `PICOVOICE_CHEETAH_LIBRISPEECH_LM` is the same as `PICOVOICE_CHEETAH`
 except that the language model is trained on LibriSpeech training text similar to
 [Mozilla DeepSpeech](https://github.com/mozilla/DeepSpeech/tree/master/data/lm). The same applies to Leopard.
-
-
-### Real Time Factor Measurement
-
-The `time` command is used to measure the execution time of different engines for a given audio file, and then divide
-the CPU time by audio length. To measure the execution time for Cheetah, run:
-
-```bash
-time res/cheetah/cheetah_demo \
-res/cheetah/libpv_cheetah.so \
-res/cheetah/acoustic_model.pv \
-res/cheetah/language_model.pv \
-res/cheetah/cheetah_eval_linux.lic \
-PATH_TO_WAV_FILE
-```
-
-The output should have the following format (values may be different):
-
-```bash
-real	0m4.961s
-user	0m4.936s
-sys	0m0.024s
-```
-
-Then, divide the `user` value by the length of the audio file, in seconds. The user value is the actual CPU time spent in the program.
-
-To measure the execution time for Leopard, run:
-
-```bash
-time res/leopard/leopard_demo \
-res/leopard/libpv_leopard.so \
-res/leopard/acoustic_model.pv \
-res/leopard/language_model.pv \
-res/leopard/leopard_eval_linux.lic \
-PATH_TO_WAV_FILE
-```
-
-For DeepSpeech:
-
-```bash
-time deepspeech \
---model res/deepspeech/output_graph.pbmm \
---lm res/deepspeech/lm.binary \
---trie res/deepspeech/trie \
---audio PATH_TO_WAV_FILE
-```
-
-Finally, for PocketSphinx:
-
-```bash
-time pocketsphinx_continuous -infile PATH_TO_WAV_FILE
-```
 
 ## Results
 
