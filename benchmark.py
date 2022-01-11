@@ -16,6 +16,7 @@ def main():
     parser.add_argument('--deepspeech-pbmm')
     parser.add_argument('--deepspeech-scorer')
     parser.add_argument('--google-application-credentials')
+    parser.add_argument('--aws-profile')
     parser.add_argument('--num-examples', type=int, default=None)
     args = parser.parse_args()
 
@@ -36,6 +37,11 @@ def main():
         if args.google_application_credentials is None:
             raise ValueError()
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.google_application_credentials
+        engine = Engine.create(args.engine)
+    elif args.engine is Engines.AMAZON_TRANSCRIBE:
+        if args.aws_profile is None:
+            raise ValueError()
+        os.environ['AWS_PROFILE'] = args.aws_profile
         engine = Engine.create(args.engine)
     else:
         raise ValueError()

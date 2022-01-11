@@ -59,7 +59,7 @@ class AmazonTranscribeEngine(Engine):
         self._transcribe = boto3.client('transcribe')
 
     def transcribe(self, path):
-        cache_path = path.replace('.wav', '.aws')
+        cache_path = path.replace('.flac', '.aws')
 
         if os.path.exists(cache_path):
             with open(cache_path) as f:
@@ -72,12 +72,12 @@ class AmazonTranscribeEngine(Engine):
         self._transcribe.start_transcription_job(
             TranscriptionJobName=job_name,
             Media={'MediaFileUri': 'https://s3-us-west-2.amazonaws.com/%s/%s' % (self._s3_bucket, s3_object)},
-            MediaFormat='wav',
+            MediaFormat='flac',
             LanguageCode='en-US')
 
         while True:
             status = self._transcribe.get_transcription_job(TranscriptionJobName=job_name)
-            if status['TranscriptionJob']['TranscriptionJobStatus'] is 'COMPLETED':
+            if status['TranscriptionJob']['TranscriptionJobStatus'] == 'COMPLETED':
                 break
             time.sleep(5)
 
@@ -121,8 +121,6 @@ class GoogleSpeechToTextEngine(Engine):
 
         res = ' '.join(result.alternatives[0].transcript for result in response.results)
         res = res.translate(str.maketrans('', '', string.punctuation))
-
-        print(res)
 
         with open(cache_path, 'w') as f:
             f.write(res)
