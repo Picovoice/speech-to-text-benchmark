@@ -1,12 +1,13 @@
-import argparse
+from argparse import ArgumentParser
 
 import editdistance
 
 from dataset import *
 from engine import *
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+
+def main():
+    parser = ArgumentParser()
     parser.add_argument('--engine_type', type=str, required=True)
     args = parser.parse_args()
 
@@ -30,3 +31,7 @@ if __name__ == '__main__':
         word_count += len(ref_words)
 
     print('word error rate : %.2f' % (100 * float(word_error_count) / word_count))
+
+
+if __name__ == '__main__':
+    main()

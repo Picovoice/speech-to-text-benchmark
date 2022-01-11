@@ -14,8 +14,6 @@ from deepspeech import Model
 from google.cloud import speech
 from google.cloud.speech import enums
 from google.cloud.speech import types
-from pocketsphinx import get_model_path
-from pocketsphinx.pocketsphinx import Decoder
 
 
 class ASREngines(Enum):
