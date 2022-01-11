@@ -8,11 +8,10 @@ from engine import *
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('--engine_type', type=str, required=True)
+    parser.add_argument('--engine', required=True, choices=[x.value for x in Engines])
     args = parser.parse_args()
 
-    dataset = Dataset.create('librispeech')
-    print('loaded %s with %.2f hours of data' % (str(dataset), dataset.size_hours()))
+    dataset = Dataset.create(Datasets.LIBRI_SPEECH)
 
     engine = Engine.create(Engines[args.engine_type])
     print('created %s engine' % str(engine))

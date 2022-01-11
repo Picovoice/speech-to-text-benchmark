@@ -1,59 +1,54 @@
 import os
+from enum import Enum
+from typing import Tuple
 
-import soundfile
+
+class Datasets(Enum):
+    LIBRI_SPEECH = 'LIBRI_SPEECH'
 
 
 class Dataset(object):
-    def size(self):
+    def size(self) -> int:
         raise NotImplementedError()
 
-    def size_hours(self):
-        return sum(soundfile.read(self.get(i)[0])[0].size / (16000 * 3600) for i in range(self.size()))
-
-    def get(self, index):
+    def get(self, index: int) -> Tuple[str, str]:
         raise NotImplementedError()
 
-    def __str__(self):
+    def __str__(self) -> str:
         raise NotImplementedError()
 
     @classmethod
-    def create(cls, dataset_type):
-        if dataset_type == 'librispeech':
-            return LibriSpeechDataset(os.path.join(os.path.dirname(__file__), 'resources/data/LibriSpeech/test-clean'))
+    def create(cls, x: Datasets):
+        if x == Datasets.LIBRI_SPEECH:
+            return LibriSpeechDataset(os.path.join(os.path.dirname(__file__), 'res/data/LibriSpeech/test-clean'))
         else:
-            raise ValueError("cannot create %s of type '%s'" % (cls.__name__, dataset_type))
+            raise ValueError(f"Cannot create {cls.__name__} of type `{x}`")
 
 
 class LibriSpeechDataset(Dataset):
-    def __init__(self, root):
+    def __init__(self, folder: str):
         self._data = list()
 
-        for speaker_id in os.listdir(root):
-            speaker_dir = os.path.join(root, speaker_id)
+        for speaker_id in os.listdir(folder):
+            speaker_folder = os.path.join(folder, speaker_id)
+            for chapter_id in os.listdir(speaker_folder):
+                chapter_folder = os.path.join(speaker_folder, chapter_id)
 
-            for chapter_id in os.listdir(speaker_dir):
-                chapter_dir = os.path.join(speaker_dir, chapter_id)
-
-                transcript_path = os.path.join(chapter_dir, '%s-%s.trans.txt' % (speaker_id, chapter_id))
-                with open(transcript_path, 'r') as f:
+                with open(os.path.join(chapter_folder, '%s-%s.trans.txt' % (speaker_id, chapter_id)), 'r') as f:
                     transcripts = dict(x.split(' ', maxsplit=1) for x in f.readlines())
 
-                for flac_file in os.listdir(chapter_dir):
-                    if flac_file.endswith('.flac'):
-                        wav_file = flac_file.replace('.flac', '.wav')
-                        wav_path = os.path.join(chapter_dir, wav_file)
-                        if not os.path.exists(wav_path):
-                            flac_path = os.path.join(chapter_dir, flac_file)
-                            pcm, sample_rate = soundfile.read(flac_path)
-                            soundfile.write(wav_path, pcm, sample_rate)
+                for x in os.listdir(chapter_folder):
+                    if x.endswith('.flac'):
+                        self._data.append((os.path.join(chapter_folder, x), transcripts[x.replace('.flac', '')]))
 
-                        self._data.append((wav_path, transcripts[wav_file.replace('.wav', '')]))
-
-    def size(self):
+    def size(self) -> int:
         return len(self._data)
 
-    def get(self, index):
+    def get(self, index: int) -> Tuple[str, str]:
         return self._data[index]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return 'LibriSpeech'
+
+
+__all__ = ['Datasets', 'Dataset']

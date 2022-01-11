@@ -128,7 +128,7 @@ class GoogleSpeechToText(Engine):
 
 class MozillaDeepSpeechASREngine(Engine):
     def __init__(self):
-        deepspeech_dir = os.path.join(os.path.dirname(__file__), 'resources/deepspeech')
+        deepspeech_dir = os.path.join(os.path.dirname(__file__), 'res/deepspeech')
         model_path = os.path.join(deepspeech_dir, 'output_graph.pbmm')
         alphabet_path = os.path.join(deepspeech_dir, 'alphabet.txt')
         language_model_path = os.path.join(deepspeech_dir, 'lm.binary')
@@ -151,7 +151,7 @@ class MozillaDeepSpeechASREngine(Engine):
 
 class PicovoiceCheetahASREngine(Engine):
     def __init__(self, lm='language_model.pv'):
-        cheetah_dir = os.path.join(os.path.dirname(__file__), 'resources/cheetah')
+        cheetah_dir = os.path.join(os.path.dirname(__file__), 'res/cheetah')
         self._cheetah_demo_path = os.path.join(cheetah_dir, 'cheetah_demo')
         self._cheetah_library_path = os.path.join(cheetah_dir, 'libpv_cheetah.so')
         self._cheetah_acoustic_model_path = os.path.join(cheetah_dir, 'acoustic_model.pv')
@@ -180,7 +180,7 @@ class PicovoiceCheetahASREngine(Engine):
 
 class PicovoiceLeopardASREngine(Engine):
     def __init__(self, lm='language_model.pv'):
-        leopard_dir = os.path.join(os.path.dirname(__file__), 'resources/leopard')
+        leopard_dir = os.path.join(os.path.dirname(__file__), 'res/leopard')
         self._demo_path = os.path.join(leopard_dir, 'leopard_demo')
         self._library_path = os.path.join(leopard_dir, 'libpv_leopard.so')
         self._acoustic_model_path = os.path.join(leopard_dir, 'acoustic_model.pv')
@@ -205,3 +205,6 @@ class PicovoiceLeopardASREngine(Engine):
 
     def __str__(self):
         return 'Picovoice Leopard'
+
+
+__all__ = ['Engines', 'Engine']

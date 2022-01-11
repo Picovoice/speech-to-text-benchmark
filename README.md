@@ -98,9 +98,9 @@ Below is information on how to use this framework to benchmark the speech-to-tex
 
 1. Make sure that you have installed DeepSpeech and PocketSphinx on your machine by following the instructions on their official pages.
 1. Unpack
-DeepSpeech's models under [resources/deepspeech](/resources/deepspeech).
+DeepSpeech's models under [resources/deepspeech](/res/deepspeech).
 1. Download the [test-clean](http://www.openslr.org/resources/12/test-clean.tar.gz) portion of LibriSpeech and unpack it under
-[resources/data](/resources/data).
+[resources/data](/res/data).
 1. For running Google Speech-to-Text and Amazon Transcribe, you need to sign up for the respective cloud provider
 and setup permissions / credentials according to their documentation. Running these services may incur fees.
 
@@ -127,11 +127,11 @@ The `time` command is used to measure the execution time of different engines fo
 the CPU time by audio length. To measure the execution time for Cheetah, run:
 
 ```bash
-time resources/cheetah/cheetah_demo \
-resources/cheetah/libpv_cheetah.so \
-resources/cheetah/acoustic_model.pv \
-resources/cheetah/language_model.pv \
-resources/cheetah/cheetah_eval_linux.lic \
+time res/cheetah/cheetah_demo \
+res/cheetah/libpv_cheetah.so \
+res/cheetah/acoustic_model.pv \
+res/cheetah/language_model.pv \
+res/cheetah/cheetah_eval_linux.lic \
 PATH_TO_WAV_FILE
 ```
 
@@ -148,11 +148,11 @@ Then, divide the `user` value by the length of the audio file, in seconds. The u
 To measure the execution time for Leopard, run:
 
 ```bash
-time resources/leopard/leopard_demo \
-resources/leopard/libpv_leopard.so \
-resources/leopard/acoustic_model.pv \
-resources/leopard/language_model.pv \
-resources/leopard/leopard_eval_linux.lic \
+time res/leopard/leopard_demo \
+res/leopard/libpv_leopard.so \
+res/leopard/acoustic_model.pv \
+res/leopard/language_model.pv \
+res/leopard/leopard_eval_linux.lic \
 PATH_TO_WAV_FILE
 ```
 
@@ -160,9 +160,9 @@ For DeepSpeech:
 
 ```bash
 time deepspeech \
---model resources/deepspeech/output_graph.pbmm \
---lm resources/deepspeech/lm.binary \
---trie resources/deepspeech/trie \
+--model res/deepspeech/output_graph.pbmm \
+--lm res/deepspeech/lm.binary \
+--trie res/deepspeech/trie \
 --audio PATH_TO_WAV_FILE
 ```
 
@@ -192,13 +192,13 @@ Picovoice Leopard LibriSpeech LM (v1.0.0) | **6.58%** | **0.02** | **0.55** | 2.
 The figure below compares the word error rate of speech-to-text engines. For Picovoice, we included the engine that was
 trained on LibriSpeech training data similar to Mozilla DeepSpeech.
 
-![](resources/doc/word_error_rate_comparison.png)
+![](res/doc/word_error_rate_comparison.png)
 
 The figure below compares accuracy and runtime metrics of offline speech-to-text engines. For Picovoice we included the
 engines that were trained on LibriSpeech training data similar to Mozilla DeepSpeech. Leopard achieves the highest accuracy
 while being 23X faster and 27X smaller in size compared to second most accurate engine (Mozilla DeepSpeech).
 
-![](resources/doc/offline_stt_comparison.png)
+![](res/doc/offline_stt_comparison.png)
 
 ## License
 
