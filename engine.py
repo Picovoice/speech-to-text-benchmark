@@ -6,6 +6,7 @@ import uuid
 from enum import Enum
 
 import boto3
+import inflect
 import pvleopard
 import requests
 import soundfile
@@ -45,6 +46,12 @@ class Engine(object):
             return PicovoiceLeopardEngine(**kwargs)
         else:
             raise ValueError(f"Cannot create {cls.__name__} of type `{x}`")
+
+    @classmethod
+    def _normalize(cls, text: str) -> str:
+        p = inflect.engine()
+        text = text.translate(str.maketrans('', '', string.punctuation.replace("'", "")))
+        return ' '.join(p.number_to_words(x) if any(c.isdigit() for c in x) else x for x in text.split())
 
 
 class AmazonTranscribeEngine(Engine):

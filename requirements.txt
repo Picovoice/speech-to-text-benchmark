@@ -2,6 +2,7 @@ boto3==1.18.19
 deepspeech==0.9.3
 editdistance
 google-cloud-speech==2.11.1
+inflect
 matplotlib
 numpy
 pvleopard==1.0.0
