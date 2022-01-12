@@ -29,6 +29,9 @@ class Engine(object):
     def rtf(self) -> float:
         raise NotImplementedError()
 
+    def delete(self):
+        raise NotImplementedError()
+
     def __str__(self) -> str:
         raise NotImplementedError()
 
@@ -101,6 +104,11 @@ class AmazonTranscribeEngine(Engine):
     def rtf(self) -> float:
         return -1.
 
+    def delete(self):
+        bucket = self._s3.Bucket(self._s3_bucket)
+        bucket.objects.all().delete()
+        bucket.delete()
+
     def __str__(self):
         return 'Amazon Transcribe'
 
@@ -137,6 +145,9 @@ class GoogleSpeechToTextEngine(Engine):
     def rtf(self) -> float:
         return -1.
 
+    def delete(self):
+        pass
+
     def __str__(self):
         return 'Google Speech-to-Text'
 
@@ -162,6 +173,9 @@ class MozillaDeepSpeechEngine(Engine):
     def rtf(self) -> float:
         return self._proc_sec / self._audio_sec
 
+    def delete(self):
+        pass
+
     def __str__(self):
         return 'Mozilla DeepSpeech'
 
@@ -174,6 +188,9 @@ class PicovoiceCheetahEngine(Engine):
         raise NotImplementedError()
 
     def rtf(self) -> float:
+        raise NotImplementedError()
+
+    def delete(self):
         raise NotImplementedError()
 
     def __str__(self) -> str:
@@ -199,6 +216,9 @@ class PicovoiceLeopardEngine(Engine):
 
     def rtf(self) -> float:
         return self._proc_sec / self._audio_sec
+
+    def delete(self):
+        self._leopard.delete()
 
     def __str__(self):
         return 'Picovoice Leopard'

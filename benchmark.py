@@ -53,9 +53,10 @@ def main():
     parser.add_argument('--num-workers', type=int, default=os.cpu_count())
     args = parser.parse_args()
 
+    args.dataset = Datasets[args.dataset]
     args.engine = Engines[args.engine]
 
-    dataset = Dataset.create(Datasets.LIBRI_SPEECH, folder=args.dataset_folder)
+    dataset = Dataset.create(args.dataset, folder=args.dataset_folder)
 
     kwargs = dict()
     if args.engine is Engines.AMAZON_TRANSCRIBE:
