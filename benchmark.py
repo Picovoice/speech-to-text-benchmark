@@ -1,5 +1,9 @@
+import math
 import os
+import random
 from argparse import ArgumentParser
+from collections import namedtuple
+from concurrent.futures import ProcessPoolExecutor
 from typing import *
 
 import editdistance
@@ -7,13 +11,15 @@ import editdistance
 from dataset import *
 from engine import *
 
+WorkerResult = namedtuple('WorkerResult', ['num_errors', 'num_words', 'rtf'])
+
 
 def process(
         engine: Engines,
         engine_params: Dict[str, Any],
         dataset: Datasets,
         dataset_folder: str,
-        indices: Sequence[int]) -> Tuple[int, int, float]:
+        indices: Sequence[int]) -> WorkerResult:
     engine = Engine.create(engine, **engine_params)
     dataset = Dataset.create(dataset, folder=dataset_folder)
 
@@ -30,7 +36,7 @@ def process(
         error_count += editdistance.eval(ref_words, words)
         word_count += len(ref_words)
 
-    return error_count, word_count, engine.rtf()
+    return WorkerResult(num_errors=error_count, num_words=word_count, rtf=engine.rtf())
 
 
 def main():
@@ -44,13 +50,12 @@ def main():
     parser.add_argument('--deepspeech-scorer')
     parser.add_argument('--picovoice-access-key')
     parser.add_argument('--num-examples', type=int, default=None)
-    parser.add_argument('--num-processes', type=int, default=os.cpu_count())
+    parser.add_argument('--num-workers', type=int, default=os.cpu_count())
     args = parser.parse_args()
 
     args.engine = Engines[args.engine]
 
     dataset = Dataset.create(Datasets.LIBRI_SPEECH, folder=args.dataset_folder)
-    print(f'Loaded {dataset} with {dataset.size()} utterances')
 
     kwargs = dict()
     if args.engine is Engines.AMAZON_TRANSCRIBE:
@@ -75,24 +80,36 @@ def main():
             raise ValueError("`picovoice_access_key` is required")
         kwargs['access_key'] = args.picovoice_access_key
 
-    engine = Engine.create(args.engine, **kwargs)
-    print(f'Created {engine} engine')
+    indices = list(range(dataset.size()))
+    random.shuffle(indices)
+    if args.num_examples is not None:
+        indices = indices[:args.num_examples]
 
-    error_count = 0
-    word_count = 0
-    for i in range(dataset.size() if args.num_examples is None else min(dataset.size(), args.num_examples)):
-        audio_path, ref_transcript = dataset.get(i)
+    num_workers = args.num_workers
 
-        transcript = engine.transcribe(audio_path)
+    chunk = math.ceil(len(indices) / num_workers)
 
-        ref_words = ref_transcript.strip('\n ').lower().split()
-        words = transcript.strip('\n ').lower().split()
+    futures = list()
+    with ProcessPoolExecutor(num_workers) as executor:
+        for i in range(num_workers):
+            future = executor.submit(
+                process,
+                engine=args.engine,
+                engine_params=kwargs,
+                dataset=args.dataset,
+                dataset_folder=args.dataset_folder,
+                indices=indices[i * chunk: (i + 1) * chunk]
+            )
+            futures.append(future)
 
-        error_count += editdistance.eval(ref_words, words)
-        word_count += len(ref_words)
+    res = [x.result() for x in futures]
 
-    print(f'WER: {(100 * float(error_count) / word_count):.2f}')
-    print(f'RTF: {engine.rtf()} sec')
+    num_errors = sum(x.num_errors for x in res)
+    num_words = sum(x.num_words for x in res)
+    rtf = sum(x.rtf for x in res) / len(res)
+
+    print(f'WER: {(100 * float(num_errors) / num_words):.2f}')
+    print(f'RTF: {rtf}')
 
 
 if __name__ == '__main__':
