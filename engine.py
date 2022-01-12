@@ -42,6 +42,8 @@ class Engine(object):
             return AmazonTranscribeEngine()
         elif x is Engines.GOOGLE_SPEECH_TO_TEXT:
             return GoogleSpeechToTextEngine()
+        elif x is Engines.GOOGLE_SPEECH_TO_TEXT_ENHANCED:
+            return GoogleSpeechToTextEnhancedEngine()
         elif x is Engines.MOZILLA_DEEP_SPEECH:
             return MozillaDeepSpeechEngine(**kwargs)
         elif x is Engines.PICOVOICE_CHEETAH:
@@ -124,8 +126,10 @@ class GoogleSpeechToTextEngine(Engine):
             language_code="en-US",
             model=model)
 
+        self._cache_extension = cache_extension
+
     def transcribe(self, path):
-        cache_path = path.replace('.flac', '.ggl')
+        cache_path = path.replace('.flac', self._cache_extension)
         if os.path.exists(cache_path):
             with open(cache_path) as f:
                 return f.read()
