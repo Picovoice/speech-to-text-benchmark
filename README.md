@@ -147,7 +147,7 @@ refers to real time factor.
 
 | Engine | WER (test-clean) | WER (test-other) | RTF | Model Size |
 :---:|:---:|:---:|:---:|:---:
-Amazon Transcribe | --- | --- | N/A | N/A |
+Amazon Transcribe | 5.20% | 9.58% | N/A | N/A |
 Google Speech-to-Text | 12.02% | --- | N/A | N/A |
 Mozilla DeepSpeech | 7.27% | --- | 0.46 | 1142.3 MB |
 Picovoice Cheetah | --- | --- | --- | --- |
