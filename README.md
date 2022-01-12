@@ -145,14 +145,20 @@ The below results are obtained by following the previous steps. The benchmarking
 running Ubuntu 18.04 with 64GB of RAM and an Intel i5-6500 CPU running at 3.2 GHz. WER refers to word error rate and RTF
 refers to real time factor.
 
-| Engine | WER (test-clean) | WER (test-other) | RTF | Model Size |
+| Engine | LibriSpeech test-clean | LibriSpeech test-other |  TEDLIUM | CommonVoice |
 :---:|:---:|:---:|:---:|:---:
-Amazon Transcribe | 5.20% | 9.58% | N/A | N/A |
-Google Speech-to-Text | 11.23% | 24.94% | N/A | N/A |
-Google Speech-to-Text (Enhanced) | 6.62% | 13.59% | N/A | N/A |
-Mozilla DeepSpeech | 7.27% | 21.45% | 0.46 | 1142.3 MB |
+Amazon Transcribe | 5.20% | 9.58% | --- | --- |
+Google Speech-to-Text | 11.23% | 24.94% | --- | --- |
+Google Speech-to-Text (Enhanced) | 6.62% | 13.59% | --- | --- |
+Mozilla DeepSpeech | 7.27% | 21.45% | --- | --- |
 Picovoice Cheetah | --- | --- | --- | --- |
-Picovoice Leopard | 5.73% | 12.84% | **0.05** | 18.2 MB |
+Picovoice Leopard | 5.73% | 12.84% | --- | --- |
+
+| Engine | RTF | Model Size |
+:---:|:---:|:---:
+Mozilla DeepSpeech | 0.46 | 1142.3 MB |
+Picovoice Cheetah | --- | --- |
+Picovoice Leopard | **0.05** | 18.2 MB |
 
 The figure below compares the word error rate of speech-to-text engines.
 
