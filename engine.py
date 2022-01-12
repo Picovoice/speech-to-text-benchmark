@@ -91,7 +91,7 @@ class AmazonTranscribeEngine(Engine):
         content = requests.get(status['TranscriptionJob']['Transcript']['TranscriptFileUri'])
 
         res = json.loads(content.content.decode('utf8'))['results']['transcripts'][0]['transcript']
-        res = res.translate(str.maketrans('', '', string.punctuation))
+        res = self._normalize(res)
 
         with open(cache_path, 'w') as f:
             f.write(res)
@@ -127,7 +127,7 @@ class GoogleSpeechToTextEngine(Engine):
         response = self._client.recognize(config=config, audio=audio)
 
         res = ' '.join(result.alternatives[0].transcript for result in response.results)
-        res = res.translate(str.maketrans('', '', string.punctuation))
+        res = self._normalize(res)
 
         with open(cache_path, 'w') as f:
             f.write(res)
