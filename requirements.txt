@@ -1,7 +1,9 @@
+azure-cognitiveservices-speech
 boto3==1.18.19
 deepspeech==0.9.3
 editdistance
 google-cloud-speech==2.11.1
+ibm_watson
 inflect
 matplotlib
 numpy
