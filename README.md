@@ -149,7 +149,7 @@ refers to real time factor.
 :---:|:---:|:---:|:---:|:---:
 Amazon Transcribe | 5.20% | 9.58% | N/A | N/A |
 Google Speech-to-Text | 11.23% | 24.94% | N/A | N/A |
-Google Speech-to-Text (Enhanced) | 11.23% | 24.94% | N/A | N/A |
+Google Speech-to-Text (Enhanced) | 6.62% | 13.59% | N/A | N/A |
 Mozilla DeepSpeech | 7.27% | 21.45% | 0.46 | 1142.3 MB |
 Picovoice Cheetah | --- | --- | --- | --- |
 Picovoice Leopard | 5.73% | 12.84% | **0.05** | 18.2 MB |
