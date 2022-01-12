@@ -17,6 +17,7 @@ from google.cloud import speech
 class Engines(Enum):
     AMAZON_TRANSCRIBE = "AMAZON_TRANSCRIBE"
     GOOGLE_SPEECH_TO_TEXT = "GOOGLE_SPEECH_TO_TEXT"
+    GOOGLE_SPEECH_TO_TEXT_ENHANCED = "GOOGLE_SPEECH_TO_TEXT_ENHANCED"
     MOZILLA_DEEP_SPEECH = 'MOZILLA_DEEP_SPEECH'
     PICOVOICE_CHEETAH = "PICOVOICE_CHEETAH"
     PICOVOICE_LEOPARD = "PICOVOICE_LEOPARD"
@@ -114,8 +115,14 @@ class AmazonTranscribeEngine(Engine):
 
 
 class GoogleSpeechToTextEngine(Engine):
-    def __init__(self):
+    def __init__(self, cache_extension='ggl', model=None):
         self._client = speech.SpeechClient()
+
+        self._config = speech.RecognitionConfig(
+            encoding=speech.RecognitionConfig.AudioEncoding.FLAC,
+            sample_rate_hertz=16000,
+            language_code="en-US",
+            model=model)
 
     def transcribe(self, path):
         cache_path = path.replace('.flac', '.ggl')
@@ -127,12 +134,8 @@ class GoogleSpeechToTextEngine(Engine):
             content = f.read()
 
         audio = speech.RecognitionAudio(content=content)
-        config = speech.RecognitionConfig(
-            encoding=speech.RecognitionConfig.AudioEncoding.FLAC,
-            sample_rate_hertz=16000,
-            language_code="en-US")
 
-        response = self._client.recognize(config=config, audio=audio)
+        response = self._client.recognize(config=self._config, audio=audio)
 
         res = ' '.join(result.alternatives[0].transcript for result in response.results)
         res = self._normalize(res)
@@ -150,6 +153,14 @@ class GoogleSpeechToTextEngine(Engine):
 
     def __str__(self):
         return 'Google Speech-to-Text'
+
+
+class GoogleSpeechToTextEnhancedEngine(GoogleSpeechToTextEngine):
+    def __init__(self):
+        super().__init__(cache_extension='.ggle', model="video")
+
+    def __str__(self):
+        return 'Google Speech-to-Text Enhanced'
 
 
 class MozillaDeepSpeechEngine(Engine):

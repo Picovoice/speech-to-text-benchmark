@@ -63,7 +63,7 @@ def main():
         if args.aws_profile is None:
             raise ValueError("`aws_profile` is required")
         os.environ['AWS_PROFILE'] = args.aws_profile
-    elif args.engine == Engines.GOOGLE_SPEECH_TO_TEXT:
+    elif args.engine == Engines.GOOGLE_SPEECH_TO_TEXT or args.engine == Engines.GOOGLE_SPEECH_TO_TEXT_ENHANCED:
         if args.google_application_credentials is None:
             raise ValueError("`google_application_credentials` is required")
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.google_application_credentials
