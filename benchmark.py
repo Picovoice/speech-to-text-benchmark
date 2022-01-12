@@ -1,10 +1,36 @@
 import os
 from argparse import ArgumentParser
+from typing import *
 
 import editdistance
 
 from dataset import *
 from engine import *
+
+
+def process(
+        engine: Engines,
+        engine_params: Dict[str, Any],
+        dataset: Datasets,
+        dataset_folder: str,
+        indices: Sequence[int]) -> Tuple[int, int, float]:
+    engine = Engine.create(engine, **engine_params)
+    dataset = Dataset.create(dataset, folder=dataset_folder)
+
+    error_count = 0
+    word_count = 0
+    for index in indices:
+        audio_path, ref_transcript = dataset.get(index)
+
+        transcript = engine.transcribe(audio_path)
+
+        ref_words = ref_transcript.strip('\n ').lower().split()
+        words = transcript.strip('\n ').lower().split()
+
+        error_count += editdistance.eval(ref_words, words)
+        word_count += len(ref_words)
+
+    return error_count, word_count, engine.rtf()
 
 
 def main():
@@ -18,6 +44,7 @@ def main():
     parser.add_argument('--deepspeech-scorer')
     parser.add_argument('--picovoice-access-key')
     parser.add_argument('--num-examples', type=int, default=None)
+    parser.add_argument('--num-processes', type=int, default=os.cpu_count())
     args = parser.parse_args()
 
     args.engine = Engines[args.engine]
