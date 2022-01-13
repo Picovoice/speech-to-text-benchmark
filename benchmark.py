@@ -36,6 +36,8 @@ def process(
         error_count += editdistance.eval(ref_words, words)
         word_count += len(ref_words)
 
+    engine.delete()
+
     return WorkerResult(num_errors=error_count, num_words=word_count, rtf=engine.rtf())
 
 
