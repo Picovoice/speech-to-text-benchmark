@@ -7,6 +7,7 @@ from typing import Tuple
 from xml.etree import ElementTree
 
 import inflect
+import soundfile
 from pytube import YouTube
 
 
@@ -153,6 +154,8 @@ class CommonVoiceDataset(Dataset):
                             flac_path,
                         ]
                         subprocess.check_output(args)
+                    elif soundfile.read(flac_path)[0].size > 16000 * 60:
+                        continue
 
                     self._data.append((flac_path, self._normalize(row['sentence'])))
 
