@@ -28,6 +28,8 @@ class Dataset(object):
     def create(cls, x: Datasets, folder: str):
         if x == Datasets.LIBRI_SPEECH:
             return LibriSpeechDataset(folder)
+        elif x == Datasets.TEDLIUM:
+            return TEDLIUMDataset(folder)
         else:
             raise ValueError(f"Cannot create {cls.__name__} of type `{x}`")
 
