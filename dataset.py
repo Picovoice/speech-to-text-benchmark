@@ -26,7 +26,9 @@ class Dataset(object):
 
     @classmethod
     def create(cls, x: Datasets, folder: str):
-        if x == Datasets.LIBRI_SPEECH:
+        if x == Datasets.COMMON_VOICE:
+            return CommonVoiceDataset(folder)
+        elif x == Datasets.LIBRI_SPEECH:
             return LibriSpeechDataset(folder)
         elif x == Datasets.TEDLIUM:
             return TEDLIUMDataset(folder)
