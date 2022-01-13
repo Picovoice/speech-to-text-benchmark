@@ -241,7 +241,7 @@ __all__ = ['Datasets', 'Dataset']
 
 
 def main():
-    pass
+    o = AssemblyAIDataset(folder=os.path.expanduser('~/work/data/speech/AssemblyAI'))
 
 
 if __name__ == '__main__':

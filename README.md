@@ -145,16 +145,16 @@ The below results are obtained by following the previous steps. The benchmarking
 running Ubuntu 18.04 with 64GB of RAM and an Intel i5-6500 CPU running at 3.2 GHz. WER refers to word error rate and RTF
 refers to real time factor.
 
-| Engine | LibriSpeech test-clean | LibriSpeech test-other |  TEDLIUM | CommonVoice |
-:---:|:---:|:---:|:---:|:---:
-Amazon Transcribe | 5.20% | 9.58% | 4.25% | --- |
-Azure Speech-to-Text | 4.96% | 9.66% | --- | --- |
-Google Speech-to-Text | 11.23% | 24.94% | 15.00% | --- |
-Google Speech-to-Text (Enhanced) | 6.62% | 13.59% | 6.68% | --- |
-IBM Watson Speech-to-Text | 11.08% | 26.38% | --- | --- |
-Mozilla DeepSpeech | 7.27% | 21.45% | 18.90% | --- |
-Picovoice Cheetah | --- | --- | --- | --- |
-Picovoice Leopard | 5.73% | 12.84% | 9.83% | 18.93% |
+| Engine | LibriSpeech test-clean | LibriSpeech test-other |  TEDLIUM | CommonVoice | AssemblyAI |
+:---:|:---:|:---:|:---:|:---:|:---:
+Amazon Transcribe | 5.20% | 9.58% | 4.25% | --- | --- |
+Azure Speech-to-Text | 4.96% | 9.66% | --- | --- | --- |
+Google Speech-to-Text | 11.23% | 24.94% | 15.00% | --- | --- |
+Google Speech-to-Text (Enhanced) | 6.62% | 13.59% | 6.68% | --- | --- |
+IBM Watson Speech-to-Text | 11.08% | 26.38% | --- | --- | --- |
+Mozilla DeepSpeech | 7.27% | 21.45% | 18.90% | --- | --- |
+Picovoice Cheetah | --- | --- | --- | --- | --- |
+Picovoice Leopard | 5.73% | 12.84% | 9.83% | 18.93% | 21.24% |
 
 | Engine | RTF | Model Size |
 :---:|:---:|:---:
