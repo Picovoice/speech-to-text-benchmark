@@ -4,6 +4,7 @@ import string
 import subprocess
 from enum import Enum
 from typing import Tuple
+from xml.etree import ElementTree
 
 import inflect
 from pytube import YouTube
@@ -42,8 +43,12 @@ class Dataset(object):
     @staticmethod
     def _normalize(text: str) -> str:
         p = inflect.engine()
-        text = text.translate(str.maketrans('', '', string.punctuation.replace("'", "")))
-        return ' '.join(p.number_to_words(x) if any(c.isdigit() for c in x) else x for x in text.split())
+        text = text.translate(str.maketrans('', '', string.punctuation.replace("'", ""))).lower()
+
+        def num2txt(y):
+            return p.number_to_words(y).replace('-', ' ').replace(',', '') if any(c.isdigit() for c in y) else y
+
+        return ' '.join(num2txt(x) for x in text.split())
 
 
 class AssemblyAIDataset(Dataset):
@@ -91,7 +96,7 @@ class AssemblyAIDataset(Dataset):
                     stderr=subprocess.STDOUT,
                     shell=True)
 
-            caption_path = webm_path.replace('.webm', '.cap')
+            caption_path = webm_path.replace('.webm', '.xml')
             if not os.path.exists(caption_path):
                 captions = YouTube(url).captions
 
@@ -104,6 +109,23 @@ class AssemblyAIDataset(Dataset):
 
                 with open(caption_path, 'w') as f:
                     f.write(captions[key].xml_captions)
+
+            txt_path = caption_path.replace('.xml', '.txt')
+            if not os.path.exists(txt_path):
+                with open(caption_path) as f:
+                    xml = f.read()
+
+                raw_txt = list()
+                for x in ElementTree.fromstring(xml).iter():
+                    if x.text is None:
+                        continue
+                    raw_txt.append(x.text.replace('\n', ' '))
+                raw_txt = ' '.join(raw_txt)
+
+                norm_txt = self._normalize(raw_txt)
+
+                with open(txt_path, 'w') as f:
+                    f.write(norm_txt)
 
 
 class CommonVoiceDataset(Dataset):

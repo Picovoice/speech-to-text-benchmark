@@ -65,7 +65,8 @@ class Engine(object):
     @staticmethod
     def _normalize(text: str) -> str:
         p = inflect.engine()
-        text = text.translate(str.maketrans('', '', string.punctuation.replace("'", "")))
+        text = text.translate(str.maketrans('', '', string.punctuation.replace("'", "").replace("-", "")))
+        text = text.replace('-', ' ')
         return ' '.join(p.number_to_words(x) if any(c.isdigit() for c in x) else x for x in text.split())
 
 
