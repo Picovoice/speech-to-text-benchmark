@@ -18,8 +18,8 @@ from ibm_watson import SpeechToTextV1
 
 
 class Engines(Enum):
-    AZURE_SPEECH_TO_TEXT = 'AZURE_SPEECH_TO_TEXT'
     AMAZON_TRANSCRIBE = "AMAZON_TRANSCRIBE"
+    AZURE_SPEECH_TO_TEXT = 'AZURE_SPEECH_TO_TEXT'
     GOOGLE_SPEECH_TO_TEXT = "GOOGLE_SPEECH_TO_TEXT"
     GOOGLE_SPEECH_TO_TEXT_ENHANCED = "GOOGLE_SPEECH_TO_TEXT_ENHANCED"
     MOZILLA_DEEP_SPEECH = 'MOZILLA_DEEP_SPEECH'
@@ -42,10 +42,10 @@ class Engine(object):
 
     @classmethod
     def create(cls, x, **kwargs):
-        if x is Engines.AZURE_SPEECH_TO_TEXT:
-            return AzureSpeechToTextEngine()
-        elif x is Engines.AMAZON_TRANSCRIBE:
+        if x is Engines.AMAZON_TRANSCRIBE:
             return AmazonTranscribeEngine()
+        elif x is Engines.AZURE_SPEECH_TO_TEXT:
+            return AzureSpeechToTextEngine(**kwargs)
         elif x is Engines.GOOGLE_SPEECH_TO_TEXT:
             return GoogleSpeechToTextEngine()
         elif x is Engines.GOOGLE_SPEECH_TO_TEXT_ENHANCED:
@@ -129,62 +129,29 @@ class AzureSpeechToTextEngine(Engine):
     def delete(self):
         pass
 
-    def __init__(self):
-        self._initial_silence_timeout_ms = 15000
-        self._key = os.environ["AZURE_SPEECH_KEY"]
-        self._location = os.environ["AZURE_SPEECH_LOCATION"]
-        self._ext = '.ms'
+    def __init__(self, azure_speech_key: str, azure_speech_location: str):
+        self._azure_speech_key = azure_speech_key
+        self._azure_speech_location = azure_speech_location
 
-    def transcribe(self, path):
-        # https://github.com/Azure-Samples/cognitive-services-speech-sdk/blob/master/samples/python/console/speech_sample.py
-
-        cache_path = path.replace('.wav', self._ext)
+    def transcribe(self, path: str) -> str:
+        cache_path = path.replace('.flac', '.ms')
         if os.path.exists(cache_path):
             with open(cache_path, 'r') as f:
                 return f.read()
 
-        speech_config = speechsdk.SpeechConfig(subscription=self._key, region=self._location)
+        speech_config = speechsdk.SpeechConfig(subscription=self._azure_speech_key, region=self._azure_speech_location)
         audio_config = speechsdk.audio.AudioConfig(filename=path)
         speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
 
-        res = ''
-
-        def recognized_cb(evt):
-            if evt.result.reason == speechsdk.ResultReason.RecognizedSpeech:
-                nonlocal res
-                res += ' ' + evt.result.text
-
-        done = False
-
-        def stop_cb(evt):
-            """callback that signals to stop continuous recognition upon receiving an event `evt`"""
-            nonlocal done
-            done = True
-
-        # Connect callbacks to the events fired by the speech recognizer
-        speech_recognizer.recognized.connect(recognized_cb)
-        # Stop continuous recognition on either session stopped or canceled events
-        speech_recognizer.session_stopped.connect(stop_cb)
-        speech_recognizer.canceled.connect(stop_cb)
-
-        # Start continuous speech recognition
-        speech_recognizer.start_continuous_recognition()
-        while not done:
-            time.sleep(0.5)
-
-        speech_recognizer.stop_continuous_recognition()
-        res = self._normalize(res)
+        res = self._normalize(speech_recognizer.recognize_once_async().get().text)
 
         with open(cache_path, 'w') as f:
             f.write(res)
 
         return res
 
-    def get_extension(self):
-        return self._ext
-
     def __str__(self):
-        return 'Microsoft Azure Speech To Text'
+        return 'Microsoft Azure Speech-to-text'
 
 
 class GoogleSpeechToTextEngine(Engine):
@@ -341,7 +308,7 @@ class WatsonSpeechToTextEngine(Engine):
         res = ''
         if response and 'results' in response and response['results']:
             res = response['results'][0]['alternatives'][0]['transcript']
-            res = normalize(res)
+            res = self._normalize(res)
 
         with open(cache_path, 'w') as f:
             f.write(res)
