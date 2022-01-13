@@ -147,7 +147,30 @@ class AzureSpeechToTextEngine(Engine):
         audio_config = speechsdk.audio.AudioConfig(filename=wav_path)
         speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
 
-        res = self._normalize(speech_recognizer.recognize_once_async().get().text)
+        res = ''
+
+        def recognized_cb(evt):
+            if evt.result.reason == speechsdk.ResultReason.RecognizedSpeech:
+                nonlocal res
+                res += ' ' + evt.result.text
+
+        done = False
+
+        def stop_cb(evt):
+            nonlocal done
+            done = True
+
+        speech_recognizer.recognized.connect(recognized_cb)
+        speech_recognizer.session_stopped.connect(stop_cb)
+        speech_recognizer.canceled.connect(stop_cb)
+
+        speech_recognizer.start_continuous_recognition()
+        while not done:
+            time.sleep(0.5)
+
+        speech_recognizer.stop_continuous_recognition()
+        res = self._normalize(res)
+
         os.remove(wav_path)
 
         with open(cache_path, 'w') as f:
