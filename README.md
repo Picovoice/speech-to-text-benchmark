@@ -150,9 +150,9 @@ refers to real time factor.
 Amazon Transcribe | 5.20% | 9.58% | --- | --- |
 Google Speech-to-Text | 11.23% | 24.94% | --- | --- |
 Google Speech-to-Text (Enhanced) | 6.62% | 13.59% | --- | --- |
-Mozilla DeepSpeech | 7.27% | 21.45% | --- | --- |
+Mozilla DeepSpeech | 7.27% | 21.45% | 18.90% | --- |
 Picovoice Cheetah | --- | --- | --- | --- |
-Picovoice Leopard | 5.73% | 12.84% | --- | --- |
+Picovoice Leopard | 5.73% | 12.84% | 9.83% | --- |
 
 | Engine | RTF | Model Size |
 :---:|:---:|:---:

@@ -46,7 +46,20 @@ class CommonVoiceDataset(Dataset):
         with open(os.path.join(folder, 'test.tsv')) as f:
             for row in csv.DictReader(f, delimiter='\t'):
                 if int(row['up_votes']) > 0 and int(row['down_votes']) == 0:
-                    self._data.append((os.path.join(folder, 'clips', row['path']), self._normalize(row['sentence'])))
+                    mp3_path = os.path.join(folder, 'clips', row['path'])
+                    flac_path = mp3_path.replace('.mp3', '.flac')
+                    if not os.path.exists(flac_path):
+                        args = [
+                            'ffmpeg',
+                            '-i',
+                            mp3_path,
+                            '-ac', '1',
+                            '-ar', '16000',
+                            flac_path,
+                        ]
+                        subprocess.check_output(args)
+
+                    self._data.append((flac_path, self._normalize(row['sentence'])))
 
     def size(self) -> int:
         return len(self._data)
