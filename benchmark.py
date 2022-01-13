@@ -94,6 +94,8 @@ def main():
     elif args.engine is Engines.WATSON_SPEECH_TO_TEXT:
         if args.watson_speech_to_text_api_key is None or args.watson_speech_to_text_url is None:
             raise ValueError("`watson-speech-to-text-api-key` and `watson-speech-to-text-url` are required")
+        kwargs['watson_speech_to_text_api_key'] = args.watson_speech_to_text_api_key
+        kwargs['watson_speech_to_text_url'] = args.watson_speech_to_text_url
 
     indices = list(range(dataset.size()))
     random.shuffle(indices)

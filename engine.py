@@ -325,9 +325,9 @@ class WatsonSpeechToTextEngine(Engine):
             with open(cache_path, 'r') as f:
                 return f.read()
 
-        with open(path, 'rb') as audio_file:
+        with open(path, 'rb') as f:
             response = self._service.recognize(
-                audio=audio_file,
+                audio=f,
                 content_type='audio/flac',
                 smart_formatting=True,
                 end_of_phrase_silence_time=15,
