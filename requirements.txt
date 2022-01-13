@@ -8,5 +8,6 @@ inflect
 matplotlib
 numpy
 pvleopard==1.0.0
+pytube
 requests
 soundfile
