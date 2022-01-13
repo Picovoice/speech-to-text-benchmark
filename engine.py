@@ -135,15 +135,20 @@ class AzureSpeechToTextEngine(Engine):
 
     def transcribe(self, path: str) -> str:
         cache_path = path.replace('.flac', '.ms')
+
         if os.path.exists(cache_path):
             with open(cache_path, 'r') as f:
                 return f.read()
 
+        wav_path = path.replace('.flac', '.wav')
+        soundfile.write(wav_path, soundfile.read(path, dtype='int16')[0], samplerate=16000)
+
         speech_config = speechsdk.SpeechConfig(subscription=self._azure_speech_key, region=self._azure_speech_location)
-        audio_config = speechsdk.audio.AudioConfig(filename=path)
+        audio_config = speechsdk.audio.AudioConfig(filename=wav_path)
         speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
 
         res = self._normalize(speech_recognizer.recognize_once_async().get().text)
+        os.remove(wav_path)
 
         with open(cache_path, 'w') as f:
             f.write(res)
