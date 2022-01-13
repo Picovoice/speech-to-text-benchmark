@@ -53,6 +53,8 @@ def main():
     parser.add_argument('--deepspeech-pbmm')
     parser.add_argument('--deepspeech-scorer')
     parser.add_argument('--picovoice-access-key')
+    parser.add_argument('--watson-speech-to-text-api-key')
+    parser.add_argument('--watson-speech-to-text-url')
     parser.add_argument('--num-examples', type=int, default=None)
     parser.add_argument('--num-workers', type=int, default=os.cpu_count())
     args = parser.parse_args()
@@ -72,23 +74,26 @@ def main():
             raise ValueError("`azure-speech-key` and `azure-speech-location` are required")
         kwargs['azure_speech_key'] = args.azure_speech_key
         kwargs['azure_speech_location'] = args.azure_speech_location
-    elif args.engine == Engines.GOOGLE_SPEECH_TO_TEXT or args.engine == Engines.GOOGLE_SPEECH_TO_TEXT_ENHANCED:
+    elif args.engine is Engines.GOOGLE_SPEECH_TO_TEXT or args.engine == Engines.GOOGLE_SPEECH_TO_TEXT_ENHANCED:
         if args.google_application_credentials is None:
             raise ValueError("`google-application-credentials` is required")
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.google_application_credentials
-    elif args.engine == Engines.MOZILLA_DEEP_SPEECH:
+    elif args.engine is Engines.MOZILLA_DEEP_SPEECH:
         if args.deepspeech_pbmm is None or args.deepspeech_scorer is None:
             raise ValueError("`deepspeech-pbmm` and `deepspeech-scorer` are required")
         kwargs['pbmm_path'] = args.deepspeech_pbmm
         kwargs['scorer_path'] = args.deepspeech_scorer
-    elif args.engine == Engines.PICOVOICE_CHEETAH:
+    elif args.engine is Engines.PICOVOICE_CHEETAH:
         if args.picovoice_access_key is None:
             raise ValueError("`picovoice-access-key` is required")
         kwargs['access_key'] = args.picovoice_access_key
-    elif args.engine == Engines.PICOVOICE_LEOPARD:
+    elif args.engine is Engines.PICOVOICE_LEOPARD:
         if args.picovoice_access_key is None:
             raise ValueError("`picovoice-access-key` is required")
         kwargs['access_key'] = args.picovoice_access_key
+    elif args.engine is Engines.WATSON_SPEECH_TO_TEXT:
+        if args.watson_speech_to_text_api_key is None or args.watson_speech_to_text_url is None:
+            raise ValueError("`watson-speech-to-text-api-key` and `watson-speech-to-text-url` are required")
 
     indices = list(range(dataset.size()))
     random.shuffle(indices)

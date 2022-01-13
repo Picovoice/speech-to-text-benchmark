@@ -25,6 +25,7 @@ class Engines(Enum):
     MOZILLA_DEEP_SPEECH = 'MOZILLA_DEEP_SPEECH'
     PICOVOICE_CHEETAH = "PICOVOICE_CHEETAH"
     PICOVOICE_LEOPARD = "PICOVOICE_LEOPARD"
+    WATSON_SPEECH_TO_TEXT = "WATSON_SPEECH_TO_TEXT"
 
 
 class Engine(object):
@@ -56,6 +57,8 @@ class Engine(object):
             return PicovoiceCheetahEngine(**kwargs)
         elif x is Engines.PICOVOICE_LEOPARD:
             return PicovoiceLeopardEngine(**kwargs)
+        elif x is Engines.WATSON_SPEECH_TO_TEXT:
+            return WatsonSpeechToTextEngine(**kwargs)
         else:
             raise ValueError(f"Cannot create {cls.__name__} of type `{x}`")
 
@@ -156,7 +159,7 @@ class AzureSpeechToTextEngine(Engine):
 
         done = False
 
-        def stop_cb(evt):
+        def stop_cb(_):
             nonlocal done
             done = True
 
@@ -262,7 +265,7 @@ class MozillaDeepSpeechEngine(Engine):
 
 
 class PicovoiceCheetahEngine(Engine):
-    def __init__(self, access_key: str):
+    def __init__(self, _: str):
         pass
 
     def transcribe(self, path: str) -> str:
@@ -312,15 +315,12 @@ class WatsonSpeechToTextEngine(Engine):
     def delete(self):
         pass
 
-    def __init__(self):
-        apikey = os.environ["WATSON_SPEECH_TO_TEXT_APIKEY"]
-        url = os.environ["WATSON_SPEECH_TO_TEXT_URL"]
-        self._service = SpeechToTextV1(authenticator=IAMAuthenticator(apikey))
-        self._service.set_service_url(url)
-        self._ext = '.ibm'
+    def __init__(self, watson_speech_to_text_api_key: str, watson_speech_to_text_url: str):
+        self._service = SpeechToTextV1(authenticator=IAMAuthenticator(watson_speech_to_text_api_key))
+        self._service.set_service_url(watson_speech_to_text_url)
 
-    def transcribe(self, path):
-        cache_path = path.replace('.wav', self._ext)
+    def transcribe(self, path: str) -> str:
+        cache_path = path.replace('.flac', '.ibm')
         if os.path.exists(cache_path):
             with open(cache_path, 'r') as f:
                 return f.read()
@@ -328,7 +328,7 @@ class WatsonSpeechToTextEngine(Engine):
         with open(path, 'rb') as audio_file:
             response = self._service.recognize(
                 audio=audio_file,
-                content_type='audio/wav',
+                content_type='audio/flac',
                 smart_formatting=True,
                 end_of_phrase_silence_time=15,
             ).get_result()
@@ -343,11 +343,8 @@ class WatsonSpeechToTextEngine(Engine):
 
         return res
 
-    def get_extension(self):
-        return self._ext
-
     def __str__(self):
-        return 'IBM Watson Speech to Text'
+        return 'IBM Watson Speech-to-Text'
 
 
 __all__ = ['Engines', 'Engine']
