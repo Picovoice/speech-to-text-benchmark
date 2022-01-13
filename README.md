@@ -147,7 +147,7 @@ refers to real time factor.
 
 | Engine | LibriSpeech test-clean | LibriSpeech test-other |  TEDLIUM | CommonVoice |
 :---:|:---:|:---:|:---:|:---:
-Amazon Transcribe | 5.20% | 9.58% | --- | --- |
+Amazon Transcribe | 5.20% | 9.58% | 4.25% | --- |
 Google Speech-to-Text | 11.23% | 24.94% | 15.00% | --- |
 Google Speech-to-Text (Enhanced) | 6.62% | 13.59% | 6.68% | --- |
 Mozilla DeepSpeech | 7.27% | 21.45% | 18.90% | --- |
