@@ -53,13 +53,13 @@ class Dataset(object):
 
 class AssemblyAIDataset(Dataset):
     def size(self) -> int:
-        pass
+        return len(self._data)
 
     def get(self, index: int) -> Tuple[str, str]:
-        pass
+        return self._data[index]
 
     def __str__(self) -> str:
-        pass
+        return 'AssemblyAI'
 
     _URLS = [
         'https://www.youtube.com/watch?v=1kNgGsp7f8c',
@@ -82,6 +82,8 @@ class AssemblyAIDataset(Dataset):
     ]
 
     def __init__(self, folder):
+        self._data = list()
+
         for url in self._URLS:
             webm_path = os.path.join(folder, f'{url.split("watch?v=")[1]}.webm')
             if not os.path.exists(webm_path):
@@ -126,6 +128,11 @@ class AssemblyAIDataset(Dataset):
 
                 with open(txt_path, 'w') as f:
                     f.write(norm_txt)
+
+            with open(txt_path) as f:
+                transcript = f.read()
+
+            self._data.append((flac_path, transcript))
 
 
 class CommonVoiceDataset(Dataset):
@@ -234,7 +241,7 @@ __all__ = ['Datasets', 'Dataset']
 
 
 def main():
-    o = AssemblyAIDataset(folder=os.path.expanduser('~/work/data/speech/AssemblyAI'))
+    pass
 
 
 if __name__ == '__main__':
