@@ -118,9 +118,15 @@ class AmazonTranscribeEngine(Engine):
         return -1.
 
     def delete(self):
-        bucket = self._s3.Bucket(self._s3_bucket)
-        bucket.objects.all().delete()
-        bucket.delete()
+        response = self._s3.list_objects_v2(Bucket=self._s3_bucket)
+        while response['KeyCount'] > 0:
+            self._s3.delete_objects(
+                Bucket=self._s3_bucket,
+                Delete={'Objects': [{'Key': obj['Key']} for obj in response['Contents']]}
+            )
+            response = self._s3.list_objects_v2(Bucket=self._s3_bucket)
+
+        self._s3.delete_bucket(Bucket=self._s3_bucket)
 
     def __str__(self):
         return 'Amazon Transcribe'
