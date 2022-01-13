@@ -86,35 +86,36 @@ class TEDLIUMDataset(Dataset):
     def __init__(self, folder: str):
         self._data = list()
 
-        data_dir = os.path.join(folder, 'test')
-        audio_path = os.path.join(data_dir, 'sph')
-        ref_path = os.path.join(data_dir, 'stm')
-        for stm_file in os.listdir(ref_path):
-            stm_path = os.path.join(ref_path, stm_file)
-            with open(stm_path) as f:
-                rd = csv.reader(f, delimiter=" ")
-
-                count = 0
-                for row in rd:
+        test_folder = os.path.join(folder, 'test')
+        audio_folder = os.path.join(test_folder, 'sph')
+        caption_folder = os.path.join(test_folder, 'stm')
+        for x in os.listdir(caption_folder):
+            with open(os.path.join(caption_folder, x)) as f:
+                for row in csv.reader(f, delimiter=" "):
                     if row[2] == "inter_segment_gap":
                         continue
-                    start = row[3]
-                    end = row[4]
-                    transcript = " ".join(row[6:])
-                    transcript = transcript.replace(" '", "'")
-                    transcript = self._normalize(transcript)
+                    start_sec = float(row[3])
+                    end_sec = float(row[4])
 
-                    sph_file = stm_file.replace('.stm', '.sph')
-                    wav_file = stm_file.replace('.stm', '_{:04d}.wav'.format(count))
-                    wav_path = os.path.join(audio_path, wav_file)
+                    transcript = self._normalize(" ".join(row[6:]).replace(" '", "'"))
 
-                    if not os.path.exists(wav_path):
-                        sph_path = os.path.join(audio_path, sph_file)
-                        subprocess.run(['sph2pipe', '-f', 'wav', '-p', '-c', '1', sph_path, wav_path,
-                                        '-t', "{}:{}".format(start, end)])
+                    sph_path = os.path.join(audio_folder, x.replace('.stm', '.sph'))
+                    flac_path = sph_path.replace('.sph', f'_{start_sec:.3f}_{end_sec:.3f}.flac')
 
-                    self._data.append((wav_path, transcript))
-                    count += 1
+                    if not os.path.exists(flac_path):
+                        args = [
+                            'ffmpeg',
+                            '-i',
+                            sph_path,
+                            '-ac', '1',
+                            '-ar', '16000',
+                            '-ss', f'{start_sec:.3f}',
+                            '-to', f'{end_sec:.3f}',
+                            flac_path,
+                        ]
+                        subprocess.check_output(args)
+
+                    self._data.append((flac_path, transcript))
 
     def size(self) -> int:
         return len(self._data)
@@ -127,3 +128,11 @@ class TEDLIUMDataset(Dataset):
 
 
 __all__ = ['Datasets', 'Dataset']
+
+
+def main():
+    pass
+
+
+if __name__ == '__main__':
+    main()
