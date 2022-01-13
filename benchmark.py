@@ -63,24 +63,24 @@ def main():
     kwargs = dict()
     if args.engine is Engines.AMAZON_TRANSCRIBE:
         if args.aws_profile is None:
-            raise ValueError("`aws_profile` is required")
+            raise ValueError("`aws-profile` is required")
         os.environ['AWS_PROFILE'] = args.aws_profile
     elif args.engine == Engines.GOOGLE_SPEECH_TO_TEXT or args.engine == Engines.GOOGLE_SPEECH_TO_TEXT_ENHANCED:
         if args.google_application_credentials is None:
-            raise ValueError("`google_application_credentials` is required")
+            raise ValueError("`google-application-credentials` is required")
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.google_application_credentials
     elif args.engine == Engines.MOZILLA_DEEP_SPEECH:
         if args.deepspeech_pbmm is None or args.deepspeech_scorer is None:
-            raise ValueError("`deepspeech_pbmm` and `deepspeech_scorer` are required")
+            raise ValueError("`deepspeech-pbmm` and `deepspeech-scorer` are required")
         kwargs['pbmm_path'] = args.deepspeech_pbmm
         kwargs['scorer_path'] = args.deepspeech_scorer
     elif args.engine == Engines.PICOVOICE_CHEETAH:
         if args.picovoice_access_key is None:
-            raise ValueError("`picovoice_access_key` is required")
+            raise ValueError("`picovoice-access-key` is required")
         kwargs['access_key'] = args.picovoice_access_key
     elif args.engine == Engines.PICOVOICE_LEOPARD:
         if args.picovoice_access_key is None:
-            raise ValueError("`picovoice_access_key` is required")
+            raise ValueError("`picovoice-access-key` is required")
         kwargs['access_key'] = args.picovoice_access_key
 
     indices = list(range(dataset.size()))
