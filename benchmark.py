@@ -91,7 +91,7 @@ def main():
         if args.picovoice_access_key is None:
             raise ValueError("`picovoice-access-key` is required")
         kwargs['access_key'] = args.picovoice_access_key
-    elif args.engine is Engines.WATSON_SPEECH_TO_TEXT:
+    elif args.engine is Engines.IBM_WATSON_SPEECH_TO_TEXT:
         if args.watson_speech_to_text_api_key is None or args.watson_speech_to_text_url is None:
             raise ValueError("`watson-speech-to-text-api-key` and `watson-speech-to-text-url` are required")
         kwargs['watson_speech_to_text_api_key'] = args.watson_speech_to_text_api_key
