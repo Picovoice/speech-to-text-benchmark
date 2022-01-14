@@ -155,6 +155,7 @@ IBM Watson Speech-to-Text | 11.08% | 26.38% | 11.89% | 38.81% | --- |
 Mozilla DeepSpeech | 7.27% | 21.45% | 18.90% | 43.82% | --- |
 Picovoice Cheetah | --- | --- | --- | --- | --- |
 Picovoice Leopard | 5.73% | 12.84% | 9.83% | 18.93% | 21.24% |
+Picovoice Big Leopard | 5.17% | 11.78% | --- | --- | --- |
 
 | Engine | RTF | Model Size |
 :---:|:---:|:---:
