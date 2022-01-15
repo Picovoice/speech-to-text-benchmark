@@ -14,9 +14,9 @@ This repo is a minimalist and extensible framework for benchmarking different sp
 
 ## Data
 
-- [LibriSpeech](http://www.openslr.org/12/) `test-clean` and `test-other portions`
-- [TED-LIUM])(https://www.openslr.org/7/) `test` portion
-- [Common Voice](https://commonvoice.mozilla.org/en) `test` portion (no down-votes and at least a single up-vote)
+- [LibriSpeech](http://www.openslr.org/12/)
+- [TED-LIUM](https://www.openslr.org/7/)
+- [Common Voice](https://commonvoice.mozilla.org/en)
 
 ## Metrics
 
@@ -152,21 +152,19 @@ python3 benchmark.py \
 
 ## Results
 
-The below results are obtained by following the previous steps. The benchmarking was performed on a Linux machine
-running Ubuntu 18.04 with 64GB of RAM and an Intel i5-6500 CPU running at 3.2 GHz. WER refers to word error rate and RTF
-refers to real time factor.
+### Accuracy
 
-| Engine | LibriSpeech test-clean | LibriSpeech test-other |  TEDLIUM | CommonVoice | AssemblyAI |
-:---:|:---:|:---:|:---:|:---:|:---:
-Amazon Transcribe | 5.20% | 9.58% | 4.25% | 15.94% | --- |
-Azure Speech-to-Text | 4.96% | 9.66% | 4.99% | 12.09% | 9.11% |
-Google Speech-to-Text | 11.23% | 24.94% | 15.00% | 30.68% | --- |
-Google Speech-to-Text (Enhanced) | 6.62% | 13.59% | 6.68% | 18.39% | --- |
-IBM Watson Speech-to-Text | 11.08% | 26.38% | 11.89% | 38.81% | --- |
-Mozilla DeepSpeech | 7.27% | 21.45% | 18.90% | 43.82% | --- |
-Picovoice Cheetah | --- | --- | --- | --- | --- |
-Picovoice Leopard | 5.73% | 12.84% | 9.83% | 18.93% | 21.24% |
-Picovoice Big Leopard | 5.17% | 11.78% | 9.11% | 16.66% | 18.87% |
+| Engine | LibriSpeech test-clean | LibriSpeech test-other |  TEDLIUM | CommonVoice |
+:---:|:---:|:---:|:---:|:---:|
+Amazon Transcribe | 5.20% | 9.58% | 4.25% | 15.94% |
+Azure Speech-to-Text | 4.96% | 9.66% | 4.99% | 12.09% |
+Google Speech-to-Text | 11.23% | 24.94% | 15.00% | 30.68% |
+Google Speech-to-Text (Enhanced) | 6.62% | 13.59% | 6.68% | 18.39% |
+IBM Watson Speech-to-Text | 11.08% | 26.38% | 11.89% | 38.81% |
+Mozilla DeepSpeech | 7.27% | 21.45% | 18.90% | 43.82% |
+Picovoice Cheetah | --- | --- | --- | --- |
+Picovoice Leopard | 5.73% | 12.84% | 9.83% | 18.93% |
+Picovoice Big Leopard | 5.17% | 11.78% | 9.11% | 16.66% |
 
 | Engine | RTF | Model Size |
 :---:|:---:|:---:
