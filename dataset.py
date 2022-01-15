@@ -11,7 +11,8 @@ import soundfile
 
 class Datasets(Enum):
     COMMON_VOICE = 'COMMON_VOICE'
-    LIBRI_SPEECH = 'LIBRI_SPEECH'
+    LIBRI_SPEECH_TEST_CLEAN = 'LIBRI_SPEECH_TEST_CLEAN'
+    LIBRI_SPEECH_TEST_OTHER = 'LIBRI_SPEECH_TEST_OTHER'
     TEDLIUM = 'TEDLIUM'
 
 
@@ -29,8 +30,8 @@ class Dataset(object):
     def create(cls, x: Datasets, folder: str):
         if x == Datasets.COMMON_VOICE:
             return CommonVoiceDataset(folder)
-        elif x == Datasets.LIBRI_SPEECH:
-            return LibriSpeechDataset(folder)
+        elif x == Datasets.LIBRI_SPEECH_TEST_CLEAN:
+            return LibriSpeechTestCleanDataset(folder)
         elif x == Datasets.TEDLIUM:
             return TEDLIUMDataset(folder)
         else:
@@ -81,7 +82,7 @@ class CommonVoiceDataset(Dataset):
         return 'CommonVoice'
 
 
-class LibriSpeechDataset(Dataset):
+class LibriSpeechTestCleanDataset(Dataset):
     def __init__(self, folder: str):
         self._data = list()
 
@@ -104,7 +105,15 @@ class LibriSpeechDataset(Dataset):
         return self._data[index]
 
     def __str__(self) -> str:
-        return 'LibriSpeech'
+        return 'LibriSpeech `test-clean`'
+
+
+class LibriSpeechTestOtherDataset(LibriSpeechTestCleanDataset):
+    def __init__(self, folder: str):
+        super().__init__(folder)
+
+    def __str__(self) -> str:
+        return 'LibriSpeech `test-other`'
 
 
 class TEDLIUMDataset(Dataset):
