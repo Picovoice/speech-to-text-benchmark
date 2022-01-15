@@ -154,28 +154,19 @@ python3 benchmark.py \
 
 ### Accuracy
 
-| Engine | LibriSpeech test-clean | LibriSpeech test-other |  TEDLIUM | CommonVoice |
-:---:|:---:|:---:|:---:|:---:|
-Amazon Transcribe | 5.20% | 9.58% | 4.25% | 15.94% |
-Azure Speech-to-Text | 4.96% | 9.66% | 4.99% | 12.09% |
-Google Speech-to-Text | 11.23% | 24.94% | 15.00% | 30.68% |
-Google Speech-to-Text (Enhanced) | 6.62% | 13.59% | 6.68% | 18.39% |
-IBM Watson Speech-to-Text | 11.08% | 26.38% | 11.89% | 38.81% |
-Mozilla DeepSpeech | 7.27% | 21.45% | 18.90% | 43.82% |
-Picovoice Cheetah | --- | --- | --- | --- |
-Picovoice Leopard | 5.73% | 12.84% | 9.83% | 18.93% |
-Picovoice Big Leopard | 5.17% | 11.78% | 9.11% | 16.66% |
+| Engine | LibriSpeech test-clean | LibriSpeech test-other |  TEDLIUM | CommonVoice | Average
+:---:|:---:|:---:|:---:|:---:|:---:|
+Amazon Transcribe | 5.20% | 9.58% | 4.25% | 15.94% | |
+Azure Speech-to-Text | 4.96% | 9.66% | 4.99% | 12.09% | |
+Google Speech-to-Text | 11.23% | 24.94% | 15.00% | 30.68% | |
+Google Speech-to-Text (Enhanced) | 6.62% | 13.59% | 6.68% | 18.39% | |
+IBM Watson Speech-to-Text | 11.08% | 26.38% | 11.89% | 38.81% | |
+Mozilla DeepSpeech | 7.27% | 21.45% | 18.90% | 43.82% | |
+Picovoice Cheetah | --- | --- | --- | --- | |
+Picovoice Leopard | 5.73% | 12.84% | 9.83% | 18.93% | |
 
 | Engine | RTF | Model Size |
 :---:|:---:|:---:
 Mozilla DeepSpeech | 0.46 | 1142.3 MB |
 Picovoice Cheetah | --- | --- |
 Picovoice Leopard | **0.05** | 18.2 MB |
-
-The figure below compares the word error rate of speech-to-text engines.
-
-![](res/doc/word_error_rate_comparison.png)
-
-The figure below compares accuracy and runtime metrics of offline speech-to-text engines.
-
-![](res/doc/offline_stt_comparison.png)
