@@ -42,10 +42,10 @@ WER = {
         Datasets.TEDLIUM: 18.90
     },
     Engines.PICOVOICE_CHEETAH: {
-        Datasets.COMMON_VOICE: 18.93,
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 5.73,
-        Datasets.LIBRI_SPEECH_TEST_OTHER: 12.84,
-        Datasets.TEDLIUM: 9.83
+        Datasets.COMMON_VOICE: 16.66,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 5.17,
+        Datasets.LIBRI_SPEECH_TEST_OTHER: 11.78,
+        Datasets.TEDLIUM: 9.11
     },
     Engines.PICOVOICE_LEOPARD: {
         Datasets.COMMON_VOICE: 18.93,
@@ -55,37 +55,31 @@ WER = {
     },
 }
 
+ENGINE_WER = sorted([(e, sum(w for w in WER[e].values()) / len(Datasets)) for e in Engines], key=lambda x: x[1])
+
 BLUE = (55 / 255, 125 / 255, 255 / 255)
 
 fig, ax = plt.subplots()
 
-print([sum(w for w in WER[e].values()) / len(Datasets) for e in Engines])
-
-ax.bar(
-    np.arange(1, len(Engines) + 1), [sum(w for w in WER[e].values()) / len(Datasets) for e in Engines],
-    0.4,
-    color=BLUE
-)
+ax.bar(np.arange(1, len(Engines) + 1), [x[1] for x in ENGINE_WER], 0.4, color=BLUE)
 
 ENGINE_TICKS = {
     Engines.AMAZON_TRANSCRIBE: 'Amazon',
     Engines.AZURE_SPEECH_TO_TEXT: 'Azure',
     Engines.GOOGLE_SPEECH_TO_TEXT: 'Google',
-    Engines.GOOGLE_SPEECH_TO_TEXT_ENHANCED: 'Google Enhanced',
-    Engines.IBM_WATSON_SPEECH_TO_TEXT: 'IBM Watson',
-    Engines.MOZILLA_DEEP_SPEECH: 'Mozilla DeepSpeech',
-    Engines.PICOVOICE_CHEETAH: 'Picovoice Cheetah',
-    Engines.PICOVOICE_LEOPARD: 'Picovoice Leopard'
+    Engines.GOOGLE_SPEECH_TO_TEXT_ENHANCED: 'Google\nEnhanced',
+    Engines.IBM_WATSON_SPEECH_TO_TEXT: 'IBM',
+    Engines.MOZILLA_DEEP_SPEECH: 'Mozilla\nDeepSpeech',
+    Engines.PICOVOICE_CHEETAH: 'Picovoice\nCheetah',
+    Engines.PICOVOICE_LEOPARD: 'Picovoice\nLeopard'
 }
 
 for spine in plt.gca().spines.values():
     if spine.spine_type != 'bottom' and spine.spine_type != 'left':
         spine.set_visible(False)
 
-plt.xticks(np.arange(1, len(Engines) + 1), [ENGINE_TICKS[e] for e in Engines], fontsize=9)
+plt.xticks(np.arange(1, len(Engines) + 1), [ENGINE_TICKS[x[0]] for x in ENGINE_WER], fontsize=9)
 
-plt.yticks(np.arange(5, 40, 5), ["%s%%" % str(x) for x in np.arange(5, 40, 5)])
+plt.yticks(np.arange(5, 30, 5), ["%s%%" % str(x) for x in np.arange(5, 30, 5)])
 
-plt.ylabel('Word Error Rate', fontsize=9)
-plt.title('Comparison of Word Error Rate of Speech-to-Text Engines\n')
 plt.show()
