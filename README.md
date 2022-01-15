@@ -9,17 +9,14 @@ This repo is a minimalist and extensible framework for benchmarking different sp
 - [Data](#data)
 - [Metrics](#metrics)
 - [Engines](#engines)
-  - [Amazon Transcribe](#amazon-transcribe)
-  - [Google Speech-to-Text](#google-speech-to-text)
-  - [Mozilla DeepSpeech](#mozilla-deepspeech)
-  - [Picovoice Cheetah](#picovoice-cheetah)
-  - [Picovoice Leopard](#picovoice-leopard)
 - [Usage](#usage)
 - [Results](#results)
 
 ## Data
 
-[LibriSpeech](http://www.openslr.org/12/) dataset is used for benchmarking.
+- [LibriSpeech](http://www.openslr.org/12/) `test-clean` and `test-other portions`
+- [TED-LIUM])(https://www.openslr.org/7/) `test` portion
+- [Common Voice](https://commonvoice.mozilla.org/en) `test` portion (no down-votes and at least a single up-vote)
 
 ## Metrics
 
@@ -39,35 +36,21 @@ The aggregate size of models (acoustic and language), in MB. We omit this metric
 
 ## Engines
 
-### Amazon Transcribe
-
-Amazon Transcribe is a cloud-based speech recognition engine, offered by AWS.
-
-### Google Speech-to-Text
-
-A cloud-based speech recognition engine offered by Google Cloud Platform.
-
-### Mozilla DeepSpeech
-
-[Mozilla DeepSpeech](https://github.com/mozilla/DeepSpeech) is an open-source implementation of
-[Baidu's DeepSpeech](https://arxiv.org/abs/1412.5567) by Mozilla. The version used in this benchmark is `0.9.3`.
-
-### Picovoice Cheetah
-
-[Cheetah](https://github.com/Picovoice/cheetah) is a streaming speech-to-text engine developed by
-[Picovoice](http://picovoice.ai/). The version used in this benchmark is `1.0.0`
-
-### Picovoice Leopard
-
-[Leopard](https://github.com/Picovoice/leopard) is a speech-to-text engine developed by
-[Picovoice](http://picovoice.ai/). The version used in this benchmark is `1.0.1`
+- [Azure Speech-to-Text](https://azure.microsoft.com/en-us/services/cognitive-services/speech-to-text/)
+- [Amazon Transcribe](https://aws.amazon.com/transcribe/)
+- [Google Speech-to-Text](https://cloud.google.com/speech-to-text)
+- [IBM Watson Speech-to-Text](https://www.ibm.com/ca-en/cloud/watson-speech-to-text)
+- [Mozilla DeepSpeech](https://github.com/mozilla/DeepSpeech)
+- [Picovoice Cheetah](https://picovoice.ai/)
+- [Picovoice Leopard](https://picovoice.ai/)
 
 ## Usage
 
 This benchmark is developed and test on `Ubuntu 20.04`.
 
-Download the [test-clean](http://www.openslr.org/resources/12/test-clean.tar.gz) portion of LibriSpeech and unpack it.
-Then, install the requirements:
+- Install [FFmpeg](https://www.ffmpeg.org/)
+- Download datasets.
+- Install the requirements:
 
 ```console
 pip3 install -r requirements.txt
@@ -75,67 +58,95 @@ pip3 install -r requirements.txt
 
 ### Amazon Transcribe Instructions
 
-Replace `${LIBRI_SPEECH_FOLDER}` with the path to downloaded LibriSpeech dataset and `${AWS_PROFILE}`
-with the name of AWS profile you wish to use. 
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, and `${AWS_PROFILE}`
+with the name of AWS profile you wish to use.
 
 ```console
 python3 benchmark.py \
---dataset LIBRI_SPEECH \
---dataset-folder ~/work/data/speech/LibriSpeech/test-clean/ \
+--dataset ${DATASET} \
+--dataset-folder ${DATASET_FOLDER} \
 --engine AMAZON_TRANSCRIBE \
 --aws-profile ${AWS_PROFILE}
 ```
 
-### Google Speech-to-Text Instructions
+### Azure Speech-to-Text Instructions
 
-Replace `${LIBRI_SPEECH_FOLDER}` with the path to downloaded LibriSpeech dataset and `${GOOGLE_APPLICATION_CREDENTIALS}`
-with credentials download from Google Cloud Platform. 
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset,
+`${AZURE_SPEECH_KEY}` and `${AZURE_SPEECH_LOCATION}` information from your Azure account.
 
 ```console
 python3 benchmark.py \
---dataset LIBRI_SPEECH \
---dataset-folder ${LIBRI_SPEECH_FOLDER} \
+--dataset ${DATASET} \
+--dataset-folder ${DATASET_FOLDER} \
+--engine AZURE_SPEECH_TO_TEXT \
+--azure-speech-key ${AZURE_SPEECH_KEY}
+--azure-speech-location ${AZURE_SPEECH_LOCATION}
+```
+
+### Google Speech-to-Text Instructions
+
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, and
+`${GOOGLE_APPLICATION_CREDENTIALS}` with credentials download from Google Cloud Platform.
+
+```console
+python3 benchmark.py \
+--dataset ${DATASET} \
+--dataset-folder ${DATASET_FOLDER} \
+--engine GOOGLE_SPEECH_TO_TEXT \
+--google-application-credentials ${GOOGLE_APPLICATION_CREDENTIALS}
+```
+
+### IBM Watson Speech-to-Text Instructions
+
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, and
+`${GOOGLE_APPLICATION_CREDENTIALS}` with credentials download from Google Cloud Platform.
+
+```console
+python3 benchmark.py \
+--dataset ${DATASET} \
+--dataset-folder ${DATASET_FOLDER} \
 --engine GOOGLE_SPEECH_TO_TEXT \
 --google-application-credentials ${GOOGLE_APPLICATION_CREDENTIALS}
 ```
 
 ### Mozilla DeepSpeech Instructions
 
-Replace `${LIBRI_SPEECH_FOLDER}` with the path to downloaded LibriSpeech dataset, `${DEEP_SPEECH_MODEL}` with path to
-DeepSpeech model file (`.pbmm`), and `${DEEP_SPEECH_SCORER}` with path to DeepSpeech scorer file (`.scorer`).
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset,
+`${DEEP_SPEECH_MODEL}` with path to DeepSpeech model file (`.pbmm`), and `${DEEP_SPEECH_SCORER}` with path to DeepSpeech
+scorer file (`.scorer`).
 
 ```console
 python3 benchmark.py \
 --engine MOZILLA_DEEP_SPEECH \
---dataset LIBRI_SPEECH \
---dataset-folder ${LIBRI_SPEECH_FOLDER} \
+--dataset ${DATASET} \
+--dataset-folder ${DATASET_FOLDER} \
 --deepspeech-pbmm ${DEEP_SPEECH_MODEL} \
 --deepspeech-scorer ${DEEP_SPEECH_SCORER}
 ```
 
 ### Picovoice Cheetah Instructions
 
-Replace `${LIBRI_SPEECH_FOLDER}` with the path to downloaded LibriSpeech dataset and `${PICOVOICE_ACCESS_KEY}` with
-AccessKey obtained from [Picovoice Console](https://console.picovoice.ai/).
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, and
+`${PICOVOICE_ACCESS_KEY}` with AccessKey obtained from [Picovoice Console](https://console.picovoice.ai/).
 
 ```console
 python3 benchmark.py \
 --engine PICOVOICE_CHEETAH \
---dataset LIBRI_SPEECH \
---dataset-folder ${LIBRI_SPEECH_FOLDER} \
+--dataset ${DATASET} \
+--dataset-folder ${DATASET_FOLDER} \
 --picovoice-access-key ${PICOVOICE_ACCESS_KEY}
 ```
 
 ### Picovoice Leopard Instructions
 
-Replace `${LIBRI_SPEECH_FOLDER}` with the path to downloaded LibriSpeech dataset and `${PICOVOICE_ACCESS_KEY}` with
-AccessKey obtained from [Picovoice Console](https://console.picovoice.ai/).
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, and
+`${PICOVOICE_ACCESS_KEY}` with AccessKey obtained from [Picovoice Console](https://console.picovoice.ai/).
 
 ```console
 python3 benchmark.py \
 --engine PICOVOICE_LEOPARD \
---dataset LIBRI_SPEECH \
---dataset-folder ${LIBRI_SPEECH_FOLDER} \
+--dataset ${DATASET} \
+--dataset-folder ${DATASET_FOLDER} \
 --picovoice-access-key ${PICOVOICE_ACCESS_KEY}
 ```
 
