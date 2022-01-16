@@ -32,6 +32,8 @@ class Dataset(object):
             return CommonVoiceDataset(folder)
         elif x == Datasets.LIBRI_SPEECH_TEST_CLEAN:
             return LibriSpeechTestCleanDataset(folder)
+        elif x == Datasets.LIBRI_SPEECH_TEST_OTHER:
+            return LibriSpeechTestOtherDataset(folder)
         elif x == Datasets.TEDLIUM:
             return TEDLIUMDataset(folder)
         else:

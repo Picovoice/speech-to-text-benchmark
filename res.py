@@ -48,14 +48,16 @@ WER = {
         Datasets.TEDLIUM: 9.11
     },
     Engines.PICOVOICE_LEOPARD: {
-        Datasets.COMMON_VOICE: 18.93,
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 5.73,
-        Datasets.LIBRI_SPEECH_TEST_OTHER: 12.84,
-        Datasets.TEDLIUM: 9.83
+        Datasets.COMMON_VOICE: 18.05,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 5.82,
+        Datasets.LIBRI_SPEECH_TEST_OTHER: 12.83,
+        Datasets.TEDLIUM: 9.05
     },
 }
 
 ENGINE_WER = sorted([(e, sum(w for w in WER[e].values()) / len(Datasets)) for e in Engines], key=lambda x: x[1])
+
+print(ENGINE_WER)
 
 BLUE = (55 / 255, 125 / 255, 255 / 255)
 
