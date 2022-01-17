@@ -48,10 +48,10 @@ WER = {
         Datasets.TEDLIUM: 9.11
     },
     Engines.PICOVOICE_LEOPARD: {
-        Datasets.COMMON_VOICE: 18.05,
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 5.82,
-        Datasets.LIBRI_SPEECH_TEST_OTHER: 12.83,
-        Datasets.TEDLIUM: 9.05
+        Datasets.COMMON_VOICE: 16.02,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 5.29,
+        Datasets.LIBRI_SPEECH_TEST_OTHER: 11.97,
+        Datasets.TEDLIUM: 8.06
     },
 }
 
