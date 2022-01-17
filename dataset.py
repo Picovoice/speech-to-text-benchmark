@@ -42,13 +42,28 @@ class Dataset(object):
     @staticmethod
     def _normalize(text: str) -> str:
         p = inflect.engine()
-        text = text.translate(str.maketrans('', '', string.punctuation.replace("'", "").replace("-", ""))).lower()
-        text = text.replace("-", " ")
+
+        text = text.lower()
+
+        for c in '-/–—':
+            text = text.replace(c, ' ')
+
+        for c in '‘!",.:;?“”`':
+            text = text.replace(c, '')
+
+        text = text.replace("’", "'").replace('&', 'and')
 
         def num2txt(y):
-            return p.number_to_words(y).replace('-', ' ').replace(',', '') if any(c.isdigit() for c in y) else y
+            return p.number_to_words(y).replace('-', ' ').replace(',', '') if any(x.isdigit() for x in y) else y
 
-        return ' '.join(num2txt(x) for x in text.split())
+        text = ' '.join(num2txt(x) for x in text.split())
+
+        if not all(c in " '" + string.ascii_lowercase for c in text):
+            raise RuntimeError()
+        if any(x.startswith("'") for x in text.split()):
+            raise RuntimeError()
+
+        return text
 
 
 class CommonVoiceDataset(Dataset):
@@ -72,7 +87,10 @@ class CommonVoiceDataset(Dataset):
                     elif soundfile.read(flac_path)[0].size > 16000 * 60:
                         continue
 
-                    self._data.append((flac_path, self._normalize(row['sentence'])))
+                    try:
+                        self._data.append((flac_path, self._normalize(row['sentence'])))
+                    except RuntimeError:
+                        continue
 
     def size(self) -> int:
         return len(self._data)
@@ -133,7 +151,10 @@ class TEDLIUMDataset(Dataset):
                     start_sec = float(row[3])
                     end_sec = float(row[4])
 
-                    transcript = self._normalize(" ".join(row[6:]).replace(" '", "'"))
+                    try:
+                        transcript = self._normalize(" ".join(row[6:]).replace(" '", "'"))
+                    except RuntimeError:
+                        continue
 
                     sph_path = os.path.join(audio_folder, x.replace('.stm', '.sph'))
                     flac_path = sph_path.replace('.sph', f'_{start_sec:.3f}_{end_sec:.3f}.flac')
