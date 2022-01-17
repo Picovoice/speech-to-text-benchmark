@@ -163,12 +163,12 @@ Google Speech-to-Text (Enhanced) | 6.62% | 13.59% | 6.68% | 18.39% | 11.32% |
 IBM Watson Speech-to-Text | 11.08% | 26.38% | 11.89% | 38.81% | 22.04% |
 Mozilla DeepSpeech | 7.27% | 21.45% | 18.90% | 43.82% | 22.86% |
 Picovoice Cheetah | 5.17% | 11.78% | 9.11% | 16.66% | 10.68% |
-Picovoice Leopard | 5.29% | 11.97% | 8.06% | 16.02% | 10.33% |
+Picovoice Leopard | 5.82% | 12.83% | 9.05% | 18.05% | 11.44% |
 
 | Engine | RTF | Model Size |
 :---:|:---:|:---:
-Mozilla DeepSpeech | 0.46 | 1142.3 MB |
+Mozilla DeepSpeech | 0.46 | 1142 MB |
 Picovoice Cheetah | --- | --- |
-Picovoice Leopard | 0.05 | 18.2 MB |
+Picovoice Leopard | 0.05 | 19 MB |
 
 ![](res/summary.png)

@@ -335,7 +335,11 @@ class PicovoiceCheetahEngine(Engine):
 
 class PicovoiceLeopardEngine(Engine):
     def __init__(self, access_key: str):
-        self._leopard = pvleopard.create(access_key=access_key, library_path=os.path.expanduser('~/work/gitlab/zoo-dev/build/release/x86_64/src/leopard/libpv_leopard.so'))
+        self._leopard = pvleopard.create(
+            access_key=access_key,
+            model_path=os.path.expanduser('~/work/gitlab/zoo-dev/res/leopard/param/leopard_params.pv'),
+            library_path=os.path.expanduser('~/work/gitlab/zoo-dev/build/release/x86_64/src/leopard/libpv_leopard.so')
+        )
         self._audio_sec = 0.
         self._proc_sec = 0.
 
