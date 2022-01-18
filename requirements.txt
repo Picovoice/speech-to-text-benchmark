@@ -7,7 +7,7 @@ ibm_watson
 inflect
 matplotlib
 numpy
-pvleopard==1.0.0
+pvleopard==1.0.2
 pytube
 requests
 soundfile
