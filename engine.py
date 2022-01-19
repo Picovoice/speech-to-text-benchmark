@@ -8,6 +8,7 @@ from enum import Enum
 import azure.cognitiveservices.speech as speechsdk
 import boto3
 import inflect
+import pvcheetah
 import pvleopard
 import requests
 import soundfile
@@ -317,17 +318,32 @@ class MozillaDeepSpeechEngine(Engine):
 
 
 class PicovoiceCheetahEngine(Engine):
-    def __init__(self, _: str):
-        pass
+    def __init__(self, access_key: str):
+        self._cheetah = pvcheetah.create(access_key=access_key)
+        self._audio_sec = 0.
+        self._proc_sec = 0.
 
     def transcribe(self, path: str) -> str:
-        raise NotImplementedError()
+        audio, sample_rate = soundfile.read(path, dtype='int16')
+        assert sample_rate == self._cheetah.sample_rate
+        self._audio_sec += audio.size / sample_rate
+
+        start_sec = time.time()
+        res = ''
+        for i in range(audio.size // self._cheetah.frame_length):
+            partial, _ = \
+                self._cheetah.process(audio[i * self._cheetah.frame_length: (i + 1) * self._cheetah.frame_length])
+            res += partial
+        res += self._cheetah.flush()
+        self._proc_sec += time.time() - start_sec
+
+        return res
 
     def rtf(self) -> float:
-        raise NotImplementedError()
+        return self._proc_sec / self._audio_sec
 
     def delete(self) -> None:
-        raise NotImplementedError()
+        self._cheetah.delete()
 
     def __str__(self) -> str:
         return 'Picovoice Cheetah'
