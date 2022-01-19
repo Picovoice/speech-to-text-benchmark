@@ -13,7 +13,7 @@ class Datasets(Enum):
     COMMON_VOICE = 'COMMON_VOICE'
     LIBRI_SPEECH_TEST_CLEAN = 'LIBRI_SPEECH_TEST_CLEAN'
     LIBRI_SPEECH_TEST_OTHER = 'LIBRI_SPEECH_TEST_OTHER'
-    TEDLIUM = 'TEDLIUM'
+    TED_LIUM = 'TED_LIUM'
 
 
 class Dataset(object):
@@ -34,7 +34,7 @@ class Dataset(object):
             return LibriSpeechTestCleanDataset(folder)
         elif x == Datasets.LIBRI_SPEECH_TEST_OTHER:
             return LibriSpeechTestOtherDataset(folder)
-        elif x == Datasets.TEDLIUM:
+        elif x == Datasets.TED_LIUM:
             return TEDLIUMDataset(folder)
         else:
             raise ValueError(f"Cannot create {cls.__name__} of type `{x}`")
@@ -181,7 +181,7 @@ class TEDLIUMDataset(Dataset):
         return self._data[index]
 
     def __str__(self) -> str:
-        return 'TEDLIUM'
+        return 'TED-LIUM'
 
 
 __all__ = ['Datasets', 'Dataset']

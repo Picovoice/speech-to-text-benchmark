@@ -162,13 +162,13 @@ python3 benchmark.py \
 | Google Speech-to-Text (Enhanced) |         6.62%          |         13.59%         |  6.68%   |   18.39%    | 11.32%  |
 |    IBM Watson Speech-to-Text     |         11.08%         |         26.38%         |  11.89%  |   38.81%    | 22.04%  |
 |        Mozilla DeepSpeech        |         7.27%          |         21.45%         |  18.90%  |   43.82%    | 22.86%  |
-|        Picovoice Cheetah         |         7.08%          |         16.28%         |  10.89%  |   -----%    | -----%  |
+|        Picovoice Cheetah         |         7.08%          |         16.28%         |  10.89%  |   23.10%    | 14.34%  |
 |        Picovoice Leopard         |         5.39%          |         12.45%         |  9.04%   |   17.13%    | 11.00%  |
 
 |       Engine       | RTF  | Model Size |
 |:------------------:|:----:|:----------:|
 | Mozilla DeepSpeech | 0.46 |  1142 MB   |
-| Picovoice Cheetah  | ---  |    ---     |
+| Picovoice Cheetah  | 0.07 |   19 MB    |
 | Picovoice Leopard  | 0.05 |   19 MB    |
 
 ![](res/summary.png)
