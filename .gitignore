@@ -1,4 +1,4 @@
 .idea/
 __pycache__/
-resources/data/
-resources/deepspeech/
+res/deepspeech/
+res/LibriSpeech
