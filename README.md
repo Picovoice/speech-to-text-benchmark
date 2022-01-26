@@ -36,8 +36,8 @@ The aggregate size of models (acoustic and language), in MB. We omit this metric
 
 ## Engines
 
-- [Azure Speech-to-Text](https://azure.microsoft.com/en-us/services/cognitive-services/speech-to-text/)
 - [Amazon Transcribe](https://aws.amazon.com/transcribe/)
+- [Azure Speech-to-Text](https://azure.microsoft.com/en-us/services/cognitive-services/speech-to-text/)
 - [Google Speech-to-Text](https://cloud.google.com/speech-to-text)
 - [IBM Watson Speech-to-Text](https://www.ibm.com/ca-en/cloud/watson-speech-to-text)
 - [Mozilla DeepSpeech](https://github.com/mozilla/DeepSpeech)
@@ -46,7 +46,7 @@ The aggregate size of models (acoustic and language), in MB. We omit this metric
 
 ## Usage
 
-This benchmark is developed and test on `Ubuntu 20.04`.
+This benchmark has been developed and tested on `Ubuntu 20.04`.
 
 - Install [FFmpeg](https://www.ffmpeg.org/)
 - Download datasets.
@@ -99,14 +99,15 @@ python3 benchmark.py \
 ### IBM Watson Speech-to-Text Instructions
 
 Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, and
-`${GOOGLE_APPLICATION_CREDENTIALS}` with credentials download from Google Cloud Platform.
+`${WATSON_SPEECH_TO_TEXT_API_KEY}`/`${${WATSON_SPEECH_TO_TEXT_URL}}` with credentials from your IBM account.
 
 ```console
 python3 benchmark.py \
 --dataset ${DATASET} \
 --dataset-folder ${DATASET_FOLDER} \
---engine GOOGLE_SPEECH_TO_TEXT \
---google-application-credentials ${GOOGLE_APPLICATION_CREDENTIALS}
+--engine IBM_WATSON_SPEECH_TO_TEXT \
+--watson-speech-to-text-api-key ${WATSON_SPEECH_TO_TEXT_API_KEY}
+--watson-speech-to-text-url ${WATSON_SPEECH_TO_TEXT_URL}
 ```
 
 ### Mozilla DeepSpeech Instructions
@@ -164,6 +165,11 @@ python3 benchmark.py \
 |        Mozilla DeepSpeech        |         7.27%          |         21.45%         |  18.90%  |   43.82%    | 22.86%  |
 |        Picovoice Cheetah         |         7.08%          |         16.28%         |  10.89%  |   23.10%    | 14.34%  |
 |        Picovoice Leopard         |         5.39%          |         12.45%         |  9.04%   |   17.13%    | 11.00%  |
+
+### RTF
+
+Measurement is carried on an Ubuntu 20.04 machine with Intel CPU (`Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz`), 64 GB of RAM,
+and NVMe storage.
 
 |       Engine       | RTF  | Model Size |
 |:------------------:|:----:|:----------:|
