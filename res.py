@@ -59,11 +59,16 @@ ENGINE_WER = sorted([(e, sum(w for w in WER[e].values()) / len(Datasets)) for e 
 
 print('\n'.join(f"{e.value}: {x:.2f}" for e, x in sorted(ENGINE_WER, key=lambda x: x[1])))
 
+GREY = (100 / 255, 100 / 255, 100 / 255)
 BLUE = (55 / 255, 125 / 255, 255 / 255)
 
 fig, ax = plt.subplots()
 
-ax.bar(np.arange(1, len(Engines) + 1), [x[1] for x in ENGINE_WER], 0.4, color=BLUE)
+for i, (engine, wer) in enumerate(ENGINE_WER, start=1):
+    color = BLUE if engine is Engines.PICOVOICE_LEOPARD or engine is Engines.PICOVOICE_CHEETAH else GREY
+    ax.bar([i], [wer], 0.4, color=color)
+    ax.text(i - 0.3, wer + 1, f'{wer:.2f}%', color=color)
+
 
 ENGINE_TICKS = {
     Engines.AMAZON_TRANSCRIBE: 'Amazon',
@@ -83,5 +88,7 @@ for spine in plt.gca().spines.values():
 plt.xticks(np.arange(1, len(Engines) + 1), [ENGINE_TICKS[x[0]] for x in ENGINE_WER], fontsize=9)
 
 plt.yticks(np.arange(5, 30, 5), ["%s%%" % str(x) for x in np.arange(5, 30, 5)])
+
+plt.ylabel('Word Error Rate (lower is better)')
 
 plt.show()

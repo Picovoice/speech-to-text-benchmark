@@ -153,7 +153,9 @@ python3 benchmark.py \
 
 ## Results
 
-### Accuracy
+### Word Error Rate (WER)
+
+![](res/summary.png)
 
 |              Engine              | LibriSpeech test-clean | LibriSpeech test-other | TED-LIUM | CommonVoice | Average |
 |:--------------------------------:|:----------------------:|:----------------------:|:--------:|:-----------:|:-------:|
@@ -168,13 +170,11 @@ python3 benchmark.py \
 
 ### RTF
 
-Measurement is carried on an Ubuntu 20.04 machine with Intel CPU (`Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz`), 64 GB of RAM,
-and NVMe storage.
+Measurement is carried on an Ubuntu 20.04 machine with Intel CPU (`Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz`), 64 GB of
+RAM, and NVMe storage.
 
 |       Engine       | RTF  | Model Size |
 |:------------------:|:----:|:----------:|
 | Mozilla DeepSpeech | 0.46 |  1142 MB   |
 | Picovoice Cheetah  | 0.07 |   19 MB    |
 | Picovoice Leopard  | 0.05 |   19 MB    |
-
-![](res/summary.png)
