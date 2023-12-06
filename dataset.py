@@ -1,12 +1,12 @@
 import csv
 import os
-import string
 import subprocess
 from enum import Enum
 from typing import Tuple
 
-import inflect
 import soundfile
+
+from normalizer import Normalizer
 
 
 class Datasets(Enum):
@@ -28,49 +28,25 @@ class Dataset(object):
 
     @classmethod
     def create(cls, x: Datasets, folder: str):
-        if x == Datasets.COMMON_VOICE:
+        if x is Datasets.COMMON_VOICE:
             return CommonVoiceDataset(folder)
-        elif x == Datasets.LIBRI_SPEECH_TEST_CLEAN:
+        elif x is Datasets.LIBRI_SPEECH_TEST_CLEAN:
             return LibriSpeechTestCleanDataset(folder)
-        elif x == Datasets.LIBRI_SPEECH_TEST_OTHER:
+        elif x is Datasets.LIBRI_SPEECH_TEST_OTHER:
             return LibriSpeechTestOtherDataset(folder)
-        elif x == Datasets.TED_LIUM:
+        elif x is Datasets.TED_LIUM:
             return TEDLIUMDataset(folder)
         else:
             raise ValueError(f"Cannot create {cls.__name__} of type `{x}`")
 
-    @staticmethod
-    def _normalize(text: str) -> str:
-        p = inflect.engine()
-
-        text = text.lower()
-
-        for c in '-/–—':
-            text = text.replace(c, ' ')
-
-        for c in '‘!",.:;?“”`':
-            text = text.replace(c, '')
-
-        text = text.replace("’", "'").replace('&', 'and')
-
-        def num2txt(y):
-            return p.number_to_words(y).replace('-', ' ').replace(',', '') if any(x.isdigit() for x in y) else y
-
-        text = ' '.join(num2txt(x) for x in text.split())
-
-        if not all(c in " '" + string.ascii_lowercase for c in text):
-            raise RuntimeError()
-        if any(x.startswith("'") for x in text.split()):
-            raise RuntimeError()
-
-        return text
-
 
 class CommonVoiceDataset(Dataset):
     def __init__(self, folder: str):
+        normalizer = Normalizer()
         self._data = list()
         with open(os.path.join(folder, 'test.tsv')) as f:
-            for row in csv.DictReader(f, delimiter='\t'):
+            reader: csv.DictReader = csv.DictReader(f, delimiter='\t')
+            for row in reader:
                 if int(row['up_votes']) > 0 and int(row['down_votes']) == 0:
                     mp3_path = os.path.join(folder, 'clips', row['path'])
                     flac_path = mp3_path.replace('.mp3', '.flac')
@@ -88,7 +64,7 @@ class CommonVoiceDataset(Dataset):
                         continue
 
                     try:
-                        self._data.append((flac_path, self._normalize(row['sentence'])))
+                        self._data.append((flac_path, normalizer.normalize(row['sentence'])))
                     except RuntimeError:
                         continue
 
@@ -105,7 +81,6 @@ class CommonVoiceDataset(Dataset):
 class LibriSpeechTestCleanDataset(Dataset):
     def __init__(self, folder: str):
         self._data = list()
-
         for speaker_id in os.listdir(folder):
             speaker_folder = os.path.join(folder, speaker_id)
             for chapter_id in os.listdir(speaker_folder):
@@ -138,8 +113,8 @@ class LibriSpeechTestOtherDataset(LibriSpeechTestCleanDataset):
 
 class TEDLIUMDataset(Dataset):
     def __init__(self, folder: str):
+        normalizer = Normalizer()
         self._data = list()
-
         test_folder = os.path.join(folder, 'test')
         audio_folder = os.path.join(test_folder, 'sph')
         caption_folder = os.path.join(test_folder, 'stm')
@@ -152,7 +127,7 @@ class TEDLIUMDataset(Dataset):
                     end_sec = float(row[4])
 
                     try:
-                        transcript = self._normalize(" ".join(row[6:]).replace(" '", "'"))
+                        transcript = normalizer.normalize(" ".join(row[6:]).replace(" '", "'"))
                     except RuntimeError:
                         continue
 
@@ -166,6 +141,7 @@ class TEDLIUMDataset(Dataset):
                             sph_path,
                             '-ac', '1',
                             '-ar', '16000',
+                            '-loglevel', 'error',
                             '-ss', f'{start_sec:.3f}',
                             '-to', f'{end_sec:.3f}',
                             flac_path,
