@@ -59,12 +59,9 @@ def main():
     parser.add_argument('--num-workers', type=int, default=os.cpu_count())
     args = parser.parse_args()
 
-    args.dataset = Datasets[args.dataset]
     args.engine = Engines[args.engine]
 
-    dataset = Dataset.create(args.dataset, folder=args.dataset_folder)
-
-    kwargs = dict()
+    engine_params = dict()
     if args.engine is Engines.AMAZON_TRANSCRIBE:
         if args.aws_profile is None:
             raise ValueError("`aws-profile` is required")
@@ -72,30 +69,28 @@ def main():
     elif args.engine is Engines.AZURE_SPEECH_TO_TEXT:
         if args.azure_speech_key is None or args.azure_speech_location is None:
             raise ValueError("`azure-speech-key` and `azure-speech-location` are required")
-        kwargs['azure_speech_key'] = args.azure_speech_key
-        kwargs['azure_speech_location'] = args.azure_speech_location
+        engine_params['azure_speech_key'] = args.azure_speech_key
+        engine_params['azure_speech_location'] = args.azure_speech_location
     elif args.engine is Engines.GOOGLE_SPEECH_TO_TEXT or args.engine == Engines.GOOGLE_SPEECH_TO_TEXT_ENHANCED:
         if args.google_application_credentials is None:
             raise ValueError("`google-application-credentials` is required")
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.google_application_credentials
-    elif args.engine is Engines.MOZILLA_DEEP_SPEECH:
-        if args.deepspeech_pbmm is None or args.deepspeech_scorer is None:
-            raise ValueError("`deepspeech-pbmm` and `deepspeech-scorer` are required")
-        kwargs['pbmm_path'] = args.deepspeech_pbmm
-        kwargs['scorer_path'] = args.deepspeech_scorer
     elif args.engine is Engines.PICOVOICE_CHEETAH:
         if args.picovoice_access_key is None:
             raise ValueError("`picovoice-access-key` is required")
-        kwargs['access_key'] = args.picovoice_access_key
+        engine_params['access_key'] = args.picovoice_access_key
     elif args.engine is Engines.PICOVOICE_LEOPARD:
         if args.picovoice_access_key is None:
             raise ValueError("`picovoice-access-key` is required")
-        kwargs['access_key'] = args.picovoice_access_key
+        engine_params['access_key'] = args.picovoice_access_key
     elif args.engine is Engines.IBM_WATSON_SPEECH_TO_TEXT:
         if args.watson_speech_to_text_api_key is None or args.watson_speech_to_text_url is None:
             raise ValueError("`watson-speech-to-text-api-key` and `watson-speech-to-text-url` are required")
-        kwargs['watson_speech_to_text_api_key'] = args.watson_speech_to_text_api_key
-        kwargs['watson_speech_to_text_url'] = args.watson_speech_to_text_url
+        engine_params['watson_speech_to_text_api_key'] = args.watson_speech_to_text_api_key
+        engine_params['watson_speech_to_text_url'] = args.watson_speech_to_text_url
+
+    args.dataset = Datasets[args.dataset]
+    dataset = Dataset.create(args.dataset, folder=args.dataset_folder)
 
     indices = list(range(dataset.size()))
     random.shuffle(indices)
@@ -103,8 +98,18 @@ def main():
         indices = indices[:args.num_examples]
 
     num_workers = args.num_workers
-
     chunk = math.ceil(len(indices) / num_workers)
+
+    res = process(
+        engine=args.engine,
+        engine_params=engine_params,
+        dataset=args.dataset,
+        dataset_folder=args.dataset_folder,
+        indices=indices[0:10],
+    )
+    import code
+    code.interact(local=locals())
+    return
 
     futures = list()
     with ProcessPoolExecutor(num_workers) as executor:
@@ -112,7 +117,7 @@ def main():
             future = executor.submit(
                 process,
                 engine=args.engine,
-                engine_params=kwargs,
+                engine_params=engine_params,
                 dataset=args.dataset,
                 dataset_folder=args.dataset_folder,
                 indices=indices[i * chunk: (i + 1) * chunk]

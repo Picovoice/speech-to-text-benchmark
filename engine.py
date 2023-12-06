@@ -12,7 +12,7 @@ import pvcheetah
 import pvleopard
 import requests
 import soundfile
-from deepspeech import Model
+import whisper
 from google.cloud import speech
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from ibm_watson import SpeechToTextV1
@@ -24,7 +24,8 @@ class Engines(Enum):
     GOOGLE_SPEECH_TO_TEXT = "GOOGLE_SPEECH_TO_TEXT"
     GOOGLE_SPEECH_TO_TEXT_ENHANCED = "GOOGLE_SPEECH_TO_TEXT_ENHANCED"
     IBM_WATSON_SPEECH_TO_TEXT = "IBM_WATSON_SPEECH_TO_TEXT"
-    MOZILLA_DEEP_SPEECH = 'MOZILLA_DEEP_SPEECH'
+    WHISPER_TINY = "WHISPER_TINY"
+    WHISPER_SMALL = "WHISPER_SMALL"
     PICOVOICE_CHEETAH = "PICOVOICE_CHEETAH"
     PICOVOICE_LEOPARD = "PICOVOICE_LEOPARD"
 
@@ -52,8 +53,10 @@ class Engine(object):
             return GoogleSpeechToTextEngine()
         elif x is Engines.GOOGLE_SPEECH_TO_TEXT_ENHANCED:
             return GoogleSpeechToTextEnhancedEngine()
-        elif x is Engines.MOZILLA_DEEP_SPEECH:
-            return MozillaDeepSpeechEngine(**kwargs)
+        elif x is Engines.WHISPER_TINY:
+            return WhisperTiny()
+        elif x is Engines.WHISPER_SMALL:
+            return WhisperSmall()
         elif x is Engines.PICOVOICE_CHEETAH:
             return PicovoiceCheetahEngine(**kwargs)
         elif x is Engines.PICOVOICE_LEOPARD:
@@ -92,7 +95,8 @@ class AmazonTranscribeEngine(Engine):
 
         if os.path.exists(cache_path):
             with open(cache_path) as f:
-                return f.read()
+                res = f.read()
+            return self._normalize(res)
 
         job_name = str(uuid.uuid4())
         s3_object = os.path.basename(path)
@@ -108,15 +112,16 @@ class AmazonTranscribeEngine(Engine):
             status = self._transcribe_client.get_transcription_job(TranscriptionJobName=job_name)
             if status['TranscriptionJob']['TranscriptionJobStatus'] == 'COMPLETED':
                 break
-            time.sleep(5)
+            time.sleep(1)
 
         content = requests.get(status['TranscriptionJob']['Transcript']['TranscriptFileUri'])
 
         res = json.loads(content.content.decode('utf8'))['results']['transcripts'][0]['transcript']
-        res = self._normalize(res)
 
         with open(cache_path, 'w') as f:
             f.write(res)
+
+        res = self._normalize(res)
 
         return res
 
@@ -146,9 +151,10 @@ class AzureSpeechToTextEngine(Engine):
     def transcribe(self, path: str) -> str:
         cache_path = path.replace('.flac', '.ms')
 
-        if os.path.exists(cache_path):
-            with open(cache_path, 'r') as f:
-                return f.read()
+        # if os.path.exists(cache_path):
+        #     with open(cache_path, 'r') as f:
+        #         res = f.read()
+        #     return self._normalize(res)
 
         wav_path = path.replace('.flac', '.wav')
         soundfile.write(wav_path, soundfile.read(path, dtype='int16')[0], samplerate=16000)
@@ -156,35 +162,54 @@ class AzureSpeechToTextEngine(Engine):
         speech_config = speechsdk.SpeechConfig(subscription=self._azure_speech_key, region=self._azure_speech_location)
         audio_config = speechsdk.audio.AudioConfig(filename=wav_path)
         speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
+        #
+        # res = ''
+        #
+        # def recognized_cb(evt):
+        #     if evt.result.reason == speechsdk.ResultReason.RecognizedSpeech:
+        #         nonlocal res
+        #         res += ' ' + evt.result.text
+        #
+        # done = False
+        #
+        # def stop_cb(_):
+        #     nonlocal done
+        #     done = True
+        #
+        # speech_recognizer.recognized.connect(recognized_cb)
+        # speech_recognizer.session_stopped.connect(stop_cb)
+        # speech_recognizer.canceled.connect(stop_cb)
+        #
+        # speech_recognizer.start_continuous_recognition()
+        # while not done:
+        #     time.sleep(0.5)
+        #
+        # speech_recognizer.stop_continuous_recognition()
 
-        res = ''
+        result = speech_recognizer.recognize_once_async().get()
+        if result.reason == speechsdk.ResultReason.RecognizedSpeech:
+            print("Recognized: {}".format(result.text))
+        elif result.reason == speechsdk.ResultReason.NoMatch:
+            print("No speech could be recognized: {}".format(result.no_match_details))
+        elif result.reason == speechsdk.ResultReason.Canceled:
+            cancellation_details = result.cancellation_details
+            print("Speech Recognition canceled: {}".format(cancellation_details.reason))
+            if cancellation_details.reason == speechsdk.CancellationReason.Error:
+                print("Error details: {}".format(cancellation_details.error_details))
+                print("Did you set the speech resource key and region values?")
 
-        def recognized_cb(evt):
-            if evt.result.reason == speechsdk.ResultReason.RecognizedSpeech:
-                nonlocal res
-                res += ' ' + evt.result.text
+        res = result.text
+        print(f"transcript: {res}")
 
-        done = False
-
-        def stop_cb(_):
-            nonlocal done
-            done = True
-
-        speech_recognizer.recognized.connect(recognized_cb)
-        speech_recognizer.session_stopped.connect(stop_cb)
-        speech_recognizer.canceled.connect(stop_cb)
-
-        speech_recognizer.start_continuous_recognition()
-        while not done:
-            time.sleep(0.5)
-
-        speech_recognizer.stop_continuous_recognition()
-        res = self._normalize(res)
+        import code
+        code.interact(local=locals())
 
         os.remove(wav_path)
 
         with open(cache_path, 'w') as f:
             f.write(res)
+
+        res = self._normalize(res)
 
         return res
 
@@ -199,7 +224,7 @@ class AzureSpeechToTextEngine(Engine):
 
 
 class GoogleSpeechToTextEngine(Engine):
-    def __init__(self, cache_extension: str = 'ggl', model: str = None):
+    def __init__(self, cache_extension: str = '.ggl', model: str = None):
         self._client = speech.SpeechClient()
 
         self._config = speech.RecognitionConfig(
@@ -211,11 +236,12 @@ class GoogleSpeechToTextEngine(Engine):
 
         self._cache_extension = cache_extension
 
-    def transcribe(self, path):
+    def transcribe(self, path: str) -> str:
         cache_path = path.replace('.flac', self._cache_extension)
         if os.path.exists(cache_path):
             with open(cache_path) as f:
-                return f.read()
+                res = f.read()
+            return self._normalize(res)
 
         with open(path, 'rb') as f:
             content = f.read()
@@ -225,10 +251,11 @@ class GoogleSpeechToTextEngine(Engine):
         response = self._client.recognize(config=self._config, audio=audio)
 
         res = ' '.join(result.alternatives[0].transcript for result in response.results)
-        res = self._normalize(res)
 
         with open(cache_path, 'w') as f:
             f.write(res)
+
+        res = self._normalize(res)
 
         return res
 
@@ -259,7 +286,8 @@ class IBMWatsonSpeechToTextEngine(Engine):
         cache_path = path.replace('.flac', '.ibm')
         if os.path.exists(cache_path):
             with open(cache_path, 'r') as f:
-                return f.read()
+                res = f.read()
+            return self._normalize(res)
 
         with open(path, 'rb') as f:
             response = self._service.recognize(
@@ -270,12 +298,13 @@ class IBMWatsonSpeechToTextEngine(Engine):
             ).get_result()
 
         res = ''
-        if response and 'results' in response and response['results']:
+        if response and ('results' in response) and response['results']:
             res = response['results'][0]['alternatives'][0]['transcript']
-            res = self._normalize(res)
 
         with open(cache_path, 'w') as f:
             f.write(res)
+
+        res = self._normalize(res)
 
         return res
 
@@ -289,21 +318,34 @@ class IBMWatsonSpeechToTextEngine(Engine):
         return 'IBM Watson Speech-to-Text'
 
 
-class MozillaDeepSpeechEngine(Engine):
-    def __init__(self, pbmm_path: str, scorer_path: str):
-        self._model = Model(pbmm_path)
-        self._model.enableExternalScorer(scorer_path)
+class WhisperTiny(Engine):
+    SAMPLE_RATE = 16000
+
+    def __init__(self, cache_extension: str = ".wspt", model: str = "tiny.en"):
+        self._model = whisper.load_model(model, device="cpu")
+        self._cache_extension = cache_extension
         self._audio_sec = 0.
         self._proc_sec = 0.
 
     def transcribe(self, path: str) -> str:
         audio, sample_rate = soundfile.read(path, dtype='int16')
-        assert sample_rate == self._model.sampleRate()
+        assert sample_rate == self.SAMPLE_RATE
         self._audio_sec += audio.size / sample_rate
 
+        cache_path = path.replace('.flac', self._cache_extension)
+        if os.path.exists(cache_path):
+            with open(cache_path) as f:
+                res = f.read()
+            return self._normalize(res)
+
         start_sec = time.time()
-        res = self._model.stt(audio)
+        res = self._model.transcribe(path)['text']
         self._proc_sec += time.time() - start_sec
+
+        with open(cache_path, 'w') as f:
+            f.write(res)
+
+        res = self._normalize(res)
 
         return res
 
@@ -314,7 +356,15 @@ class MozillaDeepSpeechEngine(Engine):
         pass
 
     def __str__(self) -> str:
-        return 'Mozilla DeepSpeech'
+        return 'Whisper Tiny'
+
+
+class WhisperSmall(WhisperTiny):
+    def __init__(self):
+        super().__init__(cache_extension='.wsps', model="small.en")
+
+    def __str__(self) -> str:
+        return 'Whisper Small'
 
 
 class PicovoiceCheetahEngine(Engine):
@@ -364,7 +414,7 @@ class PicovoiceLeopardEngine(Engine):
         res = self._leopard.process(audio)
         self._proc_sec += time.time() - start_sec
 
-        return res
+        return res[0]
 
     def rtf(self) -> float:
         return self._proc_sec / self._audio_sec

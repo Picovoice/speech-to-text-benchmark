@@ -2,3 +2,4 @@
 __pycache__/
 res/deepspeech/
 res/LibriSpeech
+venv

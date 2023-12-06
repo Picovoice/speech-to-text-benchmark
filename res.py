@@ -6,52 +6,73 @@ from engine import Engines
 
 WER = {
     Engines.AMAZON_TRANSCRIBE: {
-        Datasets.COMMON_VOICE: 15.94,
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 5.20,
-        Datasets.LIBRI_SPEECH_TEST_OTHER: 9.58,
-        Datasets.TED_LIUM: 4.25
+        Datasets.COMMON_VOICE: 15.94,  # TODO
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 2.68,
+        Datasets.LIBRI_SPEECH_TEST_OTHER: 5.69,  # TODO
+        Datasets.TED_LIUM: 4.25  # TODO
     },
     Engines.AZURE_SPEECH_TO_TEXT: {
-        Datasets.COMMON_VOICE: 12.09,
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 4.96,
-        Datasets.LIBRI_SPEECH_TEST_OTHER: 9.66,
-        Datasets.TED_LIUM: 4.99
+        Datasets.COMMON_VOICE: 12.09,  # TODO
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 4.96,  # TODO
+        Datasets.LIBRI_SPEECH_TEST_OTHER: 9.66,  # TODO
+        Datasets.TED_LIUM: 4.99  # TODO
     },
     Engines.GOOGLE_SPEECH_TO_TEXT: {
-        Datasets.COMMON_VOICE: 30.68,
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 11.23,
-        Datasets.LIBRI_SPEECH_TEST_OTHER: 24.94,
-        Datasets.TED_LIUM: 15.00
+        Datasets.COMMON_VOICE: 30.68,  # TODO
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 11.23,  # TODO
+        Datasets.LIBRI_SPEECH_TEST_OTHER: 24.68,
+        Datasets.TED_LIUM: 15.00  # TODO
     },
     Engines.GOOGLE_SPEECH_TO_TEXT_ENHANCED: {
-        Datasets.COMMON_VOICE: 18.39,
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 6.62,
-        Datasets.LIBRI_SPEECH_TEST_OTHER: 13.59,
-        Datasets.TED_LIUM: 6.68
+        Datasets.COMMON_VOICE: 18.39,  # TODO
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 6.62,  # TODO
+        Datasets.LIBRI_SPEECH_TEST_OTHER: 13.59,  # TODO
+        Datasets.TED_LIUM: 6.68  # TODO
+    },
+    Engines.WHISPER_TINY: {
+        Datasets.COMMON_VOICE: 18.39,  # TODO
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 6.62,  # TODO
+        Datasets.LIBRI_SPEECH_TEST_OTHER: 6.55,  # TODO
+        Datasets.TED_LIUM: 6.68  # TODO
     },
     Engines.IBM_WATSON_SPEECH_TO_TEXT: {
-        Datasets.COMMON_VOICE: 38.81,
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 11.08,
-        Datasets.LIBRI_SPEECH_TEST_OTHER: 26.38,
-        Datasets.TED_LIUM: 11.89
-    },
-    Engines.MOZILLA_DEEP_SPEECH: {
-        Datasets.COMMON_VOICE: 43.82,
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 7.27,
-        Datasets.LIBRI_SPEECH_TEST_OTHER: 21.45,
-        Datasets.TED_LIUM: 18.90
+        Datasets.COMMON_VOICE: 38.81,  # TODO
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 11.08,  # TODO
+        Datasets.LIBRI_SPEECH_TEST_OTHER: 26.38,  # TODO
+        Datasets.TED_LIUM: 11.89  # TODO
     },
     Engines.PICOVOICE_CHEETAH: {
-        Datasets.COMMON_VOICE: 23.10,
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 7.08,
-        Datasets.LIBRI_SPEECH_TEST_OTHER: 16.28,
-        Datasets.TED_LIUM: 10.89
+        Datasets.COMMON_VOICE: 23.10,  # TODO
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 5.87,
+        Datasets.LIBRI_SPEECH_TEST_OTHER: 12.46,
+        Datasets.TED_LIUM: 7.83,  #  7.79 # WITHOUT new normalizations
     },
     Engines.PICOVOICE_LEOPARD: {
-        Datasets.COMMON_VOICE: 17.13,
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 5.39,
-        Datasets.LIBRI_SPEECH_TEST_OTHER: 12.45,
-        Datasets.TED_LIUM: 9.04
+        Datasets.COMMON_VOICE: 16.68,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 5.39,  # TODO
+        Datasets.LIBRI_SPEECH_TEST_OTHER: 12.45,  # TODO
+        Datasets.TED_LIUM: 9.04  # TODO
+    },
+}
+
+RTF = {
+    Engines.WHISPER_TINY: {
+        Datasets.COMMON_VOICE: 23.10,  # TODO
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 5.87,   # TODO
+        Datasets.LIBRI_SPEECH_TEST_OTHER: 6.55,  # TODO
+        Datasets.TED_LIUM: 7.83,  # TODO
+    },
+    Engines.PICOVOICE_CHEETAH: {
+        Datasets.COMMON_VOICE: 23.10,  # TODO
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 5.87,   # TODO
+        Datasets.LIBRI_SPEECH_TEST_OTHER: 12.46,  # TODO
+        Datasets.TED_LIUM: 7.83,  # TODO
+    },
+    Engines.PICOVOICE_LEOPARD: {
+        Datasets.COMMON_VOICE: 16.68,  # TODO
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 5.39,  # TODO
+        Datasets.LIBRI_SPEECH_TEST_OTHER: 12.45,  # TODO
+        Datasets.TED_LIUM: 9.04  # TODO
     },
 }
 
