@@ -100,16 +100,16 @@ def main():
     num_workers = args.num_workers
     chunk = math.ceil(len(indices) / num_workers)
 
-    res = process(
-        engine=args.engine,
-        engine_params=engine_params,
-        dataset=args.dataset,
-        dataset_folder=args.dataset_folder,
-        indices=indices[0:10],
-    )
-    import code
-    code.interact(local=locals())
-    return
+    # res = process(
+    #     engine=args.engine,
+    #     engine_params=engine_params,
+    #     dataset=args.dataset,
+    #     dataset_folder=args.dataset_folder,
+    #     indices=indices[0:10],
+    # )
+    # import code
+    # code.interact(local=locals())
+    # return
 
     futures = list()
     with ProcessPoolExecutor(num_workers) as executor:
