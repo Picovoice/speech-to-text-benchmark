@@ -36,7 +36,7 @@ def process(
         error_count += editdistance.eval(ref_words, words)
         if error_count > 5:
             print(f"WARNING: high error cound of {error_count} detected.")
-            print(f"audio_path = `{audio_path}`, ref_transcript = `{ref_transcript}`, transcript = `{transcript}`")
+            print(f"audio_path = `{audio_path}`, \nref_transcript = `{ref_words}`\n, \ntranscript = `{words}`\n")
         word_count += len(ref_words)
 
     engine.delete()
