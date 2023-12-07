@@ -148,13 +148,13 @@ class AzureSpeechToTextEngine(Engine):
         self._azure_speech_key = azure_speech_key
         self._azure_speech_location = azure_speech_location
 
-    def transcribe(self, path: str) -> str:
+    def transcribe(self, path: str, force: bool = False) -> str:
         cache_path = path.replace('.flac', '.ms')
 
-        if os.path.exists(cache_path):
-            with open(cache_path, 'r') as f:
-                res = f.read()
-            return self._normalize(res)
+        # if os.path.exists(cache_path):
+        #     with open(cache_path, 'r') as f:
+        #         res = f.read()
+        #     return self._normalize(res)
 
         wav_path = path.replace('.flac', '.wav')
         soundfile.write(wav_path, soundfile.read(path, dtype='int16')[0], samplerate=16000)
@@ -163,16 +163,29 @@ class AzureSpeechToTextEngine(Engine):
         audio_config = speechsdk.audio.AudioConfig(filename=wav_path)
         speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
 
-        result = speech_recognizer.recognize_once_async().get()
-        if result.reason == speechsdk.ResultReason.NoMatch:
-            raise RuntimeError(f"No speech could be recognized: {result.no_match_details}")
-        elif result.reason == speechsdk.ResultReason.Canceled:
-            cancellation_details = result.cancellation_details
-            if cancellation_details.reason == speechsdk.CancellationReason.Error:
-                print(f"Error: {cancellation_details.error_details}")
-            raise RuntimeError(f"Speech Recognition canceled: {cancellation_details.reason}")
+        res = ''
 
-        res = result.text
+        def recognized_cb(evt):
+            if evt.result.reason == speechsdk.ResultReason.RecognizedSpeech:
+                nonlocal res
+                res += ' ' + evt.result.text
+
+        done = False
+
+        def stop_cb(_):
+            nonlocal done
+            done = True
+
+        speech_recognizer.recognized.connect(recognized_cb)
+        speech_recognizer.session_stopped.connect(stop_cb)
+        speech_recognizer.canceled.connect(stop_cb)
+
+        speech_recognizer.start_continuous_recognition()
+        while not done:
+            time.sleep(0.5)
+
+        speech_recognizer.stop_continuous_recognition()
+
         os.remove(wav_path)
 
         with open(cache_path, 'w') as f:
