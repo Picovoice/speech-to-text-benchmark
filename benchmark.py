@@ -4,6 +4,7 @@ import random
 from argparse import ArgumentParser
 from collections import namedtuple
 from concurrent.futures import ProcessPoolExecutor
+from enum import Enum
 from typing import *
 
 import editdistance
@@ -12,6 +13,7 @@ from dataset import *
 from engine import *
 
 WorkerResult = namedtuple('WorkerResult', ['num_errors', 'num_words', 'rtf'])
+RESULTS_FOLDER = os.path.join(os.path.dirname(__file__), "results")
 
 
 def process(
@@ -45,6 +47,7 @@ def main():
     parser = ArgumentParser()
     parser.add_argument('--engine', required=True, choices=[x.value for x in Engines])
     parser.add_argument('--dataset', required=True, choices=[x.value for x in Datasets])
+    parser.add_argument("--monitor-memory", action="store_true")
     parser.add_argument('--dataset-folder', required=True)
     parser.add_argument('--aws-profile')
     parser.add_argument('--azure-speech-key')
@@ -59,67 +62,63 @@ def main():
     parser.add_argument('--num-workers', type=int, default=os.cpu_count())
     args = parser.parse_args()
 
-    args.engine = Engines[args.engine]
+    engine = Engines(args.engine)
+    dataset_type = Datasets(args.dataset)
+    dataset_folder = args.dataset_folder
+    num_examples = args.num_examples
+    num_workers = args.num_workers
+    monitor_memory = args.monitor_memory
 
     engine_params = dict()
-    if args.engine is Engines.AMAZON_TRANSCRIBE:
+    if engine is Engines.AMAZON_TRANSCRIBE:
         if args.aws_profile is None:
             raise ValueError("`aws-profile` is required")
         os.environ['AWS_PROFILE'] = args.aws_profile
-    elif args.engine is Engines.AZURE_SPEECH_TO_TEXT:
+    elif engine is Engines.AZURE_SPEECH_TO_TEXT:
         if args.azure_speech_key is None or args.azure_speech_location is None:
             raise ValueError("`azure-speech-key` and `azure-speech-location` are required")
         engine_params['azure_speech_key'] = args.azure_speech_key
         engine_params['azure_speech_location'] = args.azure_speech_location
-    elif args.engine is Engines.GOOGLE_SPEECH_TO_TEXT or args.engine == Engines.GOOGLE_SPEECH_TO_TEXT_ENHANCED:
+    elif engine is Engines.GOOGLE_SPEECH_TO_TEXT or engine == Engines.GOOGLE_SPEECH_TO_TEXT_ENHANCED:
         if args.google_application_credentials is None:
             raise ValueError("`google-application-credentials` is required")
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.google_application_credentials
-    elif args.engine is Engines.PICOVOICE_CHEETAH:
+    elif engine is Engines.PICOVOICE_CHEETAH:
         if args.picovoice_access_key is None:
             raise ValueError("`picovoice-access-key` is required")
         engine_params['access_key'] = args.picovoice_access_key
-    elif args.engine is Engines.PICOVOICE_LEOPARD:
+    elif engine is Engines.PICOVOICE_LEOPARD:
         if args.picovoice_access_key is None:
             raise ValueError("`picovoice-access-key` is required")
         engine_params['access_key'] = args.picovoice_access_key
-    elif args.engine is Engines.IBM_WATSON_SPEECH_TO_TEXT:
+    elif engine is Engines.IBM_WATSON_SPEECH_TO_TEXT:
         if args.watson_speech_to_text_api_key is None or args.watson_speech_to_text_url is None:
             raise ValueError("`watson-speech-to-text-api-key` and `watson-speech-to-text-url` are required")
         engine_params['watson_speech_to_text_api_key'] = args.watson_speech_to_text_api_key
         engine_params['watson_speech_to_text_url'] = args.watson_speech_to_text_url
 
-    args.dataset = Datasets[args.dataset]
-    dataset = Dataset.create(args.dataset, folder=args.dataset_folder)
-
+    dataset = Dataset.create(dataset_type, folder=dataset_folder)
     indices = list(range(dataset.size()))
     random.shuffle(indices)
     if args.num_examples is not None:
-        indices = indices[:args.num_examples]
+        indices = indices[:num_examples]
 
-    num_workers = args.num_workers
     chunk = math.ceil(len(indices) / num_workers)
 
-    # res = process(
-    #     engine=args.engine,
-    #     engine_params=engine_params,
-    #     dataset=args.dataset,
-    #     dataset_folder=args.dataset_folder,
-    #     indices=indices[0:10],
-    # )
-    # import code
-    # code.interact(local=locals())
-    # return
+    if monitor_memory:
+        print("Please make sure the `mem_monitor.py` script is running and then press enter to continue ...")
+        input()
+        print("Running benchmark ...")
 
-    futures = list()
+    futures = []
     with ProcessPoolExecutor(num_workers) as executor:
         for i in range(num_workers):
             future = executor.submit(
                 process,
-                engine=args.engine,
+                engine=engine,
                 engine_params=engine_params,
-                dataset=args.dataset,
-                dataset_folder=args.dataset_folder,
+                dataset=dataset_type,
+                dataset_folder=dataset_folder,
                 indices=indices[i * chunk: (i + 1) * chunk]
             )
             futures.append(future)
@@ -128,9 +127,17 @@ def main():
 
     num_errors = sum(x.num_errors for x in res)
     num_words = sum(x.num_words for x in res)
-    rtf = sum(x.rtf for x in res) / len(res)
 
-    print(f'WER: {(100 * float(num_errors) / num_words):.2f}')
+    rtf = sum(x.rtf for x in res) / len(res)
+    word_error_rate = 100 * float(num_errors) / num_words
+
+    results_log_path = os.path.join(RESULTS_FOLDER, dataset_type.value, f"{str(engine)}.log")
+    os.makedirs(os.path.dirname(results_log_path), exist_ok=True)
+    with open(results_log_path, "w") as f:
+        f.write(f"WER: {str(word_error_rate)}\n")
+        f.write(f"RTF: {str(rtf)}\n")
+
+    print(f'WER: {word_error_rate:.2f}')
     print(f'RTF: {rtf}')
 
 

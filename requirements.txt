@@ -6,8 +6,10 @@ ibm_watson
 inflect
 matplotlib
 numpy
+psutil
 pvcheetah==2.0.0
 pvleopard==2.0.1
 pytube
 requests
 soundfile
+openai-whisper==20231117

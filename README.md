@@ -159,22 +159,43 @@ python3 benchmark.py \
 
 |              Engine              | LibriSpeech test-clean | LibriSpeech test-other | TED-LIUM | CommonVoice | Average |
 |:--------------------------------:|:----------------------:|:----------------------:|:--------:|:-----------:|:-------:|
-|        Amazon Transcribe         |         5.20%          |         9.58%          |  4.25%   |   15.94%    |  8.74%  |
-|       Azure Speech-to-Text       |         4.96%          |         9.66%          |  4.99%   |   12.09%    |  7.93%  |
-|      Google Speech-to-Text       |         11.23%         |         24.94%         |  15.00%  |   30.68%    | 20.46%  |
-| Google Speech-to-Text (Enhanced) |         6.62%          |         13.59%         |  6.68%   |   18.39%    | 11.32%  |
-|    IBM Watson Speech-to-Text     |         11.08%         |         26.38%         |  11.89%  |   38.81%    | 22.04%  |
-|        Mozilla DeepSpeech        |         7.27%          |         21.45%         |  18.90%  |   43.82%    | 22.86%  |
-|        Picovoice Cheetah         |         7.08%          |         16.28%         |  10.89%  |   23.10%    | 14.34%  |
-|        Picovoice Leopard         |         5.39%          |         12.45%         |  9.04%   |   17.13%    | 11.00%  |
+|        Amazon Transcribe         |          2.7%          |          5.7%          |   3.9%   |    8.8%     |  5.3%   |
+|       Azure Speech-to-Text       |          3.0%          |          6.4%          |   4.7%   |    9.0%     |  5.8%   |
+|      Google Speech-to-Text       |         11.0%          |         24.7%          |  14.5%   |    32.0%    |  20.5%  |
+| Google Speech-to-Text (Enhanced) |          6.3%          |         13.3%          |   6.2%   |    18.3%    |  11.0%  |
+|    IBM Watson Speech-to-Text     |         11.0%          |         26.4%          |  11.8%   |    39.5%    |  22.2%  |
+|           Whisper Tiny           |          6.2%          |         14.1%          |   6.7%   |   24.52%    |  12.8%  |
+|           Whisper Base           |          4.5%          |         10.7%          |   5.5%   |    18.4%    |  9.7%   |
+|          Whisper Small           |          3.6%          |          7.5%          |   4.8%   |    12.8%    |  7.2%   |
+|          Whisper Medium          |          3.5%          |          6.5%          |   4.7%   |    10.3%    |  6.3%   |
+|   Whisper Large (Multilingual)   |          3.9%          |          5.7%          |   4.7%   |    12.1%    |  6.7%   |
+|        Picovoice Cheetah         |          5.9%          |         12.5%          |   7.8%   |    17.5%    |  10.9%  |
+|        Picovoice Leopard         |          5.6%          |         11.6%          |   7.3%   |    16.3%    |  10.2%  |
 
 ### RTF
 
 Measurement is carried on an Ubuntu 20.04 machine with Intel CPU (`Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz`), 64 GB of
-RAM, and NVMe storage.
+RAM, and SATA storage.
 
-|       Engine       | RTF  | Model Size |
-|:------------------:|:----:|:----------:|
-| Mozilla DeepSpeech | 0.46 |  1142 MB   |
-| Picovoice Cheetah  | 0.07 |   19 MB    |
-| Picovoice Leopard  | 0.05 |   19 MB    |
+|      Engine       | RTF  | Model Size / MB |
+|:-----------------:|:----:|:---------------:|
+| Picovoice Cheetah | 0.08 |       31        |
+| Picovoice Leopard | 0.13 |       36        |
+|   Whisper Tiny    | 0.25 |       73        |
+|   Whisper Base    | 0.50 |       139       |
+|   Whisper Small   | 1.57 |       462       |
+|  Whisper Medium   | 4.8  |      1457       |
+|   Whisper Large   |  -   |      2944       |
+
+### Memory usage
+
+This metric provides insight into the memory consumption of the different offline engines during its processing
+of audio files on CPU. It presents the total memory utilized, measured in megabytes (MB).
+
+|      Engine       | Memory Usage / MB |
+|:-----------------:|:-----------------:|
+| Picovoice Cheetah |        550        |
+| Picovoice Leopard |        561        |
+|   Whisper Tiny    |        913        |
+|   Whisper Base    |        933        |
+|   Whisper Small   |       1696        |

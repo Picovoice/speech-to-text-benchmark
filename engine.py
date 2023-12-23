@@ -12,10 +12,17 @@ import pvcheetah
 import pvleopard
 import requests
 import soundfile
+import torch
 import whisper
 from google.cloud import speech
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from ibm_watson import SpeechToTextV1
+
+NUM_THREADS = 1
+os.environ["OMP_NUM_THREADS"] = str(NUM_THREADS)
+os.environ["MKL_NUM_THREADS"] = str(NUM_THREADS)
+torch.set_num_threads(NUM_THREADS)
+torch.set_num_interop_threads(NUM_THREADS)
 
 
 class Engines(Enum):
@@ -25,7 +32,10 @@ class Engines(Enum):
     GOOGLE_SPEECH_TO_TEXT_ENHANCED = "GOOGLE_SPEECH_TO_TEXT_ENHANCED"
     IBM_WATSON_SPEECH_TO_TEXT = "IBM_WATSON_SPEECH_TO_TEXT"
     WHISPER_TINY = "WHISPER_TINY"
+    WHISPER_BASE = "WHISPER_BASE"
     WHISPER_SMALL = "WHISPER_SMALL"
+    WHISPER_MEDIUM = "WHISPER_MEDIUM"
+    WHISPER_LARGE = "WHISPER_LARGE"
     PICOVOICE_CHEETAH = "PICOVOICE_CHEETAH"
     PICOVOICE_LEOPARD = "PICOVOICE_LEOPARD"
 
@@ -55,8 +65,14 @@ class Engine(object):
             return GoogleSpeechToTextEnhancedEngine()
         elif x is Engines.WHISPER_TINY:
             return WhisperTiny()
+        elif x is Engines.WHISPER_BASE:
+            return WhisperBase()
         elif x is Engines.WHISPER_SMALL:
             return WhisperSmall()
+        elif x is Engines.WHISPER_MEDIUM:
+            return WhisperMedium()
+        elif x is Engines.WHISPER_LARGE:
+            return WhisperLarge()
         elif x is Engines.PICOVOICE_CHEETAH:
             return PicovoiceCheetahEngine(**kwargs)
         elif x is Engines.PICOVOICE_LEOPARD:
@@ -151,10 +167,10 @@ class AzureSpeechToTextEngine(Engine):
     def transcribe(self, path: str, force: bool = False) -> str:
         cache_path = path.replace('.flac', '.ms')
 
-        # if os.path.exists(cache_path):
-        #     with open(cache_path, 'r') as f:
-        #         res = f.read()
-        #     return self._normalize(res)
+        if os.path.exists(cache_path):
+            with open(cache_path, 'r') as f:
+                res = f.read()
+            return self._normalize(res)
 
         wav_path = path.replace('.flac', '.wav')
         soundfile.write(wav_path, soundfile.read(path, dtype='int16')[0], samplerate=16000)
@@ -341,12 +357,36 @@ class WhisperTiny(Engine):
         return 'Whisper Tiny'
 
 
+class WhisperBase(WhisperTiny):
+    def __init__(self):
+        super().__init__(cache_extension='.wspb', model="base.en")
+
+    def __str__(self) -> str:
+        return 'Whisper Base'
+
+
 class WhisperSmall(WhisperTiny):
     def __init__(self):
         super().__init__(cache_extension='.wsps', model="small.en")
 
     def __str__(self) -> str:
         return 'Whisper Small'
+
+
+class WhisperMedium(WhisperTiny):
+    def __init__(self):
+        super().__init__(cache_extension='.wspm', model="medium.en")
+
+    def __str__(self) -> str:
+        return 'Whisper Medium'
+
+
+class WhisperLarge(WhisperTiny):
+    def __init__(self):
+        super().__init__(cache_extension='.wspm', model="large")
+
+    def __str__(self) -> str:
+        return 'Whisper Large'
 
 
 class PicovoiceCheetahEngine(Engine):
@@ -383,7 +423,7 @@ class PicovoiceCheetahEngine(Engine):
 
 class PicovoiceLeopardEngine(Engine):
     def __init__(self, access_key: str):
-        self._leopard = pvleopard.create(access_key=access_key)
+        self._leopard = pvleopard.create(access_key=access_key, enable_diarization=False)
         self._audio_sec = 0.
         self._proc_sec = 0.
 
