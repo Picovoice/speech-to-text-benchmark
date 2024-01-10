@@ -36,6 +36,8 @@ class Dataset(object):
             return LibriSpeechTestOtherDataset(folder)
         elif x is Datasets.TED_LIUM:
             return TEDLIUMDataset(folder)
+        elif x is Datasets.PODCAST:
+            return PodcastDataset()
         else:
             raise ValueError(f"Cannot create {cls.__name__} of type `{x}`")
 
@@ -112,43 +114,65 @@ class LibriSpeechTestOtherDataset(LibriSpeechTestCleanDataset):
 
 
 class TEDLIUMDataset(Dataset):
-    def __init__(self, folder: str):
+    def __init__(self, folder: str, split_audio: bool = False):
         normalizer = Normalizer()
         self._data = list()
         test_folder = os.path.join(folder, 'test')
         audio_folder = os.path.join(test_folder, 'sph')
         caption_folder = os.path.join(test_folder, 'stm')
         for x in os.listdir(caption_folder):
+            sph_path = os.path.join(audio_folder, x.replace('.stm', '.sph'))
+            full_transcript = ""
+
             with open(os.path.join(caption_folder, x)) as f:
                 for row in csv.reader(f, delimiter=" "):
                     if row[2] == "inter_segment_gap":
                         continue
-                    start_sec = float(row[3])
-                    end_sec = float(row[4])
 
                     try:
                         transcript = normalizer.normalize(" ".join(row[6:]).replace(" '", "'"))
+                        full_transcript = f"{full_transcript} {transcript.strip()}".strip()
                     except RuntimeError:
                         continue
 
-                    sph_path = os.path.join(audio_folder, x.replace('.stm', '.sph'))
-                    flac_path = sph_path.replace('.sph', f'_{start_sec:.3f}_{end_sec:.3f}.flac')
+                    if split_audio:
+                        start_sec = float(row[3])
+                        end_sec = float(row[4])
 
-                    if not os.path.exists(flac_path):
-                        args = [
-                            'ffmpeg',
-                            '-i',
-                            sph_path,
-                            '-ac', '1',
-                            '-ar', '16000',
-                            '-loglevel', 'error',
-                            '-ss', f'{start_sec:.3f}',
-                            '-to', f'{end_sec:.3f}',
-                            flac_path,
-                        ]
-                        subprocess.check_output(args)
+                        flac_path = sph_path.replace('.sph', f'_{start_sec:.3f}_{end_sec:.3f}.flac')
 
-                    self._data.append((flac_path, transcript))
+                        if not os.path.exists(flac_path):
+                            args = [
+                                'ffmpeg',
+                                '-i',
+                                sph_path,
+                                '-ac', '1',
+                                '-ar', '16000',
+                                '-loglevel', 'error',
+                                '-ss', f'{start_sec:.3f}',
+                                '-to', f'{end_sec:.3f}',
+                                flac_path,
+                            ]
+                            subprocess.check_output(args)
+
+                        self._data.append((flac_path, transcript))
+
+            if not split_audio:
+                flac_path = sph_path.replace('.sph', '.flac')
+
+                if not os.path.exists(flac_path):
+                    args = [
+                        'ffmpeg',
+                        '-i',
+                        sph_path,
+                        '-ac', '1',
+                        '-ar', '16000',
+                        '-loglevel', 'error',
+                        flac_path,
+                    ]
+                    subprocess.check_output(args)
+
+                self._data.append((flac_path, full_transcript))
 
     def size(self) -> int:
         return len(self._data)

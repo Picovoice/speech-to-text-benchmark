@@ -12,7 +12,7 @@ import editdistance
 from dataset import *
 from engine import *
 
-WorkerResult = namedtuple('WorkerResult', ['num_errors', 'num_words', 'rtf'])
+WorkerResult = namedtuple('WorkerResult', ['num_errors', 'num_words', 'audio_sec', 'process_sec'])
 RESULTS_FOLDER = os.path.join(os.path.dirname(__file__), "results")
 
 
@@ -40,7 +40,11 @@ def process(
 
     engine.delete()
 
-    return WorkerResult(num_errors=error_count, num_words=word_count, rtf=engine.rtf())
+    return WorkerResult(
+        num_errors=error_count,
+        num_words=word_count,
+        audio_sec=engine.audio_sec(),
+        process_sec=engine.process_sec())
 
 
 def main():
@@ -128,7 +132,7 @@ def main():
     num_errors = sum(x.num_errors for x in res)
     num_words = sum(x.num_words for x in res)
 
-    rtf = sum(x.rtf for x in res) / len(res)
+    rtf = sum(x.process_sec for x in res) / sum(x.audio_sec for x in res)
     word_error_rate = 100 * float(num_errors) / num_words
 
     results_log_path = os.path.join(RESULTS_FOLDER, dataset_type.value, f"{str(engine)}.log")

@@ -1,6 +1,3 @@
-import matplotlib.pyplot as plt
-import numpy as np
-
 from dataset import Datasets
 from engine import Engines
 
@@ -81,80 +78,42 @@ WER = {
 
 RTF = {
     Engines.WHISPER_TINY: {
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.25,
+        Datasets.TED_LIUM: 0.15,
     },
     Engines.WHISPER_BASE: {
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.50,
+        Datasets.TED_LIUM: 0.28,
     },
     Engines.WHISPER_SMALL: {
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 1.57,
+        Datasets.TED_LIUM: 0.89,
     },
     Engines.WHISPER_MEDIUM: {
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 4.80,
+        Datasets.TED_LIUM: 1.50,
     },
     Engines.PICOVOICE_CHEETAH: {
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.13,
+        Datasets.TED_LIUM: 0.09,
     },
     Engines.PICOVOICE_LEOPARD: {
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.076,
+        Datasets.TED_LIUM: 0.05,
     },
 }
 
 MEMORY = {
     Engines.WHISPER_TINY: {
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 913,
+        Datasets.TED_LIUM: 6_200 / 10,
     },
     Engines.WHISPER_BASE: {
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 933,
+        Datasets.TED_LIUM: 8_000 / 10,
     },
     Engines.WHISPER_SMALL: {
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 1696,
+        Datasets.TED_LIUM: 15_000 / 10,
+    },
+    Engines.WHISPER_MEDIUM: {
+        Datasets.TED_LIUM: 40_000 / 10,
     },
     Engines.PICOVOICE_CHEETAH: {
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 550,
+        Datasets.TED_LIUM: 3_000 / 10,
     },
     Engines.PICOVOICE_LEOPARD: {
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 561,
+        Datasets.TED_LIUM: 8_000 / 10,
     },
 }
-
-ENGINE_WER = sorted([(e, sum(w for w in WER[e].values()) / len(Datasets)) for e in Engines], key=lambda x: x[1])
-
-print('\n'.join(f"{e.value}: {x:.2f}" for e, x in sorted(ENGINE_WER, key=lambda x: x[1])))
-
-GREY = (100 / 255, 100 / 255, 100 / 255)
-BLUE = (55 / 255, 125 / 255, 255 / 255)
-
-fig, ax = plt.subplots()
-
-for i, (engine, wer) in enumerate(ENGINE_WER, start=1):
-    color = BLUE if engine is Engines.PICOVOICE_LEOPARD or engine is Engines.PICOVOICE_CHEETAH else GREY
-    ax.bar([i], [wer], 0.4, color=color)
-    ax.text(i - 0.3, wer + 1, f'{wer:.2f}%', color=color)
-
-ENGINE_TICKS = {
-    Engines.AMAZON_TRANSCRIBE: 'Amazon',
-    Engines.AZURE_SPEECH_TO_TEXT: 'Azure',
-    Engines.GOOGLE_SPEECH_TO_TEXT: 'Google',
-    Engines.GOOGLE_SPEECH_TO_TEXT_ENHANCED: 'Google\nEnhanced',
-    Engines.IBM_WATSON_SPEECH_TO_TEXT: 'IBM',
-    Engines.WHISPER_TINY: 'Whisper\nTiny',
-    Engines.WHISPER_BASE: 'Whisper\nBase',
-    Engines.WHISPER_SMALL: 'Whisper\nSmall',
-    Engines.WHISPER_MEDIUM: 'Whisper\nMedium',
-    Engines.WHISPER_LARGE: 'Whisper\nLarge\n(Multilingual)',
-    Engines.PICOVOICE_CHEETAH: 'Picovoice\nCheetah',
-    Engines.PICOVOICE_LEOPARD: 'Picovoice\nLeopard'
-}
-
-for spine in plt.gca().spines.values():
-    if spine.spine_type != 'bottom' and spine.spine_type != 'left':
-        spine.set_visible(False)
-
-plt.xticks(np.arange(1, len(Engines) + 1), [ENGINE_TICKS[x[0]] for x in ENGINE_WER], fontsize=9)
-
-plt.yticks(np.arange(5, 30, 5), ["%s%%" % str(x) for x in np.arange(5, 30, 5)])
-
-plt.ylabel('Word Error Rate (lower is better)')
-
-plt.show()

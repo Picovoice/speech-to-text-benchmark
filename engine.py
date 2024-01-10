@@ -337,7 +337,7 @@ class WhisperTiny(Engine):
             return self._normalize(res)
 
         start_sec = time.time()
-        res = self._model.transcribe(path)['text']
+        res = self._model.transcribe(path, language="en")['text']
         self._proc_sec += time.time() - start_sec
 
         with open(cache_path, 'w') as f:
@@ -347,8 +347,11 @@ class WhisperTiny(Engine):
 
         return res
 
-    def rtf(self) -> float:
-        return self._proc_sec / self._audio_sec
+    def audio_sec(self) -> float:
+        return self._audio_sec
+    
+    def process_sec(self) -> float:
+        return self._proc_sec
 
     def delete(self) -> None:
         pass
@@ -411,8 +414,11 @@ class PicovoiceCheetahEngine(Engine):
 
         return res
 
-    def rtf(self) -> float:
-        return self._proc_sec / self._audio_sec
+    def audio_sec(self) -> float:
+        return self._audio_sec
+    
+    def process_sec(self) -> float:
+        return self._proc_sec
 
     def delete(self) -> None:
         self._cheetah.delete()
@@ -438,8 +444,11 @@ class PicovoiceLeopardEngine(Engine):
 
         return res[0]
 
-    def rtf(self) -> float:
-        return self._proc_sec / self._audio_sec
+    def audio_sec(self) -> float:
+        return self._audio_sec
+    
+    def process_sec(self) -> float:
+        return self._proc_sec
 
     def delete(self) -> None:
         self._leopard.delete()
