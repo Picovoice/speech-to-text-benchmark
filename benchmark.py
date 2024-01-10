@@ -51,7 +51,6 @@ def main():
     parser = ArgumentParser()
     parser.add_argument('--engine', required=True, choices=[x.value for x in Engines])
     parser.add_argument('--dataset', required=True, choices=[x.value for x in Datasets])
-    parser.add_argument("--monitor-memory", action="store_true")
     parser.add_argument('--dataset-folder', required=True)
     parser.add_argument('--aws-profile')
     parser.add_argument('--azure-speech-key')
@@ -71,7 +70,6 @@ def main():
     dataset_folder = args.dataset_folder
     num_examples = args.num_examples
     num_workers = args.num_workers
-    monitor_memory = args.monitor_memory
 
     engine_params = dict()
     if engine is Engines.AMAZON_TRANSCRIBE:
@@ -108,11 +106,6 @@ def main():
         indices = indices[:num_examples]
 
     chunk = math.ceil(len(indices) / num_workers)
-
-    if monitor_memory:
-        print("Please make sure the `mem_monitor.py` script is running and then press enter to continue ...")
-        input()
-        print("Running benchmark ...")
 
     futures = []
     with ProcessPoolExecutor(num_workers) as executor:

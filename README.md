@@ -31,11 +31,6 @@ The Core-Hour metric is used to evaluate the computational efficiency of the spe
 indicating the number of CPU hours required to process one hour of audio. A speech-to-text
 engine with lower Core-Hour is more computationally efficient. We omit this metric for cloud-based engines.
 
-### Memory usage
-
-This metric provides insight into the memory consumption of the different offline engines during its processing
-of audio files on CPU. It presents the total memory utilized measured in gigabytes (GB) when transcribing files.
-
 ### Model Size
 
 The aggregate size of models (acoustic and language), in MB. We omit this metric for cloud-based engines.
@@ -180,7 +175,7 @@ python3 benchmark.py \
 
 To obtain these results, we ran the benchmark across the entire TED-LIUM dataset and recorded the processing time.
 The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryzen 9 5900X (12) @ 3.70GHz`),
-64 GB of RAM, and NVMe storage, using 10 cores simultaneously.
+64 GB of RAM, and NVMe storage, using 10 cores simultaneously. We omit Whisper Large (Multilingual) from this benchmark.
 
 |      Engine       | Core-Hour | Model Size / MB |
 |:-----------------:|:---------:|:---------------:|
@@ -192,12 +187,3 @@ The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryz
 |   Whisper Tiny    |   0.15    |       73        |
 
 ![](results/plots/cpu_usage_comparison.png)
-
-### Memory usage
-
-To obtain these results, we ran the benchmark across the entire TED-LIUM dataset and recorded the maximum memory usage
-during that period.
-The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryzen 9 5900X (12) @ 3.70GHz`),
-64 GB of RAM, and NVMe storage, using 10 cores simultaneously.
-
-![](results/plots/mem_usage_comparison.png)

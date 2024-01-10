@@ -96,24 +96,3 @@ RTF = {
         Datasets.TED_LIUM: 0.05,
     },
 }
-
-MEMORY = {
-    Engines.WHISPER_TINY: {
-        Datasets.TED_LIUM: 6_200 / 10,
-    },
-    Engines.WHISPER_BASE: {
-        Datasets.TED_LIUM: 8_000 / 10,
-    },
-    Engines.WHISPER_SMALL: {
-        Datasets.TED_LIUM: 15_000 / 10,
-    },
-    Engines.WHISPER_MEDIUM: {
-        Datasets.TED_LIUM: 40_000 / 10,
-    },
-    Engines.PICOVOICE_CHEETAH: {
-        Datasets.TED_LIUM: 3_000 / 10,
-    },
-    Engines.PICOVOICE_LEOPARD: {
-        Datasets.TED_LIUM: 8_000 / 10,
-    },
-}
