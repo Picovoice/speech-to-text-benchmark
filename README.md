@@ -47,7 +47,7 @@ The aggregate size of models (acoustic and language), in MB. We omit this metric
 
 ## Usage
 
-This benchmark has been developed and tested on `Ubuntu 20.04`.
+This benchmark has been developed and tested on `Ubuntu 22.04`.
 
 - Install [FFmpeg](https://www.ffmpeg.org/)
 - Download datasets.
@@ -56,6 +56,9 @@ This benchmark has been developed and tested on `Ubuntu 20.04`.
 ```console
 pip3 install -r requirements.txt
 ```
+
+In the following, we provide instructions for running the benchmark for each engine. The supported datasets are: 
+`COMMON_VOICE`, `LIBRI_SPEECH_TEST_CLEAN`, `LIBRI_SPEECH_TEST_OTHER`, or `TED_LIUM`.
 
 ### Amazon Transcribe Instructions
 
