@@ -11,6 +11,7 @@ import editdistance
 
 from dataset import *
 from engine import *
+from normalizer import Normalizer
 
 WorkerResult = namedtuple('WorkerResult', ['num_errors', 'num_words', 'audio_sec', 'process_sec'])
 RESULTS_FOLDER = os.path.join(os.path.dirname(__file__), "results")
@@ -24,6 +25,7 @@ def process(
         indices: Sequence[int]) -> WorkerResult:
     engine = Engine.create(engine, **engine_params)
     dataset = Dataset.create(dataset, folder=dataset_folder)
+    normalizer = Normalizer()
 
     error_count = 0
     word_count = 0
@@ -32,10 +34,12 @@ def process(
 
         transcript = engine.transcribe(audio_path)
 
-        ref_words = ref_transcript.strip('\n ').lower().split()
-        words = transcript.strip('\n ').lower().split()
+        ref_sentence = ref_transcript.strip('\n ').lower()
+        ref_words = normalizer.to_american(normalizer.normalize_abbreviations(ref_sentence)).split()
+        transcribed_sentence = transcript.strip('\n ').lower()
+        transcribed_words = normalizer.to_american(normalizer.normalize_abbreviations(transcribed_sentence)).split()
 
-        error_count += editdistance.eval(ref_words, words)
+        error_count += editdistance.eval(ref_words, transcribed_words)
         word_count += len(ref_words)
 
     engine.delete()

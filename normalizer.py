@@ -84,8 +84,7 @@ class Normalizer:
         'travellers': 'travelers',
         'travelling': 'traveling',
         'vapours': 'vapors',
-        'willful': 'wilful',
-        'wylder': 'wilder',
+        'wilful': 'willful',
     }
 
     ABBREVIATIONS = {
@@ -93,19 +92,22 @@ class Normalizer:
         'senior': 'sr',
         'okay': 'ok',
         'doctor': 'dr',
-        'drive': 'dr',
-        'mr': 'mister',
-        'mrs': 'missus',
+        'mister': 'mr',
+        'missus': 'mrs',
         'saint': 'st',
     }
 
-    def _to_american(self, sentence: str) -> str:
-        return ' '.join([self.AMERICAN_SPELLINGS[x] if x in self.AMERICAN_SPELLINGS else x for x in sentence.split()])
+    @staticmethod
+    def to_american(sentence: str) -> str:
+        return ' '.join(
+            [Normalizer.AMERICAN_SPELLINGS[x] if x in Normalizer.AMERICAN_SPELLINGS else x for x in sentence.split()])
 
-    def _normalize_abbreviations(self, sentence: str) -> str:
-        return ' '.join([self.ABBREVIATIONS[x] if x in self.ABBREVIATIONS else x for x in sentence.split()])
+    @staticmethod
+    def normalize_abbreviations(sentence: str) -> str:
+        return ' '.join([Normalizer.ABBREVIATIONS[x] if x in Normalizer.ABBREVIATIONS else x for x in sentence.split()])
 
-    def normalize(self, sentence: str) -> str:
+    @staticmethod
+    def normalize(sentence: str) -> str:
         p = inflect.engine()
 
         sentence = sentence.lower()
@@ -128,10 +130,8 @@ class Normalizer:
         if any(x.startswith("'") for x in sentence.split()):
             raise RuntimeError()
 
-        sentence = self._to_american(sentence)
-        sentence = self._normalize_abbreviations(sentence)
-
         return sentence
+
 
 
 __all__ = ['Normalizer']

@@ -44,7 +44,10 @@ class Engine(object):
     def transcribe(self, path: str) -> str:
         raise NotImplementedError()
 
-    def rtf(self) -> float:
+    def audio_sec(self) -> float:
+        raise NotImplementedError()
+
+    def process_sec(self) -> float:
         raise NotImplementedError()
 
     def delete(self) -> None:
@@ -141,7 +144,10 @@ class AmazonTranscribeEngine(Engine):
 
         return res
 
-    def rtf(self) -> float:
+    def audio_sec(self) -> float:
+        return -1.
+
+    def process_sec(self) -> float:
         return -1.
 
     def delete(self) -> None:
@@ -211,8 +217,11 @@ class AzureSpeechToTextEngine(Engine):
 
         return res
 
-    def rtf(self) -> float:
-        return -1
+    def audio_sec(self) -> float:
+        return -1.
+
+    def process_sec(self) -> float:
+        return -1.
 
     def delete(self) -> None:
         pass
@@ -257,7 +266,10 @@ class GoogleSpeechToTextEngine(Engine):
 
         return res
 
-    def rtf(self) -> float:
+    def audio_sec(self) -> float:
+        return -1.
+
+    def process_sec(self) -> float:
         return -1.
 
     def delete(self) -> None:
@@ -306,8 +318,11 @@ class IBMWatsonSpeechToTextEngine(Engine):
 
         return res
 
-    def rtf(self) -> float:
-        return -1
+    def audio_sec(self) -> float:
+        return -1.
+
+    def process_sec(self) -> float:
+        return -1.
 
     def delete(self) -> None:
         pass

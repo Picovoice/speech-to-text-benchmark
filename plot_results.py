@@ -8,7 +8,7 @@ import numpy as np
 from benchmark import RESULTS_FOLDER
 from dataset import Datasets
 from engine import Engines
-from results import WER, RTF, MEMORY
+from results import WER, RTF
 
 Color = Tuple[float, float, float]
 

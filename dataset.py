@@ -44,7 +44,6 @@ class Dataset(object):
 
 class CommonVoiceDataset(Dataset):
     def __init__(self, folder: str):
-        normalizer = Normalizer()
         self._data = list()
         with open(os.path.join(folder, 'test.tsv')) as f:
             reader: csv.DictReader = csv.DictReader(f, delimiter='\t')
@@ -66,7 +65,7 @@ class CommonVoiceDataset(Dataset):
                         continue
 
                     try:
-                        self._data.append((flac_path, normalizer.normalize(row['sentence'])))
+                        self._data.append((flac_path, Normalizer.normalize(row['sentence'])))
                     except RuntimeError:
                         continue
 
@@ -93,7 +92,8 @@ class LibriSpeechTestCleanDataset(Dataset):
 
                 for x in os.listdir(chapter_folder):
                     if x.endswith('.flac'):
-                        self._data.append((os.path.join(chapter_folder, x), transcripts[x.replace('.flac', '')]))
+                        transcript = Normalizer.normalize(transcripts[x.replace('.flac', '')])
+                        self._data.append((os.path.join(chapter_folder, x), transcript))
 
     def size(self) -> int:
         return len(self._data)
@@ -115,7 +115,6 @@ class LibriSpeechTestOtherDataset(LibriSpeechTestCleanDataset):
 
 class TEDLIUMDataset(Dataset):
     def __init__(self, folder: str, split_audio: bool = False):
-        normalizer = Normalizer()
         self._data = list()
         test_folder = os.path.join(folder, 'test')
         audio_folder = os.path.join(test_folder, 'sph')
@@ -130,7 +129,7 @@ class TEDLIUMDataset(Dataset):
                         continue
 
                     try:
-                        transcript = normalizer.normalize(" ".join(row[6:]).replace(" '", "'"))
+                        transcript = Normalizer.normalize(" ".join(row[6:]).replace(" '", "'"))
                         full_transcript = f"{full_transcript} {transcript.strip()}".strip()
                     except RuntimeError:
                         continue

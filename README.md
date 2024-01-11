@@ -156,20 +156,20 @@ python3 benchmark.py \
 
 ![](results/plots/WER.png)
 
-|              Engine              | LibriSpeech test-clean | LibriSpeech test-other | TED-LIUM | CommonVoice | Average |
-|:--------------------------------:|:----------------------:|:----------------------:|:--------:|:-----------:|:-------:|
-|        Amazon Transcribe         |          2.7%          |          5.7%          |   3.9%   |    8.8%     |  5.3%   |
-|       Azure Speech-to-Text       |          3.0%          |          6.4%          |   4.7%   |    9.0%     |  5.8%   |
-|      Google Speech-to-Text       |         11.0%          |         24.7%          |  14.5%   |    32.0%    |  20.5%  |
-| Google Speech-to-Text (Enhanced) |          6.3%          |         13.3%          |   6.2%   |    18.3%    |  11.0%  |
-|    IBM Watson Speech-to-Text     |         11.0%          |         26.4%          |  11.8%   |    39.5%    |  22.2%  |
-|           Whisper Tiny           |          6.2%          |         14.1%          |   6.7%   |   24.52%    |  12.8%  |
-|           Whisper Base           |          4.5%          |         10.7%          |   5.5%   |    18.4%    |  9.7%   |
-|          Whisper Small           |          3.6%          |          7.5%          |   4.8%   |    12.8%    |  7.2%   |
-|          Whisper Medium          |          3.5%          |          6.5%          |   4.7%   |    10.3%    |  6.3%   |
-|   Whisper Large (Multilingual)   |          3.9%          |          5.7%          |   4.7%   |    12.1%    |  6.7%   |
-|        Picovoice Cheetah         |          5.9%          |         12.5%          |   7.8%   |    17.5%    |  10.9%  |
-|        Picovoice Leopard         |          5.6%          |         11.6%          |   7.3%   |    16.3%    |  10.2%  |
+|             Engine             | LibriSpeech test-clean | LibriSpeech test-other | TED-LIUM | CommonVoice | Average |
+|:------------------------------:|:----------------------:|:----------------------:|:--------:|:-----------:|:-------:|
+|       Amazon Transcribe        |          2.6%          |          5.6%          |   3.8%   |    8.7%     |  5.2%   |
+|      Azure Speech-to-Text      |          2.8%          |          6.2%          |   4.6%   |    8.9%     |  5.6%   |
+|     Google Speech-to-Text      |         10.8%          |         24.5%          |  14.4%   |    31.9%    |  20.4%  |
+| Google Speech-to-Text Enhanced |          6.2%          |         13.0%          |   6.1%   |    18.2%    |  10.9%  |
+|   IBM Watson Speech-to-Text    |         10.9%          |         26.2%          |  11.7%   |    39.4%    |  22.0%  |
+|  Whisper Large (Multilingual)  |          3.7%          |          5.4%          |   4.6%   |    9.0%     |  5.7%   |
+|         Whisper Medium         |          3.3%          |          6.2%          |   4.6%   |    10.2%    |  6.1%   |
+|         Whisper Small          |          3.3%          |          7.2%          |   4.8%   |    12.7%    |  7.0%   |
+|          Whisper Base          |          4.3%          |         10.4%          |   5.4%   |    17.9%    |  9.5%   |
+|          Whisper Tiny          |          5.9%          |         13.8%          |   6.5%   |    24.4%    |  12.7%  |
+|       Picovoice Cheetah        |          5.6%          |         12.1%          |   7.7%   |    17.5%    |  10.7%  |
+|       Picovoice Leopard        |          5.3%          |         11.3%          |   7.2%   |    16.2%    |  10.0%  |
 
 ### Core-Hour & Model Size
 
@@ -179,11 +179,11 @@ The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryz
 
 |      Engine       | Core-Hour | Model Size / MB |
 |:-----------------:|:---------:|:---------------:|
-| Picovoice Leopard |   0.05    |       36        |
-| Picovoice Cheetah |   0.09    |       31        |
 |  Whisper Medium   |   1.50    |      1457       |
 |   Whisper Small   |   0.89    |       462       |
 |   Whisper Base    |   0.28    |       139       |
 |   Whisper Tiny    |   0.15    |       73        |
+| Picovoice Leopard |   0.05    |       36        |
+| Picovoice Cheetah |   0.09    |       31        |
 
 ![](results/plots/cpu_usage_comparison.png)
