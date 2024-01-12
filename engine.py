@@ -12,10 +12,17 @@ import pvcheetah
 import pvleopard
 import requests
 import soundfile
-from deepspeech import Model
+import torch
+import whisper
 from google.cloud import speech
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from ibm_watson import SpeechToTextV1
+
+NUM_THREADS = 1
+os.environ["OMP_NUM_THREADS"] = str(NUM_THREADS)
+os.environ["MKL_NUM_THREADS"] = str(NUM_THREADS)
+torch.set_num_threads(NUM_THREADS)
+torch.set_num_interop_threads(NUM_THREADS)
 
 
 class Engines(Enum):
@@ -24,7 +31,11 @@ class Engines(Enum):
     GOOGLE_SPEECH_TO_TEXT = "GOOGLE_SPEECH_TO_TEXT"
     GOOGLE_SPEECH_TO_TEXT_ENHANCED = "GOOGLE_SPEECH_TO_TEXT_ENHANCED"
     IBM_WATSON_SPEECH_TO_TEXT = "IBM_WATSON_SPEECH_TO_TEXT"
-    MOZILLA_DEEP_SPEECH = 'MOZILLA_DEEP_SPEECH'
+    WHISPER_TINY = "WHISPER_TINY"
+    WHISPER_BASE = "WHISPER_BASE"
+    WHISPER_SMALL = "WHISPER_SMALL"
+    WHISPER_MEDIUM = "WHISPER_MEDIUM"
+    WHISPER_LARGE = "WHISPER_LARGE"
     PICOVOICE_CHEETAH = "PICOVOICE_CHEETAH"
     PICOVOICE_LEOPARD = "PICOVOICE_LEOPARD"
 
@@ -33,7 +44,10 @@ class Engine(object):
     def transcribe(self, path: str) -> str:
         raise NotImplementedError()
 
-    def rtf(self) -> float:
+    def audio_sec(self) -> float:
+        raise NotImplementedError()
+
+    def process_sec(self) -> float:
         raise NotImplementedError()
 
     def delete(self) -> None:
@@ -52,8 +66,16 @@ class Engine(object):
             return GoogleSpeechToTextEngine()
         elif x is Engines.GOOGLE_SPEECH_TO_TEXT_ENHANCED:
             return GoogleSpeechToTextEnhancedEngine()
-        elif x is Engines.MOZILLA_DEEP_SPEECH:
-            return MozillaDeepSpeechEngine(**kwargs)
+        elif x is Engines.WHISPER_TINY:
+            return WhisperTiny()
+        elif x is Engines.WHISPER_BASE:
+            return WhisperBase()
+        elif x is Engines.WHISPER_SMALL:
+            return WhisperSmall()
+        elif x is Engines.WHISPER_MEDIUM:
+            return WhisperMedium()
+        elif x is Engines.WHISPER_LARGE:
+            return WhisperLarge()
         elif x is Engines.PICOVOICE_CHEETAH:
             return PicovoiceCheetahEngine(**kwargs)
         elif x is Engines.PICOVOICE_LEOPARD:
@@ -92,7 +114,8 @@ class AmazonTranscribeEngine(Engine):
 
         if os.path.exists(cache_path):
             with open(cache_path) as f:
-                return f.read()
+                res = f.read()
+            return self._normalize(res)
 
         job_name = str(uuid.uuid4())
         s3_object = os.path.basename(path)
@@ -108,19 +131,23 @@ class AmazonTranscribeEngine(Engine):
             status = self._transcribe_client.get_transcription_job(TranscriptionJobName=job_name)
             if status['TranscriptionJob']['TranscriptionJobStatus'] == 'COMPLETED':
                 break
-            time.sleep(5)
+            time.sleep(1)
 
         content = requests.get(status['TranscriptionJob']['Transcript']['TranscriptFileUri'])
 
         res = json.loads(content.content.decode('utf8'))['results']['transcripts'][0]['transcript']
-        res = self._normalize(res)
 
         with open(cache_path, 'w') as f:
             f.write(res)
 
+        res = self._normalize(res)
+
         return res
 
-    def rtf(self) -> float:
+    def audio_sec(self) -> float:
+        return -1.
+
+    def process_sec(self) -> float:
         return -1.
 
     def delete(self) -> None:
@@ -143,12 +170,13 @@ class AzureSpeechToTextEngine(Engine):
         self._azure_speech_key = azure_speech_key
         self._azure_speech_location = azure_speech_location
 
-    def transcribe(self, path: str) -> str:
+    def transcribe(self, path: str, force: bool = False) -> str:
         cache_path = path.replace('.flac', '.ms')
 
         if os.path.exists(cache_path):
             with open(cache_path, 'r') as f:
-                return f.read()
+                res = f.read()
+            return self._normalize(res)
 
         wav_path = path.replace('.flac', '.wav')
         soundfile.write(wav_path, soundfile.read(path, dtype='int16')[0], samplerate=16000)
@@ -179,17 +207,21 @@ class AzureSpeechToTextEngine(Engine):
             time.sleep(0.5)
 
         speech_recognizer.stop_continuous_recognition()
-        res = self._normalize(res)
 
         os.remove(wav_path)
 
         with open(cache_path, 'w') as f:
             f.write(res)
 
+        res = self._normalize(res)
+
         return res
 
-    def rtf(self) -> float:
-        return -1
+    def audio_sec(self) -> float:
+        return -1.
+
+    def process_sec(self) -> float:
+        return -1.
 
     def delete(self) -> None:
         pass
@@ -199,7 +231,7 @@ class AzureSpeechToTextEngine(Engine):
 
 
 class GoogleSpeechToTextEngine(Engine):
-    def __init__(self, cache_extension: str = 'ggl', model: str = None):
+    def __init__(self, cache_extension: str = '.ggl', model: str = None):
         self._client = speech.SpeechClient()
 
         self._config = speech.RecognitionConfig(
@@ -211,11 +243,12 @@ class GoogleSpeechToTextEngine(Engine):
 
         self._cache_extension = cache_extension
 
-    def transcribe(self, path):
+    def transcribe(self, path: str) -> str:
         cache_path = path.replace('.flac', self._cache_extension)
         if os.path.exists(cache_path):
             with open(cache_path) as f:
-                return f.read()
+                res = f.read()
+            return self._normalize(res)
 
         with open(path, 'rb') as f:
             content = f.read()
@@ -225,14 +258,18 @@ class GoogleSpeechToTextEngine(Engine):
         response = self._client.recognize(config=self._config, audio=audio)
 
         res = ' '.join(result.alternatives[0].transcript for result in response.results)
-        res = self._normalize(res)
 
         with open(cache_path, 'w') as f:
             f.write(res)
 
+        res = self._normalize(res)
+
         return res
 
-    def rtf(self) -> float:
+    def audio_sec(self) -> float:
+        return -1.
+
+    def process_sec(self) -> float:
         return -1.
 
     def delete(self) -> None:
@@ -259,7 +296,8 @@ class IBMWatsonSpeechToTextEngine(Engine):
         cache_path = path.replace('.flac', '.ibm')
         if os.path.exists(cache_path):
             with open(cache_path, 'r') as f:
-                return f.read()
+                res = f.read()
+            return self._normalize(res)
 
         with open(path, 'rb') as f:
             response = self._service.recognize(
@@ -270,17 +308,21 @@ class IBMWatsonSpeechToTextEngine(Engine):
             ).get_result()
 
         res = ''
-        if response and 'results' in response and response['results']:
+        if response and ('results' in response) and response['results']:
             res = response['results'][0]['alternatives'][0]['transcript']
-            res = self._normalize(res)
 
         with open(cache_path, 'w') as f:
             f.write(res)
 
+        res = self._normalize(res)
+
         return res
 
-    def rtf(self) -> float:
-        return -1
+    def audio_sec(self) -> float:
+        return -1.
+
+    def process_sec(self) -> float:
+        return -1.
 
     def delete(self) -> None:
         pass
@@ -289,32 +331,80 @@ class IBMWatsonSpeechToTextEngine(Engine):
         return 'IBM Watson Speech-to-Text'
 
 
-class MozillaDeepSpeechEngine(Engine):
-    def __init__(self, pbmm_path: str, scorer_path: str):
-        self._model = Model(pbmm_path)
-        self._model.enableExternalScorer(scorer_path)
+class WhisperTiny(Engine):
+    SAMPLE_RATE = 16000
+
+    def __init__(self, cache_extension: str = ".wspt", model: str = "tiny.en"):
+        self._model = whisper.load_model(model, device="cpu")
+        self._cache_extension = cache_extension
         self._audio_sec = 0.
         self._proc_sec = 0.
 
     def transcribe(self, path: str) -> str:
         audio, sample_rate = soundfile.read(path, dtype='int16')
-        assert sample_rate == self._model.sampleRate()
+        assert sample_rate == self.SAMPLE_RATE
         self._audio_sec += audio.size / sample_rate
 
+        cache_path = path.replace('.flac', self._cache_extension)
+        if os.path.exists(cache_path):
+            with open(cache_path) as f:
+                res = f.read()
+            return self._normalize(res)
+
         start_sec = time.time()
-        res = self._model.stt(audio)
+        res = self._model.transcribe(path, language="en")['text']
         self._proc_sec += time.time() - start_sec
+
+        with open(cache_path, 'w') as f:
+            f.write(res)
+
+        res = self._normalize(res)
 
         return res
 
-    def rtf(self) -> float:
-        return self._proc_sec / self._audio_sec
+    def audio_sec(self) -> float:
+        return self._audio_sec
+    
+    def process_sec(self) -> float:
+        return self._proc_sec
 
     def delete(self) -> None:
         pass
 
     def __str__(self) -> str:
-        return 'Mozilla DeepSpeech'
+        return 'Whisper Tiny'
+
+
+class WhisperBase(WhisperTiny):
+    def __init__(self):
+        super().__init__(cache_extension='.wspb', model="base.en")
+
+    def __str__(self) -> str:
+        return 'Whisper Base'
+
+
+class WhisperSmall(WhisperTiny):
+    def __init__(self):
+        super().__init__(cache_extension='.wsps', model="small.en")
+
+    def __str__(self) -> str:
+        return 'Whisper Small'
+
+
+class WhisperMedium(WhisperTiny):
+    def __init__(self):
+        super().__init__(cache_extension='.wspm', model="medium.en")
+
+    def __str__(self) -> str:
+        return 'Whisper Medium'
+
+
+class WhisperLarge(WhisperTiny):
+    def __init__(self):
+        super().__init__(cache_extension='.wspm', model="large")
+
+    def __str__(self) -> str:
+        return 'Whisper Large'
 
 
 class PicovoiceCheetahEngine(Engine):
@@ -339,8 +429,11 @@ class PicovoiceCheetahEngine(Engine):
 
         return res
 
-    def rtf(self) -> float:
-        return self._proc_sec / self._audio_sec
+    def audio_sec(self) -> float:
+        return self._audio_sec
+    
+    def process_sec(self) -> float:
+        return self._proc_sec
 
     def delete(self) -> None:
         self._cheetah.delete()
@@ -364,10 +457,13 @@ class PicovoiceLeopardEngine(Engine):
         res = self._leopard.process(audio)
         self._proc_sec += time.time() - start_sec
 
-        return res
+        return res[0]
 
-    def rtf(self) -> float:
-        return self._proc_sec / self._audio_sec
+    def audio_sec(self) -> float:
+        return self._audio_sec
+    
+    def process_sec(self) -> float:
+        return self._proc_sec
 
     def delete(self) -> None:
         self._leopard.delete()

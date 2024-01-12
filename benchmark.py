@@ -10,8 +10,10 @@ import editdistance
 
 from dataset import *
 from engine import *
+from normalizer import Normalizer
 
-WorkerResult = namedtuple('WorkerResult', ['num_errors', 'num_words', 'rtf'])
+WorkerResult = namedtuple('WorkerResult', ['num_errors', 'num_words', 'audio_sec', 'process_sec'])
+RESULTS_FOLDER = os.path.join(os.path.dirname(__file__), "results")
 
 
 def process(
@@ -22,6 +24,7 @@ def process(
         indices: Sequence[int]) -> WorkerResult:
     engine = Engine.create(engine, **engine_params)
     dataset = Dataset.create(dataset, folder=dataset_folder)
+    normalizer = Normalizer()
 
     error_count = 0
     word_count = 0
@@ -30,15 +33,21 @@ def process(
 
         transcript = engine.transcribe(audio_path)
 
-        ref_words = ref_transcript.strip('\n ').lower().split()
-        words = transcript.strip('\n ').lower().split()
+        ref_sentence = ref_transcript.strip('\n ').lower()
+        ref_words = normalizer.to_american(normalizer.normalize_abbreviations(ref_sentence)).split()
+        transcribed_sentence = transcript.strip('\n ').lower()
+        transcribed_words = normalizer.to_american(normalizer.normalize_abbreviations(transcribed_sentence)).split()
 
-        error_count += editdistance.eval(ref_words, words)
+        error_count += editdistance.eval(ref_words, transcribed_words)
         word_count += len(ref_words)
 
     engine.delete()
 
-    return WorkerResult(num_errors=error_count, num_words=word_count, rtf=engine.rtf())
+    return WorkerResult(
+        num_errors=error_count,
+        num_words=word_count,
+        audio_sec=engine.audio_sec(),
+        process_sec=engine.process_sec())
 
 
 def main():
@@ -59,62 +68,57 @@ def main():
     parser.add_argument('--num-workers', type=int, default=os.cpu_count())
     args = parser.parse_args()
 
-    args.dataset = Datasets[args.dataset]
-    args.engine = Engines[args.engine]
+    engine = Engines(args.engine)
+    dataset_type = Datasets(args.dataset)
+    dataset_folder = args.dataset_folder
+    num_examples = args.num_examples
+    num_workers = args.num_workers
 
-    dataset = Dataset.create(args.dataset, folder=args.dataset_folder)
-
-    kwargs = dict()
-    if args.engine is Engines.AMAZON_TRANSCRIBE:
+    engine_params = dict()
+    if engine is Engines.AMAZON_TRANSCRIBE:
         if args.aws_profile is None:
             raise ValueError("`aws-profile` is required")
         os.environ['AWS_PROFILE'] = args.aws_profile
-    elif args.engine is Engines.AZURE_SPEECH_TO_TEXT:
+    elif engine is Engines.AZURE_SPEECH_TO_TEXT:
         if args.azure_speech_key is None or args.azure_speech_location is None:
             raise ValueError("`azure-speech-key` and `azure-speech-location` are required")
-        kwargs['azure_speech_key'] = args.azure_speech_key
-        kwargs['azure_speech_location'] = args.azure_speech_location
-    elif args.engine is Engines.GOOGLE_SPEECH_TO_TEXT or args.engine == Engines.GOOGLE_SPEECH_TO_TEXT_ENHANCED:
+        engine_params['azure_speech_key'] = args.azure_speech_key
+        engine_params['azure_speech_location'] = args.azure_speech_location
+    elif engine is Engines.GOOGLE_SPEECH_TO_TEXT or engine == Engines.GOOGLE_SPEECH_TO_TEXT_ENHANCED:
         if args.google_application_credentials is None:
             raise ValueError("`google-application-credentials` is required")
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.google_application_credentials
-    elif args.engine is Engines.MOZILLA_DEEP_SPEECH:
-        if args.deepspeech_pbmm is None or args.deepspeech_scorer is None:
-            raise ValueError("`deepspeech-pbmm` and `deepspeech-scorer` are required")
-        kwargs['pbmm_path'] = args.deepspeech_pbmm
-        kwargs['scorer_path'] = args.deepspeech_scorer
-    elif args.engine is Engines.PICOVOICE_CHEETAH:
+    elif engine is Engines.PICOVOICE_CHEETAH:
         if args.picovoice_access_key is None:
             raise ValueError("`picovoice-access-key` is required")
-        kwargs['access_key'] = args.picovoice_access_key
-    elif args.engine is Engines.PICOVOICE_LEOPARD:
+        engine_params['access_key'] = args.picovoice_access_key
+    elif engine is Engines.PICOVOICE_LEOPARD:
         if args.picovoice_access_key is None:
             raise ValueError("`picovoice-access-key` is required")
-        kwargs['access_key'] = args.picovoice_access_key
-    elif args.engine is Engines.IBM_WATSON_SPEECH_TO_TEXT:
+        engine_params['access_key'] = args.picovoice_access_key
+    elif engine is Engines.IBM_WATSON_SPEECH_TO_TEXT:
         if args.watson_speech_to_text_api_key is None or args.watson_speech_to_text_url is None:
             raise ValueError("`watson-speech-to-text-api-key` and `watson-speech-to-text-url` are required")
-        kwargs['watson_speech_to_text_api_key'] = args.watson_speech_to_text_api_key
-        kwargs['watson_speech_to_text_url'] = args.watson_speech_to_text_url
+        engine_params['watson_speech_to_text_api_key'] = args.watson_speech_to_text_api_key
+        engine_params['watson_speech_to_text_url'] = args.watson_speech_to_text_url
 
+    dataset = Dataset.create(dataset_type, folder=dataset_folder)
     indices = list(range(dataset.size()))
     random.shuffle(indices)
     if args.num_examples is not None:
-        indices = indices[:args.num_examples]
-
-    num_workers = args.num_workers
+        indices = indices[:num_examples]
 
     chunk = math.ceil(len(indices) / num_workers)
 
-    futures = list()
+    futures = []
     with ProcessPoolExecutor(num_workers) as executor:
         for i in range(num_workers):
             future = executor.submit(
                 process,
-                engine=args.engine,
-                engine_params=kwargs,
-                dataset=args.dataset,
-                dataset_folder=args.dataset_folder,
+                engine=engine,
+                engine_params=engine_params,
+                dataset=dataset_type,
+                dataset_folder=dataset_folder,
                 indices=indices[i * chunk: (i + 1) * chunk]
             )
             futures.append(future)
@@ -123,9 +127,17 @@ def main():
 
     num_errors = sum(x.num_errors for x in res)
     num_words = sum(x.num_words for x in res)
-    rtf = sum(x.rtf for x in res) / len(res)
 
-    print(f'WER: {(100 * float(num_errors) / num_words):.2f}')
+    rtf = sum(x.process_sec for x in res) / sum(x.audio_sec for x in res)
+    word_error_rate = 100 * float(num_errors) / num_words
+
+    results_log_path = os.path.join(RESULTS_FOLDER, dataset_type.value, f"{str(engine)}.log")
+    os.makedirs(os.path.dirname(results_log_path), exist_ok=True)
+    with open(results_log_path, "w") as f:
+        f.write(f"WER: {str(word_error_rate)}\n")
+        f.write(f"RTF: {str(rtf)}\n")
+
+    print(f'WER: {word_error_rate:.2f}')
     print(f'RTF: {rtf}')
 
 

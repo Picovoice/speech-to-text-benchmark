@@ -25,10 +25,11 @@ This repo is a minimalist and extensible framework for benchmarking different sp
 Word error rate (WER) is the ratio of edit distance between words in a reference transcript and the words in the output
 of the speech-to-text engine to the number of words in the reference transcript.
 
-### Real Time Factor
+### Core-Hour
 
-Real-time factor (RTF) is the ratio of CPU (processing) time to the length of the input speech file. A speech-to-text
-engine with lower RTF is more computationally efficient. We omit this metric for cloud-based engines.
+The Core-Hour metric is used to evaluate the computational efficiency of the speech-to-text engine,
+indicating the number of CPU hours required to process one hour of audio. A speech-to-text
+engine with lower Core-Hour is more computationally efficient. We omit this metric for cloud-based engines.
 
 ### Model Size
 
@@ -40,13 +41,13 @@ The aggregate size of models (acoustic and language), in MB. We omit this metric
 - [Azure Speech-to-Text](https://azure.microsoft.com/en-us/services/cognitive-services/speech-to-text/)
 - [Google Speech-to-Text](https://cloud.google.com/speech-to-text)
 - [IBM Watson Speech-to-Text](https://www.ibm.com/ca-en/cloud/watson-speech-to-text)
-- [Mozilla DeepSpeech](https://github.com/mozilla/DeepSpeech)
+- [OpenAI Whisper](https://github.com/openai/whisper)
 - [Picovoice Cheetah](https://picovoice.ai/)
 - [Picovoice Leopard](https://picovoice.ai/)
 
 ## Usage
 
-This benchmark has been developed and tested on `Ubuntu 20.04`.
+This benchmark has been developed and tested on `Ubuntu 22.04`.
 
 - Install [FFmpeg](https://www.ffmpeg.org/)
 - Download datasets.
@@ -55,6 +56,9 @@ This benchmark has been developed and tested on `Ubuntu 20.04`.
 ```console
 pip3 install -r requirements.txt
 ```
+
+In the following, we provide instructions for running the benchmark for each engine. The supported datasets are: 
+`COMMON_VOICE`, `LIBRI_SPEECH_TEST_CLEAN`, `LIBRI_SPEECH_TEST_OTHER`, or `TED_LIUM`.
 
 ### Amazon Transcribe Instructions
 
@@ -110,19 +114,17 @@ python3 benchmark.py \
 --watson-speech-to-text-url ${WATSON_SPEECH_TO_TEXT_URL}
 ```
 
-### Mozilla DeepSpeech Instructions
+### OpenAI Whisper Instructions
 
-Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset,
-`${DEEP_SPEECH_MODEL}` with path to DeepSpeech model file (`.pbmm`), and `${DEEP_SPEECH_SCORER}` with path to DeepSpeech
-scorer file (`.scorer`).
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, and
+`${WHISPER_MODEL}` with the whisper model type (`WHISPER_TINY`, `WHISPER_BASE`, `WHISPER_SMALL`,
+`WHISPER_MEDIUM`, or `WHISPER_LARGE`)
 
 ```console
 python3 benchmark.py \
---engine MOZILLA_DEEP_SPEECH \
+--engine ${WHISPER_MODEL} \
 --dataset ${DATASET} \
 --dataset-folder ${DATASET_FOLDER} \
---deepspeech-pbmm ${DEEP_SPEECH_MODEL} \
---deepspeech-scorer ${DEEP_SPEECH_SCORER}
 ```
 
 ### Picovoice Cheetah Instructions
@@ -155,26 +157,36 @@ python3 benchmark.py \
 
 ### Word Error Rate (WER)
 
-![](res/summary.png)
+![](results/plots/WER.png)
 
-|              Engine              | LibriSpeech test-clean | LibriSpeech test-other | TED-LIUM | CommonVoice | Average |
-|:--------------------------------:|:----------------------:|:----------------------:|:--------:|:-----------:|:-------:|
-|        Amazon Transcribe         |         5.20%          |         9.58%          |  4.25%   |   15.94%    |  8.74%  |
-|       Azure Speech-to-Text       |         4.96%          |         9.66%          |  4.99%   |   12.09%    |  7.93%  |
-|      Google Speech-to-Text       |         11.23%         |         24.94%         |  15.00%  |   30.68%    | 20.46%  |
-| Google Speech-to-Text (Enhanced) |         6.62%          |         13.59%         |  6.68%   |   18.39%    | 11.32%  |
-|    IBM Watson Speech-to-Text     |         11.08%         |         26.38%         |  11.89%  |   38.81%    | 22.04%  |
-|        Mozilla DeepSpeech        |         7.27%          |         21.45%         |  18.90%  |   43.82%    | 22.86%  |
-|        Picovoice Cheetah         |         7.08%          |         16.28%         |  10.89%  |   23.10%    | 14.34%  |
-|        Picovoice Leopard         |         5.39%          |         12.45%         |  9.04%   |   17.13%    | 11.00%  |
+|             Engine             | LibriSpeech test-clean | LibriSpeech test-other | TED-LIUM | CommonVoice | Average |
+|:------------------------------:|:----------------------:|:----------------------:|:--------:|:-----------:|:-------:|
+|       Amazon Transcribe        |          2.6%          |          5.6%          |   3.8%   |    8.7%     |  5.2%   |
+|      Azure Speech-to-Text      |          2.8%          |          6.2%          |   4.6%   |    8.9%     |  5.6%   |
+|     Google Speech-to-Text      |         10.8%          |         24.5%          |  14.4%   |    31.9%    |  20.4%  |
+| Google Speech-to-Text Enhanced |          6.2%          |         13.0%          |   6.1%   |    18.2%    |  10.9%  |
+|   IBM Watson Speech-to-Text    |         10.9%          |         26.2%          |  11.7%   |    39.4%    |  22.0%  |
+|  Whisper Large (Multilingual)  |          3.7%          |          5.4%          |   4.6%   |    9.0%     |  5.7%   |
+|         Whisper Medium         |          3.3%          |          6.2%          |   4.6%   |    10.2%    |  6.1%   |
+|         Whisper Small          |          3.3%          |          7.2%          |   4.8%   |    12.7%    |  7.0%   |
+|          Whisper Base          |          4.3%          |         10.4%          |   5.4%   |    17.9%    |  9.5%   |
+|          Whisper Tiny          |          5.9%          |         13.8%          |   6.5%   |    24.4%    |  12.7%  |
+|       Picovoice Cheetah        |          5.6%          |         12.1%          |   7.7%   |    17.5%    |  10.7%  |
+|       Picovoice Leopard        |          5.3%          |         11.3%          |   7.2%   |    16.2%    |  10.0%  |
 
-### RTF
+### Core-Hour & Model Size
 
-Measurement is carried on an Ubuntu 20.04 machine with Intel CPU (`Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz`), 64 GB of
-RAM, and NVMe storage.
+To obtain these results, we ran the benchmark across the entire TED-LIUM dataset and recorded the processing time.
+The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryzen 9 5900X (12) @ 3.70GHz`),
+64 GB of RAM, and NVMe storage, using 10 cores simultaneously. We omit Whisper Large (Multilingual) from this benchmark.
 
-|       Engine       | RTF  | Model Size |
-|:------------------:|:----:|:----------:|
-| Mozilla DeepSpeech | 0.46 |  1142 MB   |
-| Picovoice Cheetah  | 0.07 |   19 MB    |
-| Picovoice Leopard  | 0.05 |   19 MB    |
+|      Engine       | Core-Hour | Model Size / MB |
+|:-----------------:|:---------:|:---------------:|
+|  Whisper Medium   |   1.50    |      1457       |
+|   Whisper Small   |   0.89    |       462       |
+|   Whisper Base    |   0.28    |       139       |
+|   Whisper Tiny    |   0.15    |       73        |
+| Picovoice Leopard |   0.05    |       36        |
+| Picovoice Cheetah |   0.09    |       31        |
+
+![](results/plots/cpu_usage_comparison.png)
