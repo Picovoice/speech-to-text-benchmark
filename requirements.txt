@@ -1,7 +1,7 @@
 azure-cognitiveservices-speech
 boto3
 editdistance
-google-cloud-speech
+google-cloud-speech==2.23.0
 ibm_watson
 inflect
 matplotlib

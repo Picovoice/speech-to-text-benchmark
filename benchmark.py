@@ -4,7 +4,6 @@ import random
 from argparse import ArgumentParser
 from collections import namedtuple
 from concurrent.futures import ProcessPoolExecutor
-from enum import Enum
 from typing import *
 
 import editdistance

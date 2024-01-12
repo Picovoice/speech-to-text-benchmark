@@ -36,8 +36,6 @@ class Dataset(object):
             return LibriSpeechTestOtherDataset(folder)
         elif x is Datasets.TED_LIUM:
             return TEDLIUMDataset(folder)
-        elif x is Datasets.PODCAST:
-            return PodcastDataset()
         else:
             raise ValueError(f"Cannot create {cls.__name__} of type `{x}`")
 
