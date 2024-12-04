@@ -17,6 +17,8 @@ This repo is a minimalist and extensible framework for benchmarking different sp
 - [LibriSpeech](http://www.openslr.org/12/)
 - [TED-LIUM](https://www.openslr.org/7/)
 - [Common Voice](https://commonvoice.mozilla.org/en)
+- [Multilingual LibriSpeech](https://openslr.org/94)
+- [VoxPopuli](https://github.com/facebookresearch/voxpopuli)
 
 ## Metrics
 
@@ -57,31 +59,36 @@ This benchmark has been developed and tested on `Ubuntu 22.04`.
 pip3 install -r requirements.txt
 ```
 
-In the following, we provide instructions for running the benchmark for each engine. The supported datasets are: 
-`COMMON_VOICE`, `LIBRI_SPEECH_TEST_CLEAN`, `LIBRI_SPEECH_TEST_OTHER`, or `TED_LIUM`.
+In the following, we provide instructions for running the benchmark for each engine. 
+The supported datasets are: 
+`COMMON_VOICE`, `LIBRI_SPEECH_TEST_CLEAN`, `LIBRI_SPEECH_TEST_OTHER`, `TED_LIUM`, `MLS`, and `VOX_POPULI`.
+The supported languages are:
+`EN`, `FR`, `DE`, `ES`, `IT`, `PT_BR`, and `PT_PT`.
 
 ### Amazon Transcribe Instructions
 
-Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, and `${AWS_PROFILE}`
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, `${LANGUAGE}` with the target language, and `${AWS_PROFILE}`
 with the name of AWS profile you wish to use.
 
 ```console
 python3 benchmark.py \
 --dataset ${DATASET} \
 --dataset-folder ${DATASET_FOLDER} \
+--language ${LANGUAGE} \
 --engine AMAZON_TRANSCRIBE \
 --aws-profile ${AWS_PROFILE}
 ```
 
 ### Azure Speech-to-Text Instructions
 
-Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset,
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, `${LANGUAGE}` with the target language,
 `${AZURE_SPEECH_KEY}` and `${AZURE_SPEECH_LOCATION}` information from your Azure account.
 
 ```console
 python3 benchmark.py \
 --dataset ${DATASET} \
 --dataset-folder ${DATASET_FOLDER} \
+--language ${LANGUAGE} \
 --engine AZURE_SPEECH_TO_TEXT \
 --azure-speech-key ${AZURE_SPEECH_KEY}
 --azure-speech-location ${AZURE_SPEECH_LOCATION}
@@ -89,21 +96,22 @@ python3 benchmark.py \
 
 ### Google Speech-to-Text Instructions
 
-Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, and
-`${GOOGLE_APPLICATION_CREDENTIALS}` with credentials download from Google Cloud Platform.
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, `${LANGUAGE}` with the target language,
+and `${GOOGLE_APPLICATION_CREDENTIALS}` with credentials download from Google Cloud Platform.
 
 ```console
 python3 benchmark.py \
 --dataset ${DATASET} \
 --dataset-folder ${DATASET_FOLDER} \
+--language ${LANGUAGE} \
 --engine GOOGLE_SPEECH_TO_TEXT \
 --google-application-credentials ${GOOGLE_APPLICATION_CREDENTIALS}
 ```
 
 ### IBM Watson Speech-to-Text Instructions
 
-Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, and
-`${WATSON_SPEECH_TO_TEXT_API_KEY}`/`${${WATSON_SPEECH_TO_TEXT_URL}}` with credentials from your IBM account.
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset,
+and `${WATSON_SPEECH_TO_TEXT_API_KEY}`/`${${WATSON_SPEECH_TO_TEXT_URL}}` with credentials from your IBM account.
 
 ```console
 python3 benchmark.py \
@@ -116,46 +124,55 @@ python3 benchmark.py \
 
 ### OpenAI Whisper Instructions
 
-Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, and
-`${WHISPER_MODEL}` with the whisper model type (`WHISPER_TINY`, `WHISPER_BASE`, `WHISPER_SMALL`,
-`WHISPER_MEDIUM`, or `WHISPER_LARGE`)
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, `${LANGUAGE}` with the target language,
+and `${WHISPER_MODEL}` with the whisper model type (`WHISPER_TINY`, `WHISPER_BASE`, `WHISPER_SMALL`,
+`WHISPER_MEDIUM`, `WHISPER_LARGE_V1`, `WHISPER_LARGE_V2` or `WHISPER_LARGE_V3`)
 
 ```console
 python3 benchmark.py \
 --engine ${WHISPER_MODEL} \
 --dataset ${DATASET} \
+--language ${LANGUAGE} \
 --dataset-folder ${DATASET_FOLDER} \
 ```
 
 ### Picovoice Cheetah Instructions
 
-Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, and
-`${PICOVOICE_ACCESS_KEY}` with AccessKey obtained from [Picovoice Console](https://console.picovoice.ai/).
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, `${LANGUAGE}` with the target language,
+and `${PICOVOICE_ACCESS_KEY}` with AccessKey obtained from [Picovoice Console](https://console.picovoice.ai/).
+If benchmarking a non-English language, include `--picovoice-model-path` and replace `${PICOVOICE_MODEL_PATH}` with the path to a model file acquired from the [Cheetah Github Repo](https://github.com/Picovoice/cheetah/tree/master/lib/common/).
 
 ```console
 python3 benchmark.py \
 --engine PICOVOICE_CHEETAH \
 --dataset ${DATASET} \
+--language ${LANGUAGE} \
 --dataset-folder ${DATASET_FOLDER} \
 --picovoice-access-key ${PICOVOICE_ACCESS_KEY}
+--picovoice-model-path ${PICOVOICE_MODEL_PATH}
 ```
 
 ### Picovoice Leopard Instructions
 
-Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, and
-`${PICOVOICE_ACCESS_KEY}` with AccessKey obtained from [Picovoice Console](https://console.picovoice.ai/).
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, `${LANGUAGE}` with the target language,
+and `${PICOVOICE_ACCESS_KEY}` with AccessKey obtained from [Picovoice Console](https://console.picovoice.ai/).
+If benchmarking a non-English language, include `--picovoice-model-path` and replace `${PICOVOICE_MODEL_PATH}` with the path to a model file acquired from the [Leopard Github Repo](https://github.com/Picovoice/leopard/tree/master/lib/common/).
 
 ```console
 python3 benchmark.py \
 --engine PICOVOICE_LEOPARD \
 --dataset ${DATASET} \
+--language ${LANGUAGE} \
 --dataset-folder ${DATASET_FOLDER} \
 --picovoice-access-key ${PICOVOICE_ACCESS_KEY}
+--picovoice-model-path ${PICOVOICE_MODEL_PATH}
 ```
 
 ## Results
 
-### Word Error Rate (WER)
+### English
+
+#### Word Error Rate
 
 ![](results/plots/WER.png)
 
@@ -174,11 +191,12 @@ python3 benchmark.py \
 |       Picovoice Cheetah        |          5.6%          |         12.1%          |   7.7%   |    17.5%    |  10.7%  |
 |       Picovoice Leopard        |          5.3%          |         11.3%          |   7.2%   |    16.2%    |  10.0%  |
 
-### Core-Hour & Model Size
+
+#### Core-Hour & Model Size
 
 To obtain these results, we ran the benchmark across the entire TED-LIUM dataset and recorded the processing time.
 The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryzen 9 5900X (12) @ 3.70GHz`),
-64 GB of RAM, and NVMe storage, using 10 cores simultaneously. We omit Whisper Large (Multilingual) from this benchmark.
+64 GB of RAM, and NVMe storage, using 10 cores simultaneously. We omit Whisper Large from this benchmark.
 
 |      Engine       | Core-Hour | Model Size / MB |
 |:-----------------:|:---------:|:---------------:|
@@ -190,3 +208,100 @@ The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryz
 | Picovoice Cheetah |   0.09    |       31        |
 
 ![](results/plots/cpu_usage_comparison.png)
+
+### French
+
+#### Word Error Rate
+
+![](results/plots/WER_FR.png)
+
+|             Engine             | CommonVoice | Multilingual LibriSpeech  | VoxPopuli | Average |
+|:------------------------------:|:-----------:|:-------------------------:|:---------:|:-------:|
+|       Amazon Transcribe        |    6.0%     |          4.4%             |   8.6%    |  6.3%   |
+|      Azure Speech-to-Text      |    11.1%    |          9.0%             |   11.8%   |  10.6%  |
+|     Google Speech-to-Text      |    14.3%    |          14.2%            |   15.1%   |  14.5%  |
+|         Whisper Large          |    9.3%     |          4.6%             |   10.9%   |  8.3%   |
+|         Whisper Medium         |    13.1%    |          8.6%             |   12.1%   |  11.3%  |
+|         Whisper Small          |    19.2%    |          13.5%            |   15.3%   |  16.0%  |
+|          Whisper Base          |    35.4%    |          24.4%            |   23.3%   |  27.7%  |
+|          Whisper Tiny          |    49.8%    |          36.2%            |   32.1%   |  39.4%  |
+|       Picovoice Cheetah        |    14.5%    |          14.5%            |   14.9%   |  14.6%  |
+|       Picovoice Leopard        |    15.9%    |          19.2%            |   17.5%   |  17.5%  |
+
+### German
+
+#### Word Error Rate
+
+![](results/plots/WER_DE.png)
+
+|             Engine             | CommonVoice | Multilingual LibriSpeech  | VoxPopuli | Average |
+|:------------------------------:|:-----------:|:-------------------------:|:---------:|:-------:|
+|       Amazon Transcribe        |    5.3%     |          2.9%             |   14.6%   |  7.6%   |
+|      Azure Speech-to-Text      |    6.9%     |          5.4%             |   13.1%   |  8.5%   |
+|     Google Speech-to-Text      |    9.2%     |          13.9%            |   17.2%   |  13.4%  |
+|         Whisper Large          |    5.3%     |          4.4%             |   12.5%   |  7.4%   |
+|         Whisper Medium         |    8.3%     |          7.6%             |   13.5%   |  9.8%   |
+|         Whisper Small          |    13.8%    |          11.2%            |   16.2%   |  13.7%  |
+|          Whisper Base          |    26.9%    |          19.8%            |   24.0%   |  23.6%  |
+|          Whisper Tiny          |    39.5%    |          28.6%            |   33.0%   |  33.7%  |
+|       Picovoice Cheetah        |    8.4%     |          12.1%            |   17.0%   |  12.5%  |
+|       Picovoice Leopard        |    8.2%     |          11.6%            |   23.6%   |  14.5%  |
+
+### Italian
+
+#### Word Error Rate
+
+![](results/plots/WER_IT.png)
+
+|             Engine             | CommonVoice | Multilingual LibriSpeech  | VoxPopuli | Average |
+|:------------------------------:|:-----------:|:-------------------------:|:---------:|:-------:|
+|       Amazon Transcribe        |    4.1%     |          9.1%             |   16.1%   |  9.8%   |
+|      Azure Speech-to-Text      |    5.8%     |          14.0%            |   17.8%   |  12.5%  |
+|     Google Speech-to-Text      |    5.5%     |          19.6%            |   18.7%   |  14.6%  |
+|         Whisper Large          |    4.9%     |          8.8%             |   21.8%   |  11.8%  |
+|         Whisper Medium         |    8.7%     |          14.9%            |   19.3%   |  14.3%  |
+|         Whisper Small          |    15.4%    |          20.6%            |   22.7%   |  19.6%  |
+|          Whisper Base          |    32.3%    |          31.6%            |   31.6%   |  31.8%  |
+|          Whisper Tiny          |    48.1%    |          43.3%            |   43.5%   |  45.0%  |
+|       Picovoice Cheetah        |    8.6%     |          17.6%            |   20.1%   |  15.4%  |
+|       Picovoice Leopard        |    13.0%    |          27.7%            |   22.2%   |  21.0%  |
+
+### Spanish
+
+#### Word Error Rate
+
+![](results/plots/WER_ES.png)
+
+|             Engine             | CommonVoice | Multilingual LibriSpeech  | VoxPopuli | Average |
+|:------------------------------:|:-----------:|:-------------------------:|:---------:|:-------:|
+|       Amazon Transcribe        |    3.9%     |          3.3%             |   8.7%    |  5.3%   |
+|      Azure Speech-to-Text      |    6.3%     |          5.8%             |   9.4%    |  7.2%   |
+|     Google Speech-to-Text      |    6.6%     |          9.2%             |   11.6%   |  9.1%   |
+|         Whisper Large          |    4.0%     |          2.9%             |   9.7%    |  5.5%   |
+|         Whisper Medium         |    6.2%     |          4.8%             |   9.7%    |  6.9%   |
+|         Whisper Small          |    9.8%     |          7.7%             |   11.4%   |  9.6%   |
+|          Whisper Base          |    20.2%    |          13.0%            |   15.3%   |  16.2%  |
+|          Whisper Tiny          |    33.3%    |          20.6%            |   22.7%   |  25.5%  |
+|       Picovoice Cheetah        |    8.3%     |          8.0%             |   11.4%   |  9.2%   |
+|       Picovoice Leopard        |    7.6%     |          14.9%            |   14.1%   |  12.2%  |
+
+### Portuguese
+
+#### Word Error Rate
+
+![](results/plots/WER_PT.png)
+
+|             Engine             | CommonVoice | Multilingual LibriSpeech  | Average |
+|:------------------------------:|:-----------:|:-------------------------:|:-------:|
+|       Amazon Transcribe        |    5.4%     |          7.8%             |  6.6%   |
+|      Azure Speech-to-Text      |    7.4%     |          9.0%             |  8.2%   |
+|     Google Speech-to-Text      |    8.8%     |          14.2%            |  11.5%  |
+|         Whisper Large          |    5.9%     |          5.4%             |  5.7%   |
+|         Whisper Medium         |    9.6%     |          8.1%             |  8.9%   |
+|         Whisper Small          |    15.6%    |          13.0%            |  14.3%  |
+|          Whisper Base          |    31.2%    |          22.7%            |  27.0%  |
+|          Whisper Tiny          |    47.7%    |          34.6%            |  41.2%  |
+|       Picovoice Cheetah        |    10.6%    |          16.1%            |  13.4%  |
+|       Picovoice Leopard        |    17.1%    |          20.0%            |  18.6%  |
+
+- For Amazon Transcribe, Azure Speech-to-Text, and Google Speech-to-Text, we report results with the language set to `PT-BR`, as this achieves better results compared to `PT-PT` across all engines.
