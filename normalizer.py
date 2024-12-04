@@ -9,7 +9,7 @@ from languages import Languages
 
 class Normalizer(object):
     @staticmethod
-    def normalize(sentence: str, reject_invalid: bool) -> str:
+    def normalize(sentence: str, raise_error_on_invalid_sentence: bool) -> str:
         raise NotImplementedError()
 
     @classmethod
@@ -69,7 +69,7 @@ class DefaultNormalizer:
         )
 
     @staticmethod
-    def normalize(sentence: str, reject_invalid: bool = False) -> str:
+    def normalize(sentence: str, raise_error_on_invalid_sentence: bool = False) -> str:
         sentence = sentence.lower()
         sentence = re.sub(r"[<\[][^>\]]*[>\]]", "", sentence)
         sentence = re.sub(r"\(([^)]+?)\)", "", sentence)
@@ -200,7 +200,7 @@ class EnglishNormalizer(Normalizer):
         )
 
     @staticmethod
-    def normalize(sentence: str, reject_invalid: bool = False) -> str:
+    def normalize(sentence: str, raise_error_on_invalid_sentence: bool = False) -> str:
         p = inflect.engine()
 
         sentence = sentence.lower()
@@ -222,7 +222,7 @@ class EnglishNormalizer(Normalizer):
 
         sentence = " ".join(num2txt(x) for x in sentence.split())
 
-        if reject_invalid:
+        if raise_error_on_invalid_sentence:
             if not all(c in " '" + string.ascii_lowercase for c in sentence):
                 raise RuntimeError()
             if any(x.startswith("'") for x in sentence.split()):

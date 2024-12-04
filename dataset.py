@@ -97,11 +97,12 @@ class CommonVoiceDataset(Dataset):
                             (
                                 flac_path,
                                 self._normalizer.normalize(
-                                    row["sentence"], reject_invalid=True
+                                    row["sentence"],
+                                    raise_error_on_invalid_sentence=True,
                                 ),
                             )
                         )
-                    except Exception:
+                    except RuntimeError:
                         continue
 
     def size(self) -> int:
@@ -140,7 +141,8 @@ class LibriSpeechTestCleanDataset(Dataset):
                 for x in os.listdir(chapter_folder):
                     if x.endswith(".flac"):
                         transcript = EnglishNormalizer.normalize(
-                            transcripts[x.replace(".flac", "")], reject_invalid=True
+                            transcripts[x.replace(".flac", "")],
+                            raise_error_on_invalid_sentence=True,
                         )
                         self._data.append((os.path.join(chapter_folder, x), transcript))
 
@@ -300,10 +302,13 @@ class MLSDataset(Dataset):
                     self._data.append(
                         (
                             flac_path,
-                            self._normalizer.normalize(transcript, reject_invalid=True),
+                            self._normalizer.normalize(
+                                transcript,
+                                raise_error_on_invalid_sentence=True,
+                            ),
                         )
                     )
-                except Exception:
+                except RuntimeError:
                     continue
 
     def size(self) -> int:
@@ -361,11 +366,12 @@ class VoxPopuliDataset(Dataset):
                         (
                             flac_path,
                             self._normalizer.normalize(
-                                row["normalized_text"], reject_invalid=True
+                                row["normalized_text"],
+                                raise_error_on_invalid_sentence=True,
                             ),
                         )
                     )
-                except Exception:
+                except RuntimeError:
                     continue
 
     def size(self) -> int:

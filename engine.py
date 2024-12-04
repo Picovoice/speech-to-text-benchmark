@@ -157,9 +157,7 @@ class AmazonTranscribeEngine(Engine):
             status["TranscriptionJob"]["Transcript"]["TranscriptFileUri"]
         )
 
-        res = json.loads(content.content.decode("utf8"))["results"]["transcripts"][0][
-            "transcript"
-        ]
+        res = json.loads(content.content.decode("utf8"))["results"]["transcripts"][0]["transcript"]
 
         with open(cache_path, "w") as f:
             f.write(res)
@@ -193,7 +191,10 @@ class AmazonTranscribeEngine(Engine):
 
 class AzureSpeechToTextEngine(Engine):
     def __init__(
-        self, azure_speech_key: str, azure_speech_location: str, language: Languages
+        self,
+        azure_speech_key: str,
+        azure_speech_location: str,
+        language: Languages,
     ):
         self._normalizer = Normalizer.create(language)
         self._language_code = LANGUAGE_TO_CODE[language]
@@ -210,7 +211,9 @@ class AzureSpeechToTextEngine(Engine):
 
         wav_path = path.replace(".flac", ".wav")
         soundfile.write(
-            wav_path, soundfile.read(path, dtype="int16")[0], samplerate=16000
+            wav_path,
+            soundfile.read(path, dtype="int16")[0],
+            samplerate=16000,
         )
 
         speech_config = speechsdk.SpeechConfig(
@@ -220,7 +223,8 @@ class AzureSpeechToTextEngine(Engine):
         )
         audio_config = speechsdk.audio.AudioConfig(filename=wav_path)
         speech_recognizer = speechsdk.SpeechRecognizer(
-            speech_config=speech_config, audio_config=audio_config
+            speech_config=speech_config,
+            audio_config=audio_config,
         )
 
         res = ""
