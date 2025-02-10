@@ -118,7 +118,7 @@ def main():
     elif engine == Engines.PICOVOICE_CHEETAH:
         if args.picovoice_access_key is None:
             raise ValueError("`picovoice-access-key` is required")
-        if args.picovoice_model_path is None and args.language != Languages.EN:
+        if args.picovoice_model_path is None and args.language != Languages.EN.value:
             raise ValueError("`picovoice-model-path` is required for non-EN languages")
         engine_params["access_key"] = args.picovoice_access_key
         engine_params["model_path"] = args.picovoice_model_path
@@ -126,7 +126,7 @@ def main():
     elif engine == Engines.PICOVOICE_LEOPARD:
         if args.picovoice_access_key is None:
             raise ValueError("`picovoice-access-key` is required")
-        if args.picovoice_model_path is None and args.language != Languages.EN:
+        if args.picovoice_model_path is None and args.language != Languages.EN.value:
             raise ValueError("`picovoice-model-path` is required for non-EN languages")
         engine_params["access_key"] = args.picovoice_access_key
         engine_params["model_path"] = args.picovoice_model_path
@@ -184,7 +184,7 @@ def main():
         f.write(f"WER: {str(word_error_rate)}\n")
         f.write(f"RTF: {str(rtf)}\n")
 
-    print(f"WED: {word_error_rate:.2f}")
+    print(f"WER: {word_error_rate:.2f}")
     print(f"RTF: {rtf}")
 
 

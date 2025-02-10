@@ -97,8 +97,7 @@ class CommonVoiceDataset(Dataset):
                             (
                                 flac_path,
                                 self._normalizer.normalize(
-                                    row["sentence"],
-                                    raise_error_on_invalid_sentence=True,
+                                    row["sentence"], raise_error_on_invalid_sentence=True
                                 ),
                             )
                         )
@@ -141,8 +140,7 @@ class LibriSpeechTestCleanDataset(Dataset):
                 for x in os.listdir(chapter_folder):
                     if x.endswith(".flac"):
                         transcript = EnglishNormalizer.normalize(
-                            transcripts[x.replace(".flac", "")],
-                            raise_error_on_invalid_sentence=True,
+                            transcripts[x.replace(".flac", "")], raise_error_on_invalid_sentence=True
                         )
                         self._data.append((os.path.join(chapter_folder, x), transcript))
 
@@ -180,9 +178,12 @@ class TEDLIUMDataset(Dataset):
         for x in os.listdir(caption_folder):
             sph_path = os.path.join(audio_folder, x.replace(".stm", ".sph"))
             full_transcript = ""
+            last_row = None
 
             with open(os.path.join(caption_folder, x)) as f:
                 for row in csv.reader(f, delimiter=" "):
+                    last_row = row
+
                     if row[2] == "inter_segment_gap":
                         continue
 
@@ -229,18 +230,38 @@ class TEDLIUMDataset(Dataset):
                 flac_path = sph_path.replace(".sph", ".flac")
 
                 if not os.path.exists(flac_path):
-                    args = [
-                        "ffmpeg",
-                        "-i",
-                        sph_path,
-                        "-ac",
-                        "1",
-                        "-ar",
-                        "16000",
-                        "-loglevel",
-                        "error",
-                        flac_path,
-                    ]
+                    if last_row is not None and last_row[2] == "inter_segment_gap":
+                        end_sec = float(last_row[3])
+
+                        args = [
+                            "ffmpeg",
+                            "-i",
+                            sph_path,
+                            "-ac",
+                            "1",
+                            "-ar",
+                            "16000",
+                            "-loglevel",
+                            "error",
+                            "-ss",
+                            "0",
+                            "-to",
+                            f"{end_sec:.3f}",
+                            flac_path,
+                        ]
+                    else:
+                        args = [
+                            "ffmpeg",
+                            "-i",
+                            sph_path,
+                            "-ac",
+                            "1",
+                            "-ar",
+                            "16000",
+                            "-loglevel",
+                            "error",
+                            flac_path,
+                        ]
                     subprocess.check_output(args)
 
                 self._data.append((flac_path, full_transcript))
@@ -302,10 +323,7 @@ class MLSDataset(Dataset):
                     self._data.append(
                         (
                             flac_path,
-                            self._normalizer.normalize(
-                                transcript,
-                                raise_error_on_invalid_sentence=True,
-                            ),
+                            self._normalizer.normalize(transcript, raise_error_on_invalid_sentence=True),
                         )
                     )
                 except RuntimeError:
@@ -366,8 +384,7 @@ class VoxPopuliDataset(Dataset):
                         (
                             flac_path,
                             self._normalizer.normalize(
-                                row["normalized_text"],
-                                raise_error_on_invalid_sentence=True,
+                                row["normalized_text"], raise_error_on_invalid_sentence=True
                             ),
                         )
                     )
