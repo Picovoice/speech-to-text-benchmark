@@ -208,7 +208,7 @@ python3 -m script.download_fleurs \
 |         Whisper Small          |          3.3%          |          7.2%          |   4.8%   |    12.7%    |  7.0%   |
 |          Whisper Base          |          4.3%          |         10.4%          |   5.4%   |    17.9%    |  9.5%   |
 |          Whisper Tiny          |          5.9%          |         13.8%          |   6.5%   |    24.4%    |  12.7%  |
-|       Picovoice Cheetah        |          5.4%          |         12.0%          |   6.8%   |    17.3%    |  10.4%  |
+|       Picovoice Cheetah        |          5.3%          |         11.9%          |   7.0%   |    18.2%    |  10.6%  |
 |       Picovoice Leopard        |          5.1%          |         11.1%          |   6.4%   |    16.1%    |  9.7%   |
 
 
@@ -261,7 +261,7 @@ The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryz
 |         Whisper Small          |    19.2%    |          13.5%            |   15.3%   |  16.0%  |
 |          Whisper Base          |    35.4%    |          24.4%            |   23.3%   |  27.7%  |
 |          Whisper Tiny          |    49.8%    |          36.2%            |   32.1%   |  39.4%  |
-|       Picovoice Cheetah        |    14.5%    |          14.5%            |   14.9%   |  14.6%  |
+|       Picovoice Cheetah        |    14.8%    |          14.2%            |   15.1%   |  14.7%  |
 |       Picovoice Leopard        |    15.9%    |          19.2%            |   17.5%   |  17.5%  |
 
 #### Punctuation Error Rate
@@ -297,7 +297,7 @@ The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryz
 |         Whisper Small          |    13.8%    |          11.2%            |   16.2%   |  13.7%  |
 |          Whisper Base          |    26.9%    |          19.8%            |   24.0%   |  23.6%  |
 |          Whisper Tiny          |    39.5%    |          28.6%            |   33.0%   |  33.7%  |
-|       Picovoice Cheetah        |    8.4%     |          12.1%            |   17.0%   |  12.5%  |
+|       Picovoice Cheetah        |    9.3%     |          11.0%            |   16.9%   |  12.4%  |
 |       Picovoice Leopard        |    8.2%     |          11.6%            |   23.6%   |  14.5%  |
 
 #### Punctuation Error Rate
@@ -332,7 +332,7 @@ The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryz
 |         Whisper Small          |    15.4%    |          20.6%            |   22.7%   |  19.6%  |
 |          Whisper Base          |    32.3%    |          31.6%            |   31.6%   |  31.8%  |
 |          Whisper Tiny          |    48.1%    |          43.3%            |   43.5%   |  45.0%  |
-|       Picovoice Cheetah        |    8.6%     |          17.6%            |   20.1%   |  15.4%  |
+|       Picovoice Cheetah        |    8.9%     |          17.7%            |   19.9%   |  15.5%  |
 |       Picovoice Leopard        |    13.0%    |          27.7%            |   22.2%   |  21.0%  |
 
 #### Punctuation Error Rate
@@ -367,7 +367,7 @@ The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryz
 |         Whisper Small          |    9.8%     |          7.7%             |   11.4%   |  9.6%   |
 |          Whisper Base          |    20.2%    |          13.0%            |   15.3%   |  16.2%  |
 |          Whisper Tiny          |    33.3%    |          20.6%            |   22.7%   |  25.5%  |
-|       Picovoice Cheetah        |    8.3%     |          8.0%             |   11.4%   |  9.2%   |
+|       Picovoice Cheetah        |    7.8%     |          8.2%             |   12.9%   |  9.6%   |
 |       Picovoice Leopard        |    7.6%     |          14.9%            |   14.1%   |  12.2%  |
 
 #### Punctuation Error Rate
@@ -404,7 +404,7 @@ For Amazon Transcribe, Azure Speech-to-Text, and Google Speech-to-Text, we repor
 |         Whisper Small          |    15.6%    |          13.0%            |  14.3%  |
 |          Whisper Base          |    31.2%    |          22.7%            |  27.0%  |
 |          Whisper Tiny          |    47.7%    |          34.6%            |  41.2%  |
-|       Picovoice Cheetah        |    10.6%    |          16.1%            |  13.4%  |
+|       Picovoice Cheetah        |    10.5%    |          15.9%            |  13.2%  |
 |       Picovoice Leopard        |    17.1%    |          20.0%            |  18.6%  |
 
 #### Punctuation Error Rate
