@@ -2,27 +2,40 @@ import csv
 import os
 import subprocess
 from enum import Enum
-from typing import Tuple
+from typing import (
+    Sequence,
+    Tuple
+)
 
 import soundfile
 
 from languages import Languages
-from normalizer import (
-    EnglishNormalizer,
-    Normalizer,
-)
+from normalizer import Normalizer
 
 
 class Datasets(Enum):
     COMMON_VOICE = "COMMON_VOICE"
+    FLEURS = "FLEURS"
     LIBRI_SPEECH_TEST_CLEAN = "LIBRI_SPEECH_TEST_CLEAN"
     LIBRI_SPEECH_TEST_OTHER = "LIBRI_SPEECH_TEST_OTHER"
-    TED_LIUM = "TED_LIUM"
     MLS = "MLS"
+    TED_LIUM = "TED_LIUM"
     VOX_POPULI = "VOX_POPULI"
 
 
 class Dataset(object):
+    SUPPORTED_LANGUAGES: Sequence[Languages] = []
+    SUPPORTS_PUNCTUATION: bool = False
+
+    def __init__(self, language: Languages, punctuation: bool, dataset_name: str):
+        if language not in self.SUPPORTED_LANGUAGES:
+            raise ValueError(
+                f"{dataset_name} dataset only supports {[lang.value for lang in self.SUPPORTED_LANGUAGES]} languages"
+            )
+        if punctuation and not self.SUPPORTS_PUNCTUATION:
+            raise ValueError(f"{dataset_name} dataset does not support punctuation")
+        self._language = language
+
     def size(self) -> int:
         raise NotImplementedError()
 
@@ -33,19 +46,29 @@ class Dataset(object):
         raise NotImplementedError()
 
     @classmethod
-    def create(cls, x: Datasets, folder: str, language: Languages):
+    def create(
+        cls, x: Datasets, folder: str, language: Languages, punctuation: bool, punctuation_set: str
+    ):
+        normalizer = Normalizer.create(
+            language=language,
+            keep_punctuation=punctuation,
+            punctuation_set=punctuation_set,
+        )
+
         if x is Datasets.COMMON_VOICE:
-            return CommonVoiceDataset(folder, language)
+            return CommonVoiceDataset(folder, language, punctuation, normalizer)
         elif x is Datasets.LIBRI_SPEECH_TEST_CLEAN:
-            return LibriSpeechTestCleanDataset(folder, language)
+            return LibriSpeechTestCleanDataset(folder, language, punctuation, normalizer)
         elif x is Datasets.LIBRI_SPEECH_TEST_OTHER:
-            return LibriSpeechTestOtherDataset(folder, language)
+            return LibriSpeechTestOtherDataset(folder, language, punctuation, normalizer)
         elif x is Datasets.TED_LIUM:
-            return TEDLIUMDataset(folder, language)
+            return TEDLIUMDataset(folder, language, punctuation, normalizer)
         elif x is Datasets.MLS:
-            return MLSDataset(folder, language)
+            return MLSDataset(folder, language, punctuation, normalizer)
         elif x is Datasets.VOX_POPULI:
-            return VoxPopuliDataset(folder, language)
+            return VoxPopuliDataset(folder, language, punctuation, normalizer)
+        elif x is Datasets.FLEURS:
+            return FleursDataset(folder, language, punctuation, normalizer)
         else:
             raise ValueError(f"Cannot create {cls.__name__} of type `{x}`")
 
@@ -60,15 +83,12 @@ class CommonVoiceDataset(Dataset):
         Languages.PT_BR,
         Languages.PT_PT,
     ]
+    SUPPORTS_PUNCTUATION = True
 
-    def __init__(self, folder: str, language: Languages):
-        if language not in self.SUPPORTED_LANGUAGES:
-            raise ValueError(
-                f"{Datasets.COMMON_VOICE.value} dataset only supports {[lang.value for lang in self.SUPPORTED_LANGUAGES]}"
-            )
+    def __init__(self, folder: str, language: Languages, punctuation: bool, normalizer: Normalizer):
+        super().__init__(language, punctuation, Datasets.COMMON_VOICE.value)
 
         self._language = language
-        self._normalizer = Normalizer.create(language)
 
         self._data = list()
         with open(os.path.join(folder, "test.tsv")) as f:
@@ -93,16 +113,14 @@ class CommonVoiceDataset(Dataset):
                         continue
 
                     try:
-                        self._data.append(
-                            (
-                                flac_path,
-                                self._normalizer.normalize(
-                                    row["sentence"], raise_error_on_invalid_sentence=True
-                                ),
-                            )
-                        )
+                        transcript = normalizer.normalize(row["sentence"], raise_error_on_invalid_sentence=True)
                     except RuntimeError:
                         continue
+
+                    if punctuation and transcript[-1] not in [".", "?"]:
+                        continue
+
+                    self._data.append((flac_path, transcript))
 
     def size(self) -> int:
         return len(self._data)
@@ -116,12 +134,17 @@ class CommonVoiceDataset(Dataset):
 
 class LibriSpeechTestCleanDataset(Dataset):
     SUPPORTED_LANGUAGES = [Languages.EN]
+    SUPPORTS_PUNCTUATION = False
 
-    def __init__(self, folder: str, language: Languages):
-        if language not in self.SUPPORTED_LANGUAGES:
-            raise ValueError(
-                f"{Datasets.LIBRI_SPEECH_TEST_CLEAN.value} dataset only supports {[lang.value for lang in self.SUPPORTED_LANGUAGES]}"
-            )
+    def __init__(
+        self,
+        folder: str,
+        language: Languages,
+        punctuation: bool,
+        normalizer: Normalizer,
+        dataset_name: str = Datasets.LIBRI_SPEECH_TEST_CLEAN.value,
+    ):
+        super().__init__(language, punctuation, dataset_name)
 
         self._data = list()
         for speaker_id in os.listdir(folder):
@@ -130,16 +153,14 @@ class LibriSpeechTestCleanDataset(Dataset):
                 chapter_folder = os.path.join(speaker_folder, chapter_id)
 
                 with open(
-                    os.path.join(
-                        chapter_folder, f"{speaker_id}-{chapter_id}.trans.txt"
-                    ),
+                    os.path.join(chapter_folder, f"{speaker_id}-{chapter_id}.trans.txt"),
                     "r",
                 ) as f:
                     transcripts = dict(x.split(" ", maxsplit=1) for x in f.readlines())
 
                 for x in os.listdir(chapter_folder):
                     if x.endswith(".flac"):
-                        transcript = EnglishNormalizer.normalize(
+                        transcript = normalizer.normalize(
                             transcripts[x.replace(".flac", "")], raise_error_on_invalid_sentence=True
                         )
                         self._data.append((os.path.join(chapter_folder, x), transcript))
@@ -155,8 +176,14 @@ class LibriSpeechTestCleanDataset(Dataset):
 
 
 class LibriSpeechTestOtherDataset(LibriSpeechTestCleanDataset):
-    def __init__(self, folder: str, language: Languages):
-        super().__init__(folder, language)
+    def __init__(
+        self,
+        folder: str,
+        language: Languages,
+        punctuation: bool,
+        normalizer: Normalizer,
+    ):
+        super().__init__(folder, language, punctuation, normalizer, Datasets.LIBRI_SPEECH_TEST_OTHER.value)
 
     def __str__(self) -> str:
         return "LibriSpeech `test-other`"
@@ -164,12 +191,12 @@ class LibriSpeechTestOtherDataset(LibriSpeechTestCleanDataset):
 
 class TEDLIUMDataset(Dataset):
     SUPPORTED_LANGUAGES = [Languages.EN]
+    SUPPORTS_PUNCTUATION = False
 
-    def __init__(self, folder: str, language: Languages, split_audio: bool = False):
-        if language not in self.SUPPORTED_LANGUAGES:
-            raise ValueError(
-                f"{Datasets.TED_LIUM.value} dataset only supports {[lang.value for lang in self.SUPPORTED_LANGUAGES]}"
-            )
+    def __init__(
+        self, folder: str, language: Languages, punctuation: bool, normalizer: Normalizer, split_audio: bool = False
+    ):
+        super().__init__(language, punctuation, Datasets.TED_LIUM.value)
 
         self._data = list()
         test_folder = os.path.join(folder, "test")
@@ -188,12 +215,8 @@ class TEDLIUMDataset(Dataset):
                         continue
 
                     try:
-                        transcript = EnglishNormalizer.normalize(
-                            " ".join(row[6:]).replace(" '", "'")
-                        )
-                        full_transcript = (
-                            f"{full_transcript} {transcript.strip()}".strip()
-                        )
+                        transcript = normalizer.normalize(" ".join(row[6:]).replace(" '", "'"))
+                        full_transcript = f"{full_transcript} {transcript.strip()}".strip()
                     except RuntimeError:
                         continue
 
@@ -201,9 +224,7 @@ class TEDLIUMDataset(Dataset):
                         start_sec = float(row[3])
                         end_sec = float(row[4])
 
-                        flac_path = sph_path.replace(
-                            ".sph", f"_{start_sec:.3f}_{end_sec:.3f}.flac"
-                        )
+                        flac_path = sph_path.replace(".sph", f"_{start_sec:.3f}_{end_sec:.3f}.flac")
 
                         if not os.path.exists(flac_path):
                             args = [
@@ -286,15 +307,12 @@ class MLSDataset(Dataset):
         Languages.PT_BR,
         Languages.PT_PT,
     ]
+    SUPPORTS_PUNCTUATION = False
 
-    def __init__(self, folder: str, language: Languages):
-        if language not in self.SUPPORTED_LANGUAGES:
-            raise ValueError(
-                f"{Datasets.MLS.value} dataset only supports {[lang.value for lang in self.SUPPORTED_LANGUAGES]}"
-            )
+    def __init__(self, folder: str, language: Languages, punctuation: bool, normalizer: Normalizer):
+        super().__init__(language, punctuation, Datasets.MLS.value)
 
         self._language = language
-        self._normalizer = Normalizer.create(language)
 
         self._data = list()
         with open(os.path.join(folder, "test", "transcripts.txt")) as f:
@@ -302,9 +320,7 @@ class MLSDataset(Dataset):
                 id, transcript = row.split("\t", 1)
 
                 split_id = id.split("_", 2)
-                opus_path = os.path.join(
-                    folder, "test", "audio", split_id[0], split_id[1], f"{id}.opus"
-                )
+                opus_path = os.path.join(folder, "test", "audio", split_id[0], split_id[1], f"{id}.opus")
                 flac_path = opus_path.replace(".opus", ".flac")
                 if not os.path.exists(flac_path):
                     args = [
@@ -323,7 +339,7 @@ class MLSDataset(Dataset):
                     self._data.append(
                         (
                             flac_path,
-                            self._normalizer.normalize(transcript, raise_error_on_invalid_sentence=True),
+                            normalizer.normalize(transcript, raise_error_on_invalid_sentence=True),
                         )
                     )
                 except RuntimeError:
@@ -347,17 +363,21 @@ class VoxPopuliDataset(Dataset):
         Languages.FR,
         Languages.IT,
     ]
+    SUPPORTS_PUNCTUATION = True
 
-    def __init__(self, folder: str, language: Languages):
-        if language not in self.SUPPORTED_LANGUAGES:
-            raise ValueError(
-                f"{Datasets.VOX_POPULI.value} dataset only supports {[lang.value for lang in self.SUPPORTED_LANGUAGES]}"
-            )
+    def __init__(self, folder: str, language: Languages, punctuation: bool, normalizer: Normalizer):
+        super().__init__(language, punctuation, Datasets.VOX_POPULI.value)
 
         self._language = language
-        self._normalizer = Normalizer.create(language)
 
-        self._data = list()
+        if punctuation:
+            self._data = self._load_punctuation_data(folder, normalizer)
+        else:
+            self._data = self._load_data(folder, normalizer)
+
+    @staticmethod
+    def _load_data(folder: str, normalizer: Normalizer):
+        data = list()
         with open(os.path.join(folder, "asr_test.tsv")) as f:
             reader: csv.DictReader = csv.DictReader(f, delimiter="\t")
             for row in reader:
@@ -380,16 +400,63 @@ class VoxPopuliDataset(Dataset):
                     continue
 
                 try:
-                    self._data.append(
+                    data.append(
                         (
                             flac_path,
-                            self._normalizer.normalize(
-                                row["normalized_text"], raise_error_on_invalid_sentence=True
+                            normalizer.normalize(
+                                row["normalized_text"],
+                                raise_error_on_invalid_sentence=True,
                             ),
                         )
                     )
                 except RuntimeError:
                     continue
+
+        return data
+
+    @staticmethod
+    def _load_punctuation_data(folder: str, normalizer: Normalizer):
+        data = list()
+        with open(os.path.join(folder, "asr_test.tsv")) as f:
+            reader: csv.DictReader = csv.DictReader(f, delimiter="\t")
+            for row in reader:
+                year = row["id"][:4]
+                ogg_path = os.path.join(folder, year, f"{row['id']}.ogg")
+                flac_path = ogg_path.replace(".ogg", ".flac")
+                if not os.path.exists(flac_path):
+                    args = [
+                        "ffmpeg",
+                        "-i",
+                        ogg_path,
+                        "-ac",
+                        "1",
+                        "-ar",
+                        "16000",
+                        flac_path,
+                    ]
+                    subprocess.check_output(args)
+                elif soundfile.read(flac_path)[0].size > 16000 * 60:
+                    continue
+
+                transcript = row["raw_text"]
+
+                if len(transcript) == 0:
+                    continue
+
+                if any(c.isdigit() for c in transcript):
+                    continue
+
+                try:
+                    data.append(
+                        (
+                            flac_path,
+                            normalizer.normalize(transcript, raise_error_on_invalid_sentence=True),
+                        )
+                    )
+                except RuntimeError:
+                    continue
+
+        return data
 
     def size(self) -> int:
         return len(self._data)
@@ -399,6 +466,68 @@ class VoxPopuliDataset(Dataset):
 
     def __str__(self) -> str:
         return f"Vox Populi {self._language.value}"
+
+
+class FleursDataset(Dataset):
+    SUPPORTED_LANGUAGES = [
+        Languages.DE,
+        Languages.EN,
+        Languages.ES,
+        Languages.FR,
+        Languages.IT,
+        Languages.PT_BR,
+        Languages.PT_PT,
+    ]
+    SUPPORTS_PUNCTUATION = True
+
+    def __init__(self, folder: str, language: Languages, punctuation: bool, normalizer: Normalizer):
+        super().__init__(language, punctuation, Datasets.FLEURS.value)
+
+        self._language = language
+
+        self._data = list()
+        with open(os.path.join(folder, "test.tsv")) as f:
+            fieldnames = ["id", "filename", "raw_text", "normalized_text", "phonemes", "duration", "gender"]
+            reader = csv.DictReader(f, delimiter="\t", fieldnames=fieldnames)
+            for row in reader:
+                wav_path = os.path.join(folder, "audio", "test", row["filename"])
+                flac_path = wav_path.replace(".wav", ".flac")
+                if not os.path.exists(flac_path):
+                    args = [
+                        "ffmpeg",
+                        "-i",
+                        wav_path,
+                        "-ac",
+                        "1",
+                        "-ar",
+                        "16000",
+                        flac_path,
+                    ]
+                    subprocess.check_output(args)
+                elif soundfile.read(flac_path)[0].size > 16000 * 60:
+                    continue
+
+                try:
+                    self._data.append(
+                        (
+                            flac_path,
+                            normalizer.normalize(
+                                row["raw_text"] if punctuation else row["normalized_text"],
+                                raise_error_on_invalid_sentence=True,
+                            ),
+                        )
+                    )
+                except RuntimeError as e:
+                    continue
+
+    def size(self) -> int:
+        return len(self._data)
+
+    def get(self, index: int) -> Tuple[str, str]:
+        return self._data[index]
+
+    def __str__(self) -> str:
+        return f"Fleurs {self._language.value}"
 
 
 __all__ = [
