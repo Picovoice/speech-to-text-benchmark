@@ -9,7 +9,7 @@ matplotlib
 numpy
 openai-whisper
 psutil
-pvcheetah==2.2.0
+pvcheetah==2.2.1
 pvleopard==2.0.1
 pytube
 requests
