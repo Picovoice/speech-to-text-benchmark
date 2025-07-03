@@ -19,6 +19,7 @@ This repo is a minimalist and extensible framework for benchmarking different sp
 - [Common Voice](https://commonvoice.mozilla.org/en)
 - [Multilingual LibriSpeech](https://openslr.org/94)
 - [VoxPopuli](https://github.com/facebookresearch/voxpopuli)
+- [Fleurs](https://huggingface.co/datasets/google/fleurs) ([Download instructions](#fleurs-download-instructions))
 
 ## Metrics
 
@@ -26,6 +27,10 @@ This repo is a minimalist and extensible framework for benchmarking different sp
 
 Word error rate (WER) is the ratio of edit distance between words in a reference transcript and the words in the output
 of the speech-to-text engine to the number of words in the reference transcript.
+
+### Punctuation Error Rate
+
+Punctuation Error Rate (PER) is the ratio of punctuation-specific errors between a reference transcript and the output of a speech-to-text engine to the number of punctuation-related operations in the reference transcript (more details in Section 3 of [Meister et al.](https://arxiv.org/abs/2310.02943)). We report PER results for periods (.) and question marks (?).
 
 ### Core-Hour
 
@@ -61,9 +66,12 @@ pip3 install -r requirements.txt
 
 In the following, we provide instructions for running the benchmark for each engine. 
 The supported datasets are: 
-`COMMON_VOICE`, `LIBRI_SPEECH_TEST_CLEAN`, `LIBRI_SPEECH_TEST_OTHER`, `TED_LIUM`, `MLS`, and `VOX_POPULI`.
+`COMMON_VOICE`, `LIBRI_SPEECH_TEST_CLEAN`, `LIBRI_SPEECH_TEST_OTHER`, `TED_LIUM`, `MLS`, `VOX_POPULI` and `FLEURS`.
 The supported languages are:
 `EN`, `FR`, `DE`, `ES`, `IT`, `PT_BR`, and `PT_PT`.
+
+To evaluate PER, use the `--punctuation` flag.
+Use `--punctuation-set ${PUNCTUATION_SET}` to select which punctuation marks to calculate PER against, where `${PUNCTUATION_SET}` is one or more of `.`, `?` and `,` (default `.?`).
 
 ### Amazon Transcribe Instructions
 
@@ -168,6 +176,18 @@ python3 benchmark.py \
 --picovoice-model-path ${PICOVOICE_MODEL_PATH}
 ```
 
+### Fleurs Download Instructions
+
+We provide a script to download the Fleurs dataset into its expected format.
+Replace `${LANGUAGES}` with a space separated list of supported languages and `${DOWNLOAD_FOLDER}` with the output download folder path.
+
+```
+python3 -m script.download_fleurs \
+--languages ${LANGUAGES} \
+--download-folder ${DOWNLOAD_FOLDER}
+```
+
+
 ## Results
 
 ### English
@@ -188,9 +208,25 @@ python3 benchmark.py \
 |         Whisper Small          |          3.3%          |          7.2%          |   4.8%   |    12.7%    |  7.0%   |
 |          Whisper Base          |          4.3%          |         10.4%          |   5.4%   |    17.9%    |  9.5%   |
 |          Whisper Tiny          |          5.9%          |         13.8%          |   6.5%   |    24.4%    |  12.7%  |
-|       Picovoice Cheetah        |          5.4%          |         12.0%          |   6.8%   |    17.3%    |  10.4%  |
+|       Picovoice Cheetah        |          5.3%          |         11.9%          |   7.0%   |    18.2%    |  10.6%  |
 |       Picovoice Leopard        |          5.1%          |         11.1%          |   6.4%   |    16.1%    |  9.7%   |
 
+
+#### Punctuation Error Rate
+
+![](results/plots/PER.png)
+
+|             Engine             | CommonVoice | Fleurs | VoxPopuli | Average |
+|:------------------------------:|:-----------:|:------:|:---------:|:-------:|
+|       Amazon Transcribe        |    3.8%     | 12.1%  |   19.1%   |  11.7%  |
+|      Azure Speech-to-Text      |    6.0%     | 18.9%  |   23.0%   |  16.0%  |
+|     Google Speech-to-Text      |    21.3%    | 43.4%  |   45.7%   |  36.8%  |
+|  Whisper Large (Multilingual)  |    10.2%    | 11.6%  |   21.4%   |  14.4%  |
+|         Whisper Medium         |    10.4%    | 10.2%  |   21.7%   |  14.1%  |
+|         Whisper Small          |    10.8%    | 12.2%  |   22.5%   |  15.2%  |
+|          Whisper Base          |    9.7%     | 14.2%  |   23.7%   |  15.9%  |
+|          Whisper Tiny          |    12.2%    | 15.4%  |   24.7%   |  17.4%  |
+|       Picovoice Cheetah        |    6.0%     | 18.3%  |   30.0%   |  18.1%  |
 
 #### Core-Hour & Model Size
 
@@ -225,8 +261,25 @@ The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryz
 |         Whisper Small          |    19.2%    |          13.5%            |   15.3%   |  16.0%  |
 |          Whisper Base          |    35.4%    |          24.4%            |   23.3%   |  27.7%  |
 |          Whisper Tiny          |    49.8%    |          36.2%            |   32.1%   |  39.4%  |
-|       Picovoice Cheetah        |    14.5%    |          14.5%            |   14.9%   |  14.6%  |
+|       Picovoice Cheetah        |    14.8%    |          14.2%            |   15.1%   |  14.7%  |
 |       Picovoice Leopard        |    15.9%    |          19.2%            |   17.5%   |  17.5%  |
+
+#### Punctuation Error Rate
+
+![](results/plots/PER_FR.png)
+
+|             Engine             | CommonVoice | Fleurs | VoxPopuli | Average |
+|:------------------------------:|:-----------:|:------:|:---------:|:-------:|
+|       Amazon Transcribe        |    11.2%    | 11.8%  |   33.1%   |  18.7%  |
+|      Azure Speech-to-Text      |    6.2%     | 12.5%  |   25.8%   |  14.8%  |
+|     Google Speech-to-Text      |    26.6%    | 24.5%  |   30.7%   |  27.3%  |
+|         Whisper Large          |    10.8%    |  9.4%  |   23.8%   |  14.7%  |
+|         Whisper Medium         |    8.7%     | 11.1%  |   22.8%   |  14.2%  |
+|         Whisper Small          |    10.2%    | 13.4%  |   25.0%   |  16.2%  |
+|          Whisper Base          |    10.9%    | 18.5%  |   26.8%   |  18.7%  |
+|          Whisper Tiny          |    15.0%    | 27.3%  |   31.5%   |  24.6%  |
+|       Picovoice Cheetah        |    8.8%     | 23.7%  |   38.3%   |  23.6%  |
+
 
 ### German
 
@@ -244,8 +297,24 @@ The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryz
 |         Whisper Small          |    13.8%    |          11.2%            |   16.2%   |  13.7%  |
 |          Whisper Base          |    26.9%    |          19.8%            |   24.0%   |  23.6%  |
 |          Whisper Tiny          |    39.5%    |          28.6%            |   33.0%   |  33.7%  |
-|       Picovoice Cheetah        |    8.4%     |          12.1%            |   17.0%   |  12.5%  |
+|       Picovoice Cheetah        |    9.3%     |          11.0%            |   16.9%   |  12.4%  |
 |       Picovoice Leopard        |    8.2%     |          11.6%            |   23.6%   |  14.5%  |
+
+#### Punctuation Error Rate
+
+![](results/plots/PER_DE.png)
+
+|             Engine             | CommonVoice | Fleurs | VoxPopuli | Average |
+|:------------------------------:|:-----------:|:------:|:---------:|:-------:|
+|       Amazon Transcribe        |    3.1%     | 14.5%  |   24.3%   |  14.0%  |
+|      Azure Speech-to-Text      |    8.3%     | 19.4%  |   30.2%   |  19.3%  |
+|     Google Speech-to-Text      |    15.9%    | 26.9%  |   29.4%   |  24.1%  |
+|         Whisper Large          |    6.5%     | 15.3%  |   20.5%   |  14.1%  |
+|         Whisper Medium         |    3.4%     | 10.2%  |   21.3%   |  11.6%  |
+|         Whisper Small          |    3.7%     | 11.5%  |   22.6%   |  12.6%  |
+|          Whisper Base          |    5.8%     | 14.9%  |   25.6%   |  15.4%  |
+|          Whisper Tiny          |    9.3%     | 22.0%  |   30.0%   |  20.4%  |
+|       Picovoice Cheetah        |    3.2%     | 24.3%  |   29.7%   |  19.1%  |
 
 ### Italian
 
@@ -263,8 +332,24 @@ The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryz
 |         Whisper Small          |    15.4%    |          20.6%            |   22.7%   |  19.6%  |
 |          Whisper Base          |    32.3%    |          31.6%            |   31.6%   |  31.8%  |
 |          Whisper Tiny          |    48.1%    |          43.3%            |   43.5%   |  45.0%  |
-|       Picovoice Cheetah        |    8.6%     |          17.6%            |   20.1%   |  15.4%  |
+|       Picovoice Cheetah        |    8.9%     |          17.7%            |   19.9%   |  15.5%  |
 |       Picovoice Leopard        |    13.0%    |          27.7%            |   22.2%   |  21.0%  |
+
+#### Punctuation Error Rate
+
+![](results/plots/PER_IT.png)
+
+|             Engine             | CommonVoice | Fleurs | VoxPopuli | Average |
+|:------------------------------:|:-----------:|:------:|:---------:|:-------:|
+|       Amazon Transcribe        |    6.5%     | 63.4%  |   46.4%   |  38.8%  |
+|      Azure Speech-to-Text      |    3.5%     | 16.3%  |   26.9%   |  15.6%  |
+|     Google Speech-to-Text      |    27.9%    | 25.5%  |   46.9%   |  33.4%  |
+|         Whisper Large          |    11.9%    | 12.2%  |   36.4%   |  20.2%  |
+|         Whisper Medium         |    15.0%    | 12.5%  |   39.5%   |  22.3%  |
+|         Whisper Small          |    10.8%    | 12.9%  |   39.0%   |  20.9%  |
+|          Whisper Base          |    19.8%    | 18.2%  |   45.7%   |  27.9%  |
+|          Whisper Tiny          |    27.4%    | 26.3%  |   45.3%   |  33.0%  |
+|       Picovoice Cheetah        |    5.6%     | 27.2%  |   48.6%   |  27.1%  |
 
 ### Spanish
 
@@ -282,10 +367,28 @@ The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryz
 |         Whisper Small          |    9.8%     |          7.7%             |   11.4%   |  9.6%   |
 |          Whisper Base          |    20.2%    |          13.0%            |   15.3%   |  16.2%  |
 |          Whisper Tiny          |    33.3%    |          20.6%            |   22.7%   |  25.5%  |
-|       Picovoice Cheetah        |    8.3%     |          8.0%             |   11.4%   |  9.2%   |
+|       Picovoice Cheetah        |    7.8%     |          8.2%             |   12.9%   |  9.6%   |
 |       Picovoice Leopard        |    7.6%     |          14.9%            |   14.1%   |  12.2%  |
 
+#### Punctuation Error Rate
+
+![](results/plots/PER_ES.png)
+
+|             Engine             | CommonVoice | Fleurs | VoxPopuli | Average |
+|:------------------------------:|:-----------:|:------:|:---------:|:-------:|
+|       Amazon Transcribe        |    5.6%     | 15.2%  |   32.7%   |  17.8%  |
+|      Azure Speech-to-Text      |    3.9%     | 13.6%  |   26.9%   |  14.8%  |
+|     Google Speech-to-Text      |    58.7%    | 45.0%  |   42.3%   |  48.7%  |
+|         Whisper Large          |    6.1%     |  9.2%  |   26.4%   |  13.9%  |
+|         Whisper Medium         |    14.4%    | 15.1%  |   26.7%   |  18.7%  |
+|         Whisper Small          |    10.9%    | 12.1%  |   29.8%   |  17.6%  |
+|          Whisper Base          |    16.9%    | 15.0%  |   32.2%   |  21.4%  |
+|          Whisper Tiny          |    18.9%    | 17.6%  |   33.3%   |  23.3%  |
+|       Picovoice Cheetah        |    5.7%     | 21.0%  |   47.8%   |  24.8%  |
+
 ### Portuguese
+
+For Amazon Transcribe, Azure Speech-to-Text, and Google Speech-to-Text, we report results with the language set to `PT-BR`, as this achieves better results compared to `PT-PT` across all engines.
 
 #### Word Error Rate
 
@@ -301,7 +404,21 @@ The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryz
 |         Whisper Small          |    15.6%    |          13.0%            |  14.3%  |
 |          Whisper Base          |    31.2%    |          22.7%            |  27.0%  |
 |          Whisper Tiny          |    47.7%    |          34.6%            |  41.2%  |
-|       Picovoice Cheetah        |    10.6%    |          16.1%            |  13.4%  |
+|       Picovoice Cheetah        |    10.5%    |          15.9%            |  13.2%  |
 |       Picovoice Leopard        |    17.1%    |          20.0%            |  18.6%  |
 
-- For Amazon Transcribe, Azure Speech-to-Text, and Google Speech-to-Text, we report results with the language set to `PT-BR`, as this achieves better results compared to `PT-PT` across all engines.
+#### Punctuation Error Rate
+
+![](results/plots/PER_PT.png)
+
+|             Engine             | CommonVoice | Fleurs | Average |
+|:------------------------------:|:-----------:|:------:|:-------:|
+|       Amazon Transcribe        |    15.8%    | 23.2%  |  19.5%  |
+|      Azure Speech-to-Text      |    11.9%    | 19.4%  |  15.7%  |
+|     Google Speech-to-Text      |    31.3%    | 32.1%  |  31.7%  |
+|         Whisper Large          |    9.2%     | 16.6%  |  12.9%  |
+|         Whisper Medium         |    11.8%    | 12.8%  |  12.3%  |
+|         Whisper Small          |    11.6%    | 13.9%  |  12.8%  |
+|          Whisper Base          |    15.4%    | 16.9%  |  16.2%  |
+|          Whisper Tiny          |    22.2%    | 22.7%  |  22.5%  |
+|       Picovoice Cheetah        |    12.4%    | 32.8%  |  22.6%  |

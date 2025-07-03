@@ -20,16 +20,11 @@ from ibm_watson import SpeechToTextV1
 
 from languages import (
     LANGUAGE_TO_CODE,
-    Languages,
+    Languages
 )
-from normalizer import Normalizer
 
-warnings.filterwarnings(
-    "ignore", message="FP16 is not supported on CPU; using FP32 instead"
-)
-warnings.filterwarnings(
-    "ignore", message="Performing inference on CPU when CUDA is available"
-)
+warnings.filterwarnings("ignore", message="FP16 is not supported on CPU; using FP32 instead")
+warnings.filterwarnings("ignore", message="Performing inference on CPU when CUDA is available")
 
 NUM_THREADS = 1
 os.environ["OMP_NUM_THREADS"] = str(NUM_THREADS)
@@ -96,9 +91,9 @@ class Engine(object):
         elif x is Engines.WHISPER_LARGE_V3:
             return WhisperLargeV3(language=language)
         elif x is Engines.PICOVOICE_CHEETAH:
-            return PicovoiceCheetahEngine(language=language, **kwargs)
+            return PicovoiceCheetahEngine(**kwargs)
         elif x is Engines.PICOVOICE_LEOPARD:
-            return PicovoiceLeopardEngine(language=language, **kwargs)
+            return PicovoiceLeopardEngine(**kwargs)
         elif x is Engines.IBM_WATSON_SPEECH_TO_TEXT:
             return IBMWatsonSpeechToTextEngine(language=language, **kwargs)
         else:
@@ -107,7 +102,6 @@ class Engine(object):
 
 class AmazonTranscribeEngine(Engine):
     def __init__(self, language: Languages):
-        self._normalizer = Normalizer.create(language)
         self._language_code = LANGUAGE_TO_CODE[language]
 
         self._s3_client = boto3.client("s3")
@@ -126,7 +120,7 @@ class AmazonTranscribeEngine(Engine):
         if os.path.exists(cache_path):
             with open(cache_path) as f:
                 res = f.read()
-            return self._normalizer.normalize(res)
+            return res
 
         job_name = str(uuid.uuid4())
         s3_object = os.path.basename(path)
@@ -134,17 +128,13 @@ class AmazonTranscribeEngine(Engine):
 
         self._transcribe_client.start_transcription_job(
             TranscriptionJobName=job_name,
-            Media={
-                "MediaFileUri": f"https://s3-us-west-2.amazonaws.com/{self._s3_bucket}/{s3_object}"
-            },
+            Media={"MediaFileUri": f"https://s3-us-west-2.amazonaws.com/{self._s3_bucket}/{s3_object}"},
             MediaFormat="flac",
             LanguageCode=self._language_code,
         )
 
         while True:
-            status = self._transcribe_client.get_transcription_job(
-                TranscriptionJobName=job_name
-            )
+            status = self._transcribe_client.get_transcription_job(TranscriptionJobName=job_name)
             job_status = status["TranscriptionJob"]["TranscriptionJobStatus"]
             if job_status == "COMPLETED":
                 break
@@ -153,16 +143,12 @@ class AmazonTranscribeEngine(Engine):
                 raise RuntimeError(f"Amazon Transcribe job {job_name} failed: {error}")
             time.sleep(1)
 
-        content = requests.get(
-            status["TranscriptionJob"]["Transcript"]["TranscriptFileUri"]
-        )
+        content = requests.get(status["TranscriptionJob"]["Transcript"]["TranscriptFileUri"])
 
         res = json.loads(content.content.decode("utf8"))["results"]["transcripts"][0]["transcript"]
 
         with open(cache_path, "w") as f:
             f.write(res)
-
-        res = self._normalizer.normalize(res)
 
         return res
 
@@ -177,9 +163,7 @@ class AmazonTranscribeEngine(Engine):
         while response["KeyCount"] > 0:
             self._s3_client.delete_objects(
                 Bucket=self._s3_bucket,
-                Delete={
-                    "Objects": [{"Key": obj["Key"]} for obj in response["Contents"]]
-                },
+                Delete={"Objects": [{"Key": obj["Key"]} for obj in response["Contents"]]},
             )
             response = self._s3_client.list_objects_v2(Bucket=self._s3_bucket)
 
@@ -196,7 +180,6 @@ class AzureSpeechToTextEngine(Engine):
         azure_speech_location: str,
         language: Languages,
     ):
-        self._normalizer = Normalizer.create(language)
         self._language_code = LANGUAGE_TO_CODE[language]
         self._azure_speech_key = azure_speech_key
         self._azure_speech_location = azure_speech_location
@@ -207,7 +190,7 @@ class AzureSpeechToTextEngine(Engine):
         if os.path.exists(cache_path):
             with open(cache_path, "r") as f:
                 res = f.read()
-            return self._normalizer.normalize(res)
+            return res
 
         wav_path = path.replace(".flac", ".wav")
         soundfile.write(
@@ -255,8 +238,6 @@ class AzureSpeechToTextEngine(Engine):
         with open(cache_path, "w") as f:
             f.write(res)
 
-        res = self._normalizer.normalize(res)
-
         return res
 
     def audio_sec(self) -> float:
@@ -279,7 +260,6 @@ class GoogleSpeechToTextEngine(Engine):
         cache_extension: str = ".ggl",
         model: Optional[str] = None,
     ):
-        self._normalizer = Normalizer.create(language)
         self._language_code = LANGUAGE_TO_CODE[language]
 
         self._client = speech.SpeechClient()
@@ -289,6 +269,7 @@ class GoogleSpeechToTextEngine(Engine):
             sample_rate_hertz=16000,
             language_code=self._language_code,
             model=model,
+            enable_automatic_punctuation=True,
         )
 
         self._cache_extension = cache_extension
@@ -298,7 +279,7 @@ class GoogleSpeechToTextEngine(Engine):
         if os.path.exists(cache_path):
             with open(cache_path) as f:
                 res = f.read()
-            return self._normalizer.normalize(res)
+            return res
 
         with open(path, "rb") as f:
             content = f.read()
@@ -311,8 +292,6 @@ class GoogleSpeechToTextEngine(Engine):
 
         with open(cache_path, "w") as f:
             f.write(res)
-
-        res = self._normalizer.normalize(res)
 
         return res
 
@@ -332,9 +311,7 @@ class GoogleSpeechToTextEngine(Engine):
 class GoogleSpeechToTextEnhancedEngine(GoogleSpeechToTextEngine):
     def __init__(self, language: Languages):
         if language != Languages.EN:
-            raise ValueError(
-                "GOOGLE_SPEECH_TO_TEXT_ENHANCED engine only supports EN language"
-            )
+            raise ValueError("GOOGLE_SPEECH_TO_TEXT_ENHANCED engine only supports EN language")
         super().__init__(language=language, cache_extension=".ggle", model="video")
 
     def __str__(self) -> str:
@@ -349,14 +326,9 @@ class IBMWatsonSpeechToTextEngine(Engine):
         language: Languages,
     ):
         if language != Languages.EN:
-            raise ValueError(
-                "IBM_WATSON_SPEECH_TO_TEXT engine only supports EN language"
-            )
+            raise ValueError("IBM_WATSON_SPEECH_TO_TEXT engine only supports EN language")
 
-        self._normalizer = Normalizer.create(language)
-        self._service = SpeechToTextV1(
-            authenticator=IAMAuthenticator(watson_speech_to_text_api_key)
-        )
+        self._service = SpeechToTextV1(authenticator=IAMAuthenticator(watson_speech_to_text_api_key))
         self._service.set_service_url(watson_speech_to_text_url)
 
     def transcribe(self, path: str) -> str:
@@ -364,7 +336,7 @@ class IBMWatsonSpeechToTextEngine(Engine):
         if os.path.exists(cache_path):
             with open(cache_path, "r") as f:
                 res = f.read()
-            return self._normalizer.normalize(res)
+            return res
 
         with open(path, "rb") as f:
             response = self._service.recognize(
@@ -380,8 +352,6 @@ class IBMWatsonSpeechToTextEngine(Engine):
 
         with open(cache_path, "w") as f:
             f.write(res)
-
-        res = self._normalizer.normalize(res)
 
         return res
 
@@ -415,7 +385,6 @@ class Whisper(Engine):
         self._model = whisper.load_model(model, device="cpu")
         self._cache_extension = cache_extension
         self._language_code = self.LANGUAGE_TO_WHISPER_CODE[language]
-        self._normalizer = Normalizer.create(language)
         self._audio_sec = 0.0
         self._proc_sec = 0.0
 
@@ -428,7 +397,7 @@ class Whisper(Engine):
         if os.path.exists(cache_path):
             with open(cache_path) as f:
                 res = f.read()
-            return self._normalizer.normalize(res)
+            return res
 
         start_sec = time.time()
         res = self._model.transcribe(path, language=self._language_code)["text"]
@@ -436,8 +405,6 @@ class Whisper(Engine):
 
         with open(cache_path, "w") as f:
             f.write(res)
-
-        res = self._normalizer.normalize(res)
 
         return res
 
@@ -520,12 +487,14 @@ class PicovoiceCheetahEngine(Engine):
         access_key: str,
         model_path: Optional[str],
         library_path: Optional[str],
-        language: Languages,
+        punctuation: bool = False,
     ):
         self._cheetah = pvcheetah.create(
-            access_key=access_key, model_path=model_path, library_path=library_path
+            access_key=access_key,
+            model_path=model_path,
+            library_path=library_path,
+            enable_automatic_punctuation=punctuation,
         )
-        self._normalizer = Normalizer.create(language)
         self._audio_sec = 0.0
         self._proc_sec = 0.0
 
@@ -538,17 +507,13 @@ class PicovoiceCheetahEngine(Engine):
         res = ""
         for i in range(audio.size // self._cheetah.frame_length):
             partial, _ = self._cheetah.process(
-                audio[
-                    i
-                    * self._cheetah.frame_length : (i + 1)
-                    * self._cheetah.frame_length
-                ]
+                audio[i * self._cheetah.frame_length : (i + 1) * self._cheetah.frame_length]
             )
             res += partial
         res += self._cheetah.flush()
         self._proc_sec += time.time() - start_sec
 
-        return self._normalizer.normalize(res)
+        return res
 
     def audio_sec(self) -> float:
         return self._audio_sec
@@ -569,12 +534,14 @@ class PicovoiceLeopardEngine(Engine):
         access_key: str,
         model_path: Optional[str],
         library_path: Optional[str],
-        language: Languages,
+        punctuation: bool = False,
     ):
         self._leopard = pvleopard.create(
-            access_key=access_key, model_path=model_path, library_path=library_path
+            access_key=access_key,
+            model_path=model_path,
+            library_path=library_path,
+            enable_automatic_punctuation=punctuation,
         )
-        self._normalizer = Normalizer.create(language)
         self._audio_sec = 0.0
         self._proc_sec = 0.0
 
@@ -587,7 +554,7 @@ class PicovoiceLeopardEngine(Engine):
         res = self._leopard.process(audio)
         self._proc_sec += time.time() - start_sec
 
-        return self._normalizer.normalize(res[0])
+        return res[0]
 
     def audio_sec(self) -> float:
         return self._audio_sec

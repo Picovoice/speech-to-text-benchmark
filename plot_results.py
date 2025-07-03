@@ -1,6 +1,9 @@
 import argparse
 import os
-from typing import Dict, Tuple
+from typing import (
+    Dict,
+    Tuple
+)
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -59,33 +62,36 @@ ENGINE_COLORS = {
 }
 
 
-def _plot_wer(
-    engine_wer: Dict[Engines, Dict[Datasets, float]], save_path: str, show: bool = False
+def _plot_error_rate(
+    engine_error_rate: Dict[Engines, Dict[Datasets, float]],
+    save_path: str,
+    show: bool = False,
+    punctuation: bool = False,
 ) -> None:
-    sorted_wer = sorted(
+    sorted_error_rates = sorted(
         [
             (
                 e,
                 round(
-                    sum(w for w in engine_wer[e].values()) / len(engine_wer[e]) + 1e-9,
+                    sum(w for w in engine_error_rate[e].values()) / len(engine_error_rate[e]) + 1e-9,
                     1,
                 ),
             )
-            for e in engine_wer.keys()
+            for e in engine_error_rate.keys()
         ],
         key=lambda x: x[1],
     )
-    print("\n".join(f"{e.value}: {x}" for e, x in sorted_wer))
+    print("\n".join(f"{e.value}: {x}" for e, x in sorted_error_rates))
 
     _, ax = plt.subplots(figsize=(12, 6))
 
-    for i, (engine, wer) in enumerate(sorted_wer, start=1):
+    for i, (engine, error_rate) in enumerate(sorted_error_rates, start=1):
         color = ENGINE_COLORS[engine]
-        ax.bar([i], [wer], 0.4, color=color)
+        ax.bar([i], [error_rate], 0.4, color=color)
         ax.text(
             i,
-            wer + 0.5,
-            f"{wer}%",
+            error_rate + 0.5,
+            f"{error_rate}%",
             color=color,
             ha="center",
             va="bottom",
@@ -96,12 +102,15 @@ def _plot_wer(
             spine.set_visible(False)
 
     plt.xticks(
-        np.arange(1, len(engine_wer) + 1),
-        [ENGINE_PRINT_NAMES[x[0]] for x in sorted_wer],
+        np.arange(1, len(engine_error_rate) + 1),
+        [ENGINE_PRINT_NAMES[x[0]] for x in sorted_error_rates],
         fontsize=9,
     )
     ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f"{x:.0f}%"))
-    plt.ylabel("Word Error Rate (lower is better)")
+    if punctuation:
+        plt.ylabel("Punctuation Error Rate (lower is better)")
+    else:
+        plt.ylabel("Word Error Rate (lower is better)")
 
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     plt.savefig(save_path)
@@ -113,9 +122,7 @@ def _plot_wer(
     plt.close()
 
 
-def _plot_cpu(
-    save_folder: str, show: bool, dataset: Datasets = Datasets.TED_LIUM
-) -> None:
+def _plot_cpu(save_folder: str, show: bool, dataset: Datasets = Datasets.TED_LIUM) -> None:
     fig, ax = plt.subplots(figsize=(6, 6))
     x_limit = 0
     for engine_type, engine_value in RTF.items():
@@ -168,12 +175,18 @@ def main() -> None:
 
     save_folder = os.path.join(RESULTS_FOLDER, "plots")
 
-    _plot_wer(WER, save_path=os.path.join(save_folder, "WER.png"), show=args.show)
-    _plot_wer(WER_FR, save_path=os.path.join(save_folder, "WER_FR.png"), show=args.show)
-    _plot_wer(WER_DE, save_path=os.path.join(save_folder, "WER_DE.png"), show=args.show)
-    _plot_wer(WER_ES, save_path=os.path.join(save_folder, "WER_ES.png"), show=args.show)
-    _plot_wer(WER_IT, save_path=os.path.join(save_folder, "WER_IT.png"), show=args.show)
-    _plot_wer(WER_PT, save_path=os.path.join(save_folder, "WER_PT.png"), show=args.show)
+    _plot_error_rate(WER_EN, save_path=os.path.join(save_folder, "WER.png"), show=args.show)
+    _plot_error_rate(WER_FR, save_path=os.path.join(save_folder, "WER_FR.png"), show=args.show)
+    _plot_error_rate(WER_DE, save_path=os.path.join(save_folder, "WER_DE.png"), show=args.show)
+    _plot_error_rate(WER_ES, save_path=os.path.join(save_folder, "WER_ES.png"), show=args.show)
+    _plot_error_rate(WER_IT, save_path=os.path.join(save_folder, "WER_IT.png"), show=args.show)
+    _plot_error_rate(WER_PT, save_path=os.path.join(save_folder, "WER_PT.png"), show=args.show)
+    _plot_error_rate(PER_EN, save_path=os.path.join(save_folder, "PER.png"), punctuation=True, show=args.show)
+    _plot_error_rate(PER_FR, save_path=os.path.join(save_folder, "PER_FR.png"), punctuation=True, show=args.show)
+    _plot_error_rate(PER_DE, save_path=os.path.join(save_folder, "PER_DE.png"), punctuation=True, show=args.show)
+    _plot_error_rate(PER_ES, save_path=os.path.join(save_folder, "PER_ES.png"), punctuation=True, show=args.show)
+    _plot_error_rate(PER_IT, save_path=os.path.join(save_folder, "PER_IT.png"), punctuation=True, show=args.show)
+    _plot_error_rate(PER_PT, save_path=os.path.join(save_folder, "PER_PT.png"), punctuation=True, show=args.show)
     _plot_cpu(save_folder=save_folder, show=args.show, dataset=Datasets.TED_LIUM)
 
 

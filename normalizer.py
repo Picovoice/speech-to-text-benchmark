@@ -6,16 +6,26 @@ import inflect
 
 from languages import Languages
 
+SUPPORTED_PUNCTUATION_SET = ",.?"
+
 
 class Normalizer(object):
-    @staticmethod
-    def normalize(sentence: str, raise_error_on_invalid_sentence: bool) -> str:
+    def __init__(self, keep_punctuation: bool, punctuation_set: str = SUPPORTED_PUNCTUATION_SET) -> None:
+        self._keep_punctuation = keep_punctuation
+        self._punctuation_set = punctuation_set
+
+    def normalize(self, sentence: str, raise_error_on_invalid_sentence: bool) -> str:
         raise NotImplementedError()
 
     @classmethod
-    def create(cls, language: Languages):
+    def create(
+        cls,
+        language: Languages,
+        keep_punctuation: bool,
+        punctuation_set: str = SUPPORTED_PUNCTUATION_SET,
+    ):
         if language == Languages.EN:
-            return EnglishNormalizer()
+            return EnglishNormalizer(keep_punctuation, punctuation_set)
         elif language in [
             Languages.DE,
             Languages.ES,
@@ -24,12 +34,12 @@ class Normalizer(object):
             Languages.PT_PT,
             Languages.PT_BR,
         ]:
-            return DefaultNormalizer()
+            return DefaultNormalizer(keep_punctuation, punctuation_set)
         else:
             raise ValueError(f"Cannot create {cls.__name__} of type `{language}`")
 
 
-class DefaultNormalizer:
+class DefaultNormalizer(Normalizer):
     """
     Adapted from: https://github.com/openai/whisper/blob/main/whisper/normalizers/basic.py
     """
@@ -53,8 +63,7 @@ class DefaultNormalizer:
         "Ł": "L",
     }
 
-    @staticmethod
-    def _remove_symbols_and_diacritics(s: str) -> str:
+    def _remove_symbols_and_diacritics(self, s: str) -> str:
         return "".join(
             (
                 DefaultNormalizer.ADDITIONAL_DIACRITICS[c]
@@ -62,18 +71,33 @@ class DefaultNormalizer:
                 else (
                     ""
                     if unicodedata.category(c) == "Mn"
-                    else " " if unicodedata.category(c)[0] in "MSP" else c
+                    else (
+                        " "
+                        if unicodedata.category(c)[0] in "MS"
+                        or (unicodedata.category(c)[0] == "P" and c not in SUPPORTED_PUNCTUATION_SET)
+                        else c
+                    )
                 )
             )
             for c in unicodedata.normalize("NFKD", s)
         )
 
-    @staticmethod
-    def normalize(sentence: str, raise_error_on_invalid_sentence: bool = False) -> str:
+    def normalize(self, sentence: str, raise_error_on_invalid_sentence: bool = False) -> str:
         sentence = sentence.lower()
         sentence = re.sub(r"[<\[][^>\]]*[>\]]", "", sentence)
         sentence = re.sub(r"\(([^)]+?)\)", "", sentence)
-        sentence = DefaultNormalizer._remove_symbols_and_diacritics(sentence).lower()
+        sentence = sentence.replace("!", ".")
+        sentence = sentence.replace("...", "")
+        sentence = self._remove_symbols_and_diacritics(sentence).lower()
+
+        if self._keep_punctuation:
+            removable_punctuation = "".join(set(SUPPORTED_PUNCTUATION_SET) - set(self._punctuation_set))
+        else:
+            removable_punctuation = SUPPORTED_PUNCTUATION_SET
+
+        for c in removable_punctuation:
+            sentence = sentence.replace(c, "")
+
         sentence = re.sub(r"\s+", " ", sentence)
 
         return sentence
@@ -173,15 +197,13 @@ class EnglishNormalizer(Normalizer):
         "saint": "st",
     }
 
+    APOSTROPHE_REGEX = r"(?<!\w)\'|\'(?!\w)"  # Apostrophes that are not part of a contraction
+
     @staticmethod
     def to_american(sentence: str) -> str:
         return " ".join(
             [
-                (
-                    EnglishNormalizer.AMERICAN_SPELLINGS[x]
-                    if x in EnglishNormalizer.AMERICAN_SPELLINGS
-                    else x
-                )
+                (EnglishNormalizer.AMERICAN_SPELLINGS[x] if x in EnglishNormalizer.AMERICAN_SPELLINGS else x)
                 for x in sentence.split()
             ]
         )
@@ -190,17 +212,12 @@ class EnglishNormalizer(Normalizer):
     def normalize_abbreviations(sentence: str) -> str:
         return " ".join(
             [
-                (
-                    EnglishNormalizer.ABBREVIATIONS[x]
-                    if x in EnglishNormalizer.ABBREVIATIONS
-                    else x
-                )
+                (EnglishNormalizer.ABBREVIATIONS[x] if x in EnglishNormalizer.ABBREVIATIONS else x)
                 for x in sentence.split()
             ]
         )
 
-    @staticmethod
-    def normalize(sentence: str, raise_error_on_invalid_sentence: bool = False) -> str:
+    def normalize(self, sentence: str, raise_error_on_invalid_sentence: bool = False) -> str:
         p = inflect.engine()
 
         sentence = sentence.lower()
@@ -208,22 +225,32 @@ class EnglishNormalizer(Normalizer):
         for c in "-/–—":
             sentence = sentence.replace(c, " ")
 
-        for c in '‘!",.:;?“”`':
+        for c in '‘":;“”`()[]':
+            sentence = sentence.replace(c, "")
+
+        sentence = sentence.replace("!", ".")
+        sentence = sentence.replace("...", "")
+
+        if self._keep_punctuation:
+            removable_punctuation = "".join(set(SUPPORTED_PUNCTUATION_SET) - set(self._punctuation_set))
+        else:
+            removable_punctuation = SUPPORTED_PUNCTUATION_SET
+
+        for c in removable_punctuation:
             sentence = sentence.replace(c, "")
 
         sentence = sentence.replace("’", "'").replace("&", "and")
 
+        sentence = re.sub(self.APOSTROPHE_REGEX, "", sentence)
+
         def num2txt(y):
-            return (
-                p.number_to_words(y).replace("-", " ").replace(",", "")
-                if any(x.isdigit() for x in y)
-                else y
-            )
+            return p.number_to_words(y).replace("-", " ").replace(",", "") if any(x.isdigit() for x in y) else y
 
         sentence = " ".join(num2txt(x) for x in sentence.split())
 
         if raise_error_on_invalid_sentence:
-            if not all(c in " '" + string.ascii_lowercase for c in sentence):
+            valid_characters = " '" + self._punctuation_set if self._keep_punctuation else " '"
+            if not all(c in valid_characters + string.ascii_lowercase for c in sentence):
                 raise RuntimeError()
             if any(x.startswith("'") for x in sentence.split()):
                 raise RuntimeError()
