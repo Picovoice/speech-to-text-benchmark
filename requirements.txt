@@ -10,8 +10,8 @@ matplotlib
 numpy
 openai-whisper
 psutil
-pvcheetah==2.3.0
-pvleopard==2.0.1
+pvcheetah==3.0.0
+pvleopard==3.0.0
 pytube
 requests
 soundfile
