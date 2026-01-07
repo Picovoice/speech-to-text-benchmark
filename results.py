@@ -3,25 +3,25 @@ from engine import Engines
 
 RTF = {
     Engines.PICOVOICE_LEOPARD: {
-        Datasets.TED_LIUM: 0.042,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.030,
     },
     Engines.PICOVOICE_CHEETAH_FAST: {
-        Datasets.TED_LIUM: 0.073,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.073,
     },
     Engines.PICOVOICE_CHEETAH: {
-        Datasets.TED_LIUM: 0.082,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.082,
     },
     Engines.WHISPER_TINY: {
-        Datasets.TED_LIUM: 0.158,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.158,
     },
     Engines.WHISPER_BASE: {
-        Datasets.TED_LIUM: 0.323,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.323,
     },
     Engines.WHISPER_SMALL: {
-        Datasets.TED_LIUM: 0.988,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.988,
     },
     Engines.WHISPER_MEDIUM: {
-        Datasets.TED_LIUM: 1.522,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 1.522,
     },
 }
 
@@ -896,4 +896,3 @@ __all__ = [
     "WER_IT",
     "WER_PT",
 ]
-

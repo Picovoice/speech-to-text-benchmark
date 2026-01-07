@@ -133,7 +133,7 @@ def _plot_error_rate(
     plt.close()
 
 
-def _plot_cpu(save_folder: str, show: bool, dataset: Datasets = Datasets.TED_LIUM) -> None:
+def _plot_cpu(save_folder: str, show: bool, dataset: Datasets = Datasets.LIBRI_SPEECH_TEST_CLEAN) -> None:
     fig, ax = plt.subplots(figsize=(6, 6))
     x_limit = 0
     for engine_type, engine_value in RTF.items():
@@ -307,7 +307,7 @@ def main() -> None:
     _plot_error_rate(PER_IT, save_path=os.path.join(save_folder, "PER_IT_ST.png"), streaming=True, punctuation=True, show=args.show)
     _plot_error_rate(PER_PT, save_path=os.path.join(save_folder, "PER_PT_ST.png"), streaming=True, punctuation=True, show=args.show)
 
-    _plot_cpu(save_folder=save_folder, show=args.show, dataset=Datasets.TED_LIUM)
+    _plot_cpu(save_folder=save_folder, show=args.show, dataset=Datasets.LIBRI_SPEECH_TEST_CLEAN)
 
     _plot_latency(save_folder=save_folder, show=args.show, dataset=Datasets.LIBRI_SPEECH_TEST_CLEAN)
 

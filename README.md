@@ -73,8 +73,8 @@ pip3 install -r requirements.txt
 
 ### Benchmark Usage
 
-In the following, we provide instructions for running the benchmark for each engine. 
-The supported datasets are: 
+In the following, we provide instructions for running the benchmark for each engine.
+The supported datasets are:
 `COMMON_VOICE`, `LIBRI_SPEECH_TEST_CLEAN`, `LIBRI_SPEECH_TEST_OTHER`, `TED_LIUM`, `MLS`, `VOX_POPULI` and `FLEURS`.
 The supported languages are:
 `EN`, `FR`, `DE`, `ES`, `IT`, `PT_BR`, and `PT_PT`.
@@ -84,7 +84,7 @@ Use `--punctuation-set ${PUNCTUATION_SET}` to select which punctuation marks to 
 
 #### Amazon Transcribe Instructions
 
-Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, `${LANGUAGE}` with the target language, 
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, `${LANGUAGE}` with the target language,
 `${AWS_LOCATION}` with the name of the AWS server and `${AWS_PROFILE}` with the name of the AWS profile you wish to use.
 
 ```console
@@ -318,7 +318,7 @@ The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryz
 |    Whisper Small       |   0.99    |       462       |
 |     Whisper Base       |   0.32    |       139       |
 |     Whisper Tiny       |   0.16    |       73        |
-|   Picovoice Leopard    |   0.04    |       36        |
+|   Picovoice Leopard    |   0.03    |       37        |
 |   Picovoice Cheetah    |   0.08    |       31        |
 | Picovoice Cheetah Fast |   0.07    |       31        |
 
