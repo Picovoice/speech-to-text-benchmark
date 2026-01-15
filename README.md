@@ -318,9 +318,9 @@ The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryz
 |    Whisper Small       |   0.99    |       462       |
 |     Whisper Base       |   0.32    |       139       |
 |     Whisper Tiny       |   0.16    |       73        |
-|   Picovoice Leopard    |   0.03    |       37        |
-|   Picovoice Cheetah    |   0.08    |       31        |
-| Picovoice Cheetah Fast |   0.07    |       31        |
+|   Picovoice Leopard    |   0.01    |       37        |
+|   Picovoice Cheetah    |   0.02    |       34        |
+| Picovoice Cheetah Fast |   0.03    |       34        |
 
 #### Word Emission Latency
 

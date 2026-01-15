@@ -3,13 +3,13 @@ from engine import Engines
 
 RTF = {
     Engines.PICOVOICE_LEOPARD: {
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.030,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.014,
     },
     Engines.PICOVOICE_CHEETAH_FAST: {
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.073,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.015,
     },
     Engines.PICOVOICE_CHEETAH: {
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.082,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.024,
     },
     Engines.WHISPER_TINY: {
         Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.158,
