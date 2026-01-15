@@ -320,8 +320,8 @@ Picovoice engine results are obtained with the configuration of `--pv-device cpu
 |     Whisper Base       |   0.32    |       139       |
 |     Whisper Tiny       |   0.16    |       73        |
 |   Picovoice Leopard    |   0.01    |       37        |
-|   Picovoice Cheetah    |   0.02    |       34        |
-| Picovoice Cheetah Fast |   0.03    |       34        |
+|   Picovoice Cheetah    |   0.03    |       34        |
+| Picovoice Cheetah Fast |   0.02    |       34        |
 
 #### Word Emission Latency
 
