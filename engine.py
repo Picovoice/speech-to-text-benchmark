@@ -1075,11 +1075,13 @@ class PicovoiceCheetahEngine(StreamingEngine):
         access_key: str,
         model_path: Optional[str],
         library_path: Optional[str],
+        device: str = "cpu:1",
         punctuation: bool = False,
     ):
         self._cheetah = pvcheetah.create(
             access_key=access_key,
             model_path=model_path,
+            device=device,
             library_path=library_path,
             enable_automatic_punctuation=punctuation,
         )
@@ -1157,11 +1159,13 @@ class PicovoiceLeopardEngine(Engine):
         access_key: str,
         model_path: Optional[str],
         library_path: Optional[str],
+        device: str = "cpu:1",
         punctuation: bool = False,
     ):
         self._leopard = pvleopard.create(
             access_key=access_key,
             model_path=model_path,
+            device=device,
             library_path=library_path,
             enable_automatic_punctuation=punctuation,
         )

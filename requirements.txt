@@ -10,7 +10,7 @@ matplotlib
 numpy
 openai-whisper==20250625
 psutil
-pvcheetah==2.3.0
+pvcheetah==3.0.1
 pvleopard==3.0.0
 pytube
 requests

@@ -116,6 +116,7 @@ def main():
     parser.add_argument("--watson-speech-to-text-url")
     parser.add_argument("--num-examples", type=int, default=None)
     parser.add_argument("--num-workers", type=int, default=os.cpu_count())
+    parser.add_argument("--pv-device", default="cpu:1")
     args = parser.parse_args()
 
     engine_name = Engines(args.engine)
@@ -153,6 +154,7 @@ def main():
             raise ValueError("`picovoice-model-path` is required for non-EN languages")
         engine_params["access_key"] = args.picovoice_access_key
         engine_params["model_path"] = args.picovoice_model_path
+        engine_params["device"] = args.pv_device
         engine_params["library_path"] = args.picovoice_library_path
         engine_params["punctuation"] = punctuation
     elif engine_name == Engines.PICOVOICE_LEOPARD:
@@ -162,6 +164,7 @@ def main():
             raise ValueError("`picovoice-model-path` is required for non-EN languages")
         engine_params["access_key"] = args.picovoice_access_key
         engine_params["model_path"] = args.picovoice_model_path
+        engine_params["device"] = args.pv_device
         engine_params["library_path"] = args.picovoice_library_path
         engine_params["punctuation"] = punctuation
     elif engine_name == Engines.IBM_WATSON_SPEECH_TO_TEXT:
