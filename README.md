@@ -313,15 +313,15 @@ Picovoice engine results are obtained with the configuration of `--pv-device cpu
 
 ![](results/plots/cpu_usage_comparison.png)
 
-|         Engine         | Core-Hour | Model Size / MB |
-|:----------------------:|:---------:|:---------------:|
-|    Whisper Medium      |   1.52    |      1457       |
-|    Whisper Small       |   0.99    |       462       |
-|     Whisper Base       |   0.32    |       139       |
-|     Whisper Tiny       |   0.16    |       73        |
-|   Picovoice Leopard    |   0.01    |       37        |
-|   Picovoice Cheetah    |   0.03    |       34        |
-| Picovoice Cheetah Fast |   0.02    |       34        |
+|         Engine         | Core-Hour  | Model Size / MB |
+|:----------------------:|:----------:|:---------------:|
+|    Whisper Medium      |   1.52     |      1457       |
+|    Whisper Small       |   0.99     |       462       |
+|     Whisper Base       |   0.32     |       139       |
+|     Whisper Tiny       |   0.16     |       73        |
+|   Picovoice Leopard    |   0.014    |       37        |
+| Picovoice Cheetah Fast |   0.015    |       34        |
+|   Picovoice Cheetah    |   0.024    |       34        |
 
 #### Word Emission Latency
 
