@@ -309,7 +309,7 @@ python3 benchmark_latency.py \
 To obtain these results, we ran the benchmark across the entire LibriSpeech test-clean dataset and recorded the processing time.
 The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryzen 9 5900X (12) @ 3.70GHz`),
 64 GB of RAM, and NVMe storage, using 10 cores simultaneously. We omit Whisper Large from this benchmark.
-Picovoice engine results are obtained with the configuration of `--pv-device cpu:16` and `--num-workers 1`.
+Picovoice engine results are obtained with `--pv-device cpu:1`.
 
 ![](results/plots/cpu_usage_comparison.png)
 
@@ -319,9 +319,9 @@ Picovoice engine results are obtained with the configuration of `--pv-device cpu
 |    Whisper Small       |   0.99     |       462       |
 |     Whisper Base       |   0.32     |       139       |
 |     Whisper Tiny       |   0.16     |       73        |
-|   Picovoice Leopard    |   0.014    |       37        |
-| Picovoice Cheetah Fast |   0.015    |       34        |
-|   Picovoice Cheetah    |   0.024    |       34        |
+|   Picovoice Leopard    |   0.026    |       37        |
+| Picovoice Cheetah Fast |   0.042    |       34        |
+|   Picovoice Cheetah    |   0.048    |       34        |
 
 #### Word Emission Latency
 
