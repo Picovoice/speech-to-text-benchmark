@@ -55,6 +55,9 @@ The aggregate size of models (acoustic and language), in MB. We omit this metric
 - [Google Speech-to-Text](https://cloud.google.com/speech-to-text)
 - [IBM Watson Speech-to-Text](https://www.ibm.com/ca-en/cloud/watson-speech-to-text)
 - [OpenAI Whisper](https://github.com/openai/whisper)
+- [Whisper.cpp](https://github.com/ggerganov/whisper.cpp)
+- [Vosk](https://alphacephei.com/vosk/)
+- [Moonshine](https://github.com/usefulsensors/moonshine)
 - [Picovoice Cheetah](https://picovoice.ai/)
 - [Picovoice Leopard](https://picovoice.ai/)
 
@@ -79,7 +82,7 @@ The supported datasets are:
 The supported languages are:
 `EN`, `FR`, `DE`, `ES`, `IT`, `PT_BR`, and `PT_PT`.
 
-To evaluate PER, use the `--punctuation` flag.
+To evaluate Punctuation Error Rate, use the `--punctuation` flag.
 Use `--punctuation-set ${PUNCTUATION_SET}` to select which punctuation marks to calculate PER against, where `${PUNCTUATION_SET}` is one or more of `.`, `?` and `,` (default `.?`).
 
 #### Amazon Transcribe Instructions
@@ -118,7 +121,7 @@ Set `--engine` to `AZURE_SPEECH_TO_TEXT_REAL_TIME` to use Azure Speech-to-text i
 
 #### Google Speech-to-Text Instructions
 
-Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, `${LANGUAGE}` with the target language,
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, `${LANGUAGE}` with the target language
 and `${GOOGLE_APPLICATION_CREDENTIALS}` with credentials download from Google Cloud Platform.
 
 ```console
@@ -134,13 +137,15 @@ Set `--engine` to `GOOGLE_SPEECH_TO_TEXT_STREAMING` to use Google Speech-to-text
 
 #### IBM Watson Speech-to-Text Instructions
 
-Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset,
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset
 and `${WATSON_SPEECH_TO_TEXT_API_KEY}`/`${${WATSON_SPEECH_TO_TEXT_URL}}` with credentials from your IBM account.
+This engine only supports English.
 
 ```console
 python3 benchmark.py \
 --dataset ${DATASET} \
 --dataset-folder ${DATASET_FOLDER} \
+--language EN \
 --engine IBM_WATSON_SPEECH_TO_TEXT \
 --watson-speech-to-text-api-key ${WATSON_SPEECH_TO_TEXT_API_KEY}
 --watson-speech-to-text-url ${WATSON_SPEECH_TO_TEXT_URL}
@@ -148,9 +153,9 @@ python3 benchmark.py \
 
 #### OpenAI Whisper Instructions
 
-Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, `${LANGUAGE}` with the target language,
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, `${LANGUAGE}` with the target language
 and `${WHISPER_MODEL}` with the whisper model type (`WHISPER_TINY`, `WHISPER_BASE`, `WHISPER_SMALL`,
-`WHISPER_MEDIUM`, `WHISPER_LARGE_V1`, `WHISPER_LARGE_V2` or `WHISPER_LARGE_V3`)
+`WHISPER_MEDIUM`, `WHISPER_LARGE_V1`, `WHISPER_LARGE_V2`, `WHISPER_LARGE_V3` or `WHISPER_LARGE_TURBO`)
 
 ```console
 python3 benchmark.py \
@@ -160,19 +165,61 @@ python3 benchmark.py \
 --dataset-folder ${DATASET_FOLDER} \
 ```
 
+#### Whisper.cpp Streaming Instructions
+
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, `${LANGUAGE}` with the target language,
+and `${WHISPER_CPP_MODEL}` with the Whisper.cpp streaming model type (`WHISPER_CPP_STREAMING_TINY`, `WHISPER_CPP_STREAMING_BASE`, `WHISPER_CPP_STREAMING_SMALL`,
+`WHISPER_CPP_STREAMING_MEDIUM`, `WHISPER_CPP_STREAMING_LARGE_V3` or `WHISPER_CPP_STREAMING_LARGE_TURBO`).
+
+```console
+python3 benchmark.py \
+--engine ${WHISPER_CPP_MODEL} \
+--dataset ${DATASET} \
+--dataset-folder ${DATASET_FOLDER}
+--language ${LANGUAGE} \
+```
+
+#### Moonshine Streaming Instructions
+
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset
+and `${MOONSHINE_MODEL}` with the Moonshine streaming model type (`MOONSHINE_STREAMING_TINY`, `MOONSHINE_STREAMING_SMALL` or `MOONSHINE_STREAMING_MEDIUM`).
+This engine only supports English.
+
+```console
+python3 benchmark.py \
+--engine ${MOONSHINE_MODEL} \
+--dataset ${DATASET} \
+--dataset-folder ${DATASET_FOLDER}
+--language EN \
+```
+
+#### Vosk Streaming Instructions
+
+Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset
+and `${VOSK_MODEL}` with the Vosk streaming model type (`VOSK_STREAMING_SMALL` or `VOSK_STREAMING_LARGE`).
+This engine only supports English.
+
+```console
+python3 benchmark.py \
+--engine ${VOSK_MODEL} \
+--dataset ${DATASET} \
+--dataset-folder ${DATASET_FOLDER} \
+--language EN
+```
+
 #### Picovoice Cheetah Instructions
 
 Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with path to dataset, `${LANGUAGE}` with the target language,
 and `${PICOVOICE_ACCESS_KEY}` with AccessKey obtained from [Picovoice Console](https://console.picovoice.ai/).
 By default, the Cheetah English model is used.
-For non-English languages and Cheetah Fast models replace `${PICOVOICE_MODEL_PATH}` with the path to a model file acquired from the [Cheetah Github Repo](https://github.com/Picovoice/cheetah/tree/master/lib/common/).
+For non-English languages models replace `${PICOVOICE_MODEL_PATH}` with the path to a model file acquired from the [Cheetah Github Repo](https://github.com/Picovoice/cheetah/tree/master/lib/common/).
 
 ```console
 python3 benchmark.py \
 --engine PICOVOICE_CHEETAH \
 --dataset ${DATASET} \
---language ${LANGUAGE} \
 --dataset-folder ${DATASET_FOLDER} \
+--language ${LANGUAGE} \
 --picovoice-access-key ${PICOVOICE_ACCESS_KEY} \
 --picovoice-model-path ${PICOVOICE_MODEL_PATH}
 ```
@@ -187,8 +234,8 @@ If benchmarking a non-English language, include `--picovoice-model-path` and rep
 python3 benchmark.py \
 --engine PICOVOICE_LEOPARD \
 --dataset ${DATASET} \
---language ${LANGUAGE} \
 --dataset-folder ${DATASET_FOLDER} \
+--language ${LANGUAGE} \
 --picovoice-access-key ${PICOVOICE_ACCESS_KEY} \
 --picovoice-model-path ${PICOVOICE_MODEL_PATH}
 ```
@@ -240,12 +287,50 @@ python3 benchmark_latency.py \
 --google-application-credentials ${GOOGLE_APPLICATION_CREDENTIALS}
 ```
 
+#### Whisper.cpp Streaming Instructions
+
+Replace `${DATASET_FOLDER}` with the path to an aligned dataset, `${LANGUAGE}` with the target language,
+and `${WHISPER_CPP_MODEL}` with the Whisper.cpp streaming model type (`WHISPER_CPP_STREAMING_TINY`, `WHISPER_CPP_STREAMING_BASE`, `WHISPER_CPP_STREAMING_SMALL`,
+`WHISPER_CPP_STREAMING_MEDIUM`, `WHISPER_CPP_STREAMING_LARGE_V3` or `WHISPER_CPP_STREAMING_LARGE_TURBO`).
+
+```console
+python3 benchmark_latency.py \
+--engine ${WHISPER_CPP_MODEL} \
+--dataset-folder ${DATASET_FOLDER} \
+--language ${LANGUAGE}
+```
+
+#### Moonshine Streaming Instructions
+
+Replace `${DATASET_FOLDER}` with the path to an aligned dataset and `${MOONSHINE_MODEL}` with the Moonshine streaming model type (`MOONSHINE_STREAMING_TINY`, `MOONSHINE_STREAMING_SMALL` or `MOONSHINE_STREAMING_MEDIUM`).
+This engine only supports English.
+
+```console
+python3 benchmark_latency.py \
+--engine ${MOONSHINE_MODEL} \
+--dataset-folder ${DATASET_FOLDER} \
+--language EN
+```
+
+#### Vosk Streaming Instructions
+
+Replace `${DATASET_FOLDER}` with the path to an aligned dataset
+and `${VOSK_MODEL}` with the Vosk streaming model type (`VOSK_STREAMING_SMALL` or `VOSK_STREAMING_LARGE`).
+This engine only supports English.
+
+```console
+python3 benchmark_latency.py \
+--engine ${VOSK_MODEL} \
+--dataset-folder ${DATASET_FOLDER} \
+--language EN
+```
+
 #### Picovoice Cheetah Instructions
 
 Replace `${DATASET_FOLDER}` with the path to an aligned dataset, `${LANGUAGE}` with the target language,
 and `${PICOVOICE_ACCESS_KEY}` with an AccessKey obtained from [Picovoice Console](https://console.picovoice.ai/).
 By default, the Cheetah English model is used.
-For non-English languages and Cheetah Fast models replace `${PICOVOICE_MODEL_PATH}` with the path to a model file obtained from the [Cheetah Github Repo](https://github.com/Picovoice/cheetah/tree/master/lib/common/).
+For non-English languages models replace `${PICOVOICE_MODEL_PATH}` with the path to a model file obtained from the [Cheetah Github Repo](https://github.com/Picovoice/cheetah/tree/master/lib/common/).
 
 ```console
 python3 benchmark_latency.py \
@@ -270,7 +355,7 @@ python3 benchmark_latency.py \
 |      Azure Speech-to-Text      |          2.9%          |          6.0%          |   4.6%   |    8.4%     |  5.5%   |
 |     Google Speech-to-Text      |          5.3%          |         10.5%          |   5.5%   |    14.3%    |  8.9%   |
 |   IBM Watson Speech-to-Text    |         10.9%          |         26.2%          |  11.7%   |    39.4%    |  22.0%  |
-|  Whisper Large (Multilingual)  |          3.7%          |          5.4%          |   4.6%   |    9.0%     |  5.7%   |
+|        Whisper Large V3        |          3.7%          |          5.4%          |   4.6%   |    9.0%     |  5.7%   |
 |         Whisper Medium         |          3.3%          |          6.2%          |   4.6%   |    10.2%    |  6.1%   |
 |         Whisper Small          |          3.3%          |          7.2%          |   4.8%   |    12.7%    |  7.0%   |
 |          Whisper Base          |          4.3%          |         10.4%          |   5.4%   |    17.9%    |  9.5%   |
@@ -287,41 +372,58 @@ python3 benchmark_latency.py \
 |   Amazon Transcribe Streaming  |          2.6%          |          5.5%          |   4.8%   |    9.4%     |  5.6%   |
 |  Azure Speech-to-Text Real Time|          4.9%          |          8.5%          |   8.7%   |    10.7%    |  8.2%   |
 | Google Speech-to-Text Streaming|          8.6%          |         14.3%          |   7.9%   |    16.8%    |  11.9%  |
-|       Picovoice Cheetah        |          5.3%          |         11.7%          |   6.6%   |    17.5%    |  10.3%  |
-|     Picovoice Cheetah Fast     |          5.9%          |         13.5%          |   7.1%   |    20.3%    |  11.7%  |
-
-
+|    Whisper.cpp Streaming Tiny  |         12.7%          |         23.3%          |  16.0%   |    37.5%    |  22.4%  |
+|    Whisper.cpp Streaming Base  |         11.9%          |         19.9%          |  14.2%   |    33.2%    |  19.8%  |
+|          Vosk Small            |          9.9%          |         21.0%          |  10.7%   |    32.1%    |  18.4%  |
+|          Vosk Large            |          5.4%          |         12.7%          |   6.6%   |    21.4%    |  11.5%  |
+|        Moonshine Tiny          |         11.8%          |         28.7%          |  12.5%   |    42.4%    |  23.9%  |
+|        Moonshine Small         |          7.0%          |         15.0%          |   6.9%   |    24.8%    |  13.4%  |
+|       Moonshine Medium         |          5.9%          |         11.4%          |   6.5%   |    18.7%    |  10.6%  |
+|       Picovoice Cheetah        |          5.4%          |         11.4%          |   6.4%   |    17.0%    |  10.1%  |
 
 #### Streaming Engines Punctuation Error Rate
 
 ![](results/plots/PER_ST.png)
 
-|             Engine             | CommonVoice | Fleurs | VoxPopuli | Average |
-|:------------------------------:|:-----------:|:------:|:---------:|:-------:|
-|   Amazon Transcribe Streaming  |    13.2%    | 24.4%  |   35.5%   |  24.4%  |
-|  Azure Speech-to-Text Real Time|    5.6%     | 17.6%  |   25.9%   |  16.4%  |
-| Google Speech-to-Text Streaming|    20.2%    | 42.7%  |   45.0%   |  36.0%  |
-|       Picovoice Cheetah        |    4.6%     | 13.4%  |   27.6%   |  15.2%  |
-|     Picovoice Cheetah Fast     |    8.5%     | 15.4%  |   27.4%   |  17.1%  |
+|             Engine              | CommonVoice | Fleurs | VoxPopuli | Average |
+|:-------------------------------:|:-----------:|:------:|:---------:|:-------:|
+|   Amazon Transcribe Streaming   |    13.2%    | 24.4%  |   35.5%   |  24.4%  |
+|  Azure Speech-to-Text Real Time |    5.6%     | 17.6%  |   25.9%   |  16.4%  |
+| Google Speech-to-Text Streaming |    20.2%    | 42.7%  |   45.0%   |  36.0%  |
+|    Whisper.cpp Streaming Tiny   |    41.2%    | 57.9%  |   62.1%   |  53.7%  |
+|    Whisper.cpp Streaming Base   |    43.2%    | 56.4%  |   62.8%   |  54.1%  |
+|        Moonshine Tiny           |    21.0%    | 46.5%  |   59.1%   |  42.2%  |
+|        Moonshine Small          |    30.5%    | 45.3%  |   59.5%   |  45.1%  |
+|       Moonshine Medium          |    32.3%    | 46.1%  |   55.4%   |  44.6%  |
+|       Picovoice Cheetah         |    6.5%     | 14.4%  |   27.4%   |  16.1%  |
 
 #### Core-Hour & Model Size
 
 To obtain these results, we ran the benchmark across the entire LibriSpeech test-clean dataset and recorded the processing time.
 The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryzen 9 5900X (12) @ 3.70GHz`),
 64 GB of RAM, and NVMe storage, using 10 cores simultaneously. We omit Whisper Large from this benchmark.
-Picovoice engine results are obtained with `--pv-device cpu:1`.
 
 ![](results/plots/cpu_usage_comparison.png)
 
-|         Engine         | Core-Hour  | Model Size / MB |
-|:----------------------:|:----------:|:---------------:|
-|    Whisper Medium      |   1.52     |      1457       |
-|    Whisper Small       |   0.99     |       462       |
-|     Whisper Base       |   0.32     |       139       |
-|     Whisper Tiny       |   0.16     |       73        |
-|   Picovoice Leopard    |   0.026    |       37        |
-| Picovoice Cheetah Fast |   0.042    |       34        |
-|   Picovoice Cheetah    |   0.048    |       34        |
+|            Engine             | Core-Hour | Model Size / MB |
+|:-----------------------------:|:---------:|:---------------:|
+|        Whisper Medium         |   1.52    |      1457       |
+|         Whisper Small         |   0.99    |       462       |
+|         Whisper Base          |   0.32    |       139       |
+|         Whisper Tiny          |   0.16    |       73        |
+|   Whisper.cpp Streaming Base  |   1.67    |       139       |
+|   Whisper.cpp Streaming Tiny  |   0.77    |       73        |
+|          Vosk Large           |   0.34    |      2733       |
+|          Vosk Small           |   0.12    |       68        |
+|   Moonshine Streaming Tiny    |   1.03    |       49        |
+|  Moonshine Streaming Small    |   2.22    |       158       |
+|  Moonshine Streaming Medium   |   3.36    |       290       |
+|      Picovoice Leopard        |   0.026   |       37        |
+|      Picovoice Cheetah        |   0.083   |       34        |
+
+![](results/plots/wer_vs_core_hour_comparison.png)
+
+![](results/plots/wer_vs_size_comparison.png)
 
 #### Word Emission Latency
 
@@ -331,10 +433,17 @@ To obtain these results, we used 100 randomly selected files from the LibriSpeec
 
 |              Engine             | Latency (ms) |
 |:-------------------------------:|:------------:|
-|   Amazon Transcribe Streaming   |     920      |
-| Google Speech-to-text Streaming |     830      |
-|     Picovoice Cheetah Fast      |     580      |
 |  Azure Speech-to-Text Real-time |     530      |
+|   Amazon Transcribe Streaming   |     920      |
+| Google Speech-to-Text Streaming |     830      |
+|    Whisper.cpp Streaming Tiny   |    1240      |
+|    Whisper.cpp Streaming Base   |    1240      |
+|          Vosk Small             |     920      |
+|          Vosk Large             |    2000      |
+|        Moonshine Tiny           |     780      |
+|        Moonshine Small          |     650      |
+|       Moonshine Medium          |     640      |
+|       Picovoice Cheetah         |     590      |
 
 ![](results/plots/wer_vs_latency_comparison.png)
 
@@ -365,8 +474,7 @@ To obtain these results, we used 100 randomly selected files from the LibriSpeec
 |   Amazon Transcribe Streaming  |    9.8%     |          7.7%             |   10.4%   |  9.3%   |
 |  Azure Speech-to-Text Real Time|    13.3%    |          14.1%            |   20.0%   |  15.8%  |
 | Google Speech-to-Text Streaming|    16.9%    |          19.4%            |   19.1%   |  18.5%  |
-|       Picovoice Cheetah        |    14.7%    |          14.2%            |   15.0%   |  14.6%  |
-|     Picovoice Cheetah Fast     |    16.1%    |          14.5%            |   15.3%   |  15.3%  |
+|       Picovoice Cheetah        |    14.1%    |          13.2%            |   13.5%   |  13.6%  |
 
 #### Streaming Engines Punctuation Error Rate
 
@@ -377,8 +485,7 @@ To obtain these results, we used 100 randomly selected files from the LibriSpeec
 |   Amazon Transcribe Streaming  |    7.4%     | 17.0%  |   21.9%   |  15.4%  |
 |  Azure Speech-to-Text Real Time|    6.7%     | 18.8%  |   28.4%   |  18.0%  |
 | Google Speech-to-Text Streaming|    26.4%    | 22.3%  |   28.6%   |  25.8%  |
-|       Picovoice Cheetah        |    8.4%     | 22.8%  |   37.0%   |  22.7%  |
-|     Picovoice Cheetah Fast     |    8.7%     | 20.7%  |   35.2%   |  21.5%  |
+|       Picovoice Cheetah        |    7.0%     | 19.6%  |   29.9%   |  18.8%  |
 
 
 ### German
@@ -408,8 +515,7 @@ To obtain these results, we used 100 randomly selected files from the LibriSpeec
 |   Amazon Transcribe Streaming  |    6.4%     |          6.8%             |   12.1%   |  8.4%   |
 |  Azure Speech-to-Text Real Time|    6.9%     |          6.6%             |   16.5%   |  10.0%  |
 | Google Speech-to-Text Streaming|    10.7%    |          16.7%            |   20.9%   |  16.1%  |
-|       Picovoice Cheetah        |    9.2%     |          10.7%            |   16.8%   |  12.2%  |
-|     Picovoice Cheetah Fast     |    10.7%    |          11.1%            |   17.7%   |  13.2%  |
+|       Picovoice Cheetah        |    9.4%     |          10.4%            |   15.8%   |  11.9%  |
 
 #### Streaming Engines Punctuation Error Rate
 
@@ -420,8 +526,7 @@ To obtain these results, we used 100 randomly selected files from the LibriSpeec
 |   Amazon Transcribe Streaming  |    3.1%     | 23.5%  |   20.6%   |  15.7%  |
 |  Azure Speech-to-Text Real Time|    2.3%     | 28.4%  |   25.8%   |  18.8%  |
 | Google Speech-to-Text Streaming|    15.8%    | 27.1%  |   28.6%   |  23.8%  |
-|       Picovoice Cheetah        |    3.1%     | 23.7%  |   31.0%   |  19.3%  |
-|     Picovoice Cheetah Fast     |    3.4%     | 24.8%  |   32.7%   |  20.3%  |
+|       Picovoice Cheetah        |    3.0%     | 22.6%  |   30.7%   |  18.8%  |
 
 ### Italian
 
@@ -450,8 +555,7 @@ To obtain these results, we used 100 randomly selected files from the LibriSpeec
 |   Amazon Transcribe Streaming  |    5.2%     |          12.6%            |   16.6%   |  11.5%  |
 |  Azure Speech-to-Text Real Time|    8.2%     |          21.3%            |   26.1%   |  18.5%  |
 | Google Speech-to-Text Streaming|    6.6%     |          25.2%            |   22.2%   |  18.0%  |
-|       Picovoice Cheetah        |    9.0%     |          17.3%            |   19.9%   |  15.4%  |
-|     Picovoice Cheetah Fast     |    10.3%    |          17.3%            |   20.5%   |  16.0%  |
+|       Picovoice Cheetah        |    8.3%     |          16.0%            |   18.7%   |  14.3%  |
 
 #### Streaming Engines Punctuation Error Rate
 
@@ -462,8 +566,7 @@ To obtain these results, we used 100 randomly selected files from the LibriSpeec
 |   Amazon Transcribe Streaming  |    5.0%     | 46.4%  |   34.6%   |  28.7%  |
 |  Azure Speech-to-Text Real Time|    5.5%     | 28.8%  |   40.8%   |  25.0%  |
 | Google Speech-to-Text Streaming|    27.4%    | 23.5%  |   46.0%   |  32.3%  |
-|       Picovoice Cheetah        |    5.1%     | 27.5%  |   48.7%   |  27.1%  |
-|     Picovoice Cheetah Fast     |    4.0%     | 31.0%  |   49.1%   |  28.0%  |
+|       Picovoice Cheetah        |    4.3%     | 35.7%  |   46.4%   |  28.8%  |
 
 ### Spanish
 
@@ -492,8 +595,7 @@ To obtain these results, we used 100 randomly selected files from the LibriSpeec
 |   Amazon Transcribe Streaming  |    5.3%     |          5.0%             |   8.9%    |  6.4%   |
 |  Azure Speech-to-Text Real Time|    7.1%     |          7.1%             |   13.9%   |  9.4%   |
 | Google Speech-to-Text Streaming|    7.4%     |          11.3%            |   16.2%   |  11.6%  |
-|       Picovoice Cheetah        |    7.7%     |          8.2%             |   12.9%   |  9.6%   |
-|     Picovoice Cheetah Fast     |    8.6%     |          7.6%             |   11.9%   |  9.4%   |
+|       Picovoice Cheetah        |    7.8%     |          7.3%             |   10.6%   |  8.6%   |
 
 #### Streaming Engines Punctuation Error Rate
 
@@ -504,8 +606,7 @@ To obtain these results, we used 100 randomly selected files from the LibriSpeec
 |   Amazon Transcribe Streaming  |    5.7%     | 21.2%  |   23.9%   |  16.9%  |
 |  Azure Speech-to-Text Real Time|    3.9%     | 20.3%  |   27.2%   |  17.1%  |
 | Google Speech-to-Text Streaming|    58.6%    | 45.1%  |   41.9%   |  48.5%  |
-|       Picovoice Cheetah        |    5.4%     | 20.4%  |   41.7%   |  22.5%  |
-|     Picovoice Cheetah Fast     |    4.8%     | 20.9%  |   38.4%   |  21.4%  |
+|       Picovoice Cheetah        |    4.0%     | 21.7%  |   35.1%   |  20.3%  |
 
 ### Portuguese
 
@@ -536,8 +637,7 @@ For Amazon Transcribe, Azure Speech-to-Text, and Google Speech-to-Text, we repor
 |   Amazon Transcribe Streaming  |    7.0%     |          9.0%             |  8.0%   |
 |  Azure Speech-to-Text Real Time|    8.3%     |          11.0%            |  9.7%   |
 | Google Speech-to-Text Streaming|    9.1%     |          16.5%            |  12.8%  |
-|       Picovoice Cheetah        |    10.5%    |          15.8%            |  13.2%  |
-|     Picovoice Cheetah Fast     |    12.4%    |          15.8%            |  14.1%  |
+|       Picovoice Cheetah        |    10.6%    |          14.0%            |  12.3%  |
 
 #### Streaming Engines Punctuation Error Rate
 
@@ -548,5 +648,4 @@ For Amazon Transcribe, Azure Speech-to-Text, and Google Speech-to-Text, we repor
 |   Amazon Transcribe Streaming  |    11.1%    | 27.6%  |  19.4%  |
 |  Azure Speech-to-Text Real Time|    13.3%    | 28.6%  |  21.0%  |
 | Google Speech-to-Text Streaming|    30.9%    | 31.9%  |  31.4%  |
-|       Picovoice Cheetah        |    13.3%    | 31.8%  |  22.6%  |
-|     Picovoice Cheetah Fast     |    12.9%    | 33.0%  |  23.0%  |
+|       Picovoice Cheetah        |    11.2%    | 31.6%  |  21.4%  |
