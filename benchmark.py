@@ -103,7 +103,7 @@ def main():
     parser.add_argument("--language", required=True, choices=[x.value for x in Languages])
     parser.add_argument("--punctuation", action="store_true")
     parser.add_argument("--punctuation-set", type=str, default=".?")
-    parser.add_argument("--streaming-chunk-size-ms", type=int, default=32)
+    parser.add_argument("--streaming-chunk-size-ms", type=int, default=None)
     parser.add_argument("--aws-profile")
     parser.add_argument("--aws-location")
     parser.add_argument("--azure-speech-key")
@@ -116,7 +116,6 @@ def main():
     parser.add_argument("--watson-speech-to-text-url")
     parser.add_argument("--num-examples", type=int, default=None)
     parser.add_argument("--num-workers", type=int, default=os.cpu_count())
-    parser.add_argument("--pv-device", default="cpu:1")
     args = parser.parse_args()
 
     engine_name = Engines(args.engine)
@@ -147,36 +146,40 @@ def main():
         if args.google_application_credentials is None:
             raise ValueError("`google-application-credentials` is required")
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = args.google_application_credentials
-    elif engine_name in [Engines.PICOVOICE_CHEETAH, Engines.PICOVOICE_CHEETAH_FAST]:
+    elif engine_name is Engines.PICOVOICE_CHEETAH:
         if args.picovoice_access_key is None:
             raise ValueError("`picovoice-access-key` is required")
         if args.picovoice_model_path is None and args.language != Languages.EN.value:
             raise ValueError("`picovoice-model-path` is required for non-EN languages")
         engine_params["access_key"] = args.picovoice_access_key
         engine_params["model_path"] = args.picovoice_model_path
-        engine_params["device"] = args.pv_device
         engine_params["library_path"] = args.picovoice_library_path
         engine_params["punctuation"] = punctuation
-    elif engine_name == Engines.PICOVOICE_LEOPARD:
+    elif engine_name is Engines.PICOVOICE_LEOPARD:
         if args.picovoice_access_key is None:
             raise ValueError("`picovoice-access-key` is required")
         if args.picovoice_model_path is None and args.language != Languages.EN.value:
             raise ValueError("`picovoice-model-path` is required for non-EN languages")
         engine_params["access_key"] = args.picovoice_access_key
         engine_params["model_path"] = args.picovoice_model_path
-        engine_params["device"] = args.pv_device
         engine_params["library_path"] = args.picovoice_library_path
         engine_params["punctuation"] = punctuation
-    elif engine_name == Engines.IBM_WATSON_SPEECH_TO_TEXT:
+    elif engine_name is Engines.IBM_WATSON_SPEECH_TO_TEXT:
         if args.watson_speech_to_text_api_key is None or args.watson_speech_to_text_url is None:
             raise ValueError("`watson-speech-to-text-api-key` and `watson-speech-to-text-url` are required")
         engine_params["watson_speech_to_text_api_key"] = args.watson_speech_to_text_api_key
         engine_params["watson_speech_to_text_url"] = args.watson_speech_to_text_url
-
-    if engine_name in StreamingEngines and engine_name not in [Engines.PICOVOICE_CHEETAH, Engines.PICOVOICE_CHEETAH_FAST]:
-        engine_params["chunk_size_ms"] = args.streaming_chunk_size_ms
-        engine_params["apply_delay"] = False
-        engine_params["ignore_punctuation"] = False
+    if engine_name in StreamingEngines:
+        if engine_name is not Engines.PICOVOICE_CHEETAH:
+            engine_params["chunk_size_ms"] = args.streaming_chunk_size_ms
+        if engine_name in [
+            Engines.AMAZON_TRANSCRIBE_STREAMING,
+            Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME,
+            Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING,
+            Engines.GOOGLE_SPEECH_TO_TEXT_ENHANCED_STREAMING,
+        ]:
+            engine_params["apply_delay"] = False
+            engine_params["ignore_punctuation"] = False
 
     for p in punctuation_set:
         if p not in SUPPORTED_PUNCTUATION_SET:

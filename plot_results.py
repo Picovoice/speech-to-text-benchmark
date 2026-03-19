@@ -7,7 +7,6 @@ from typing import (
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.patches import Rectangle
 
 from benchmark import RESULTS_FOLDER
 from dataset import Datasets
@@ -50,8 +49,18 @@ ENGINE_PRINT_NAMES = {
     Engines.WHISPER_MEDIUM: "Whisper\nMedium",
     Engines.WHISPER_LARGE: "Whisper\nLarge",
     Engines.PICOVOICE_CHEETAH: "Picovoice\nCheetah",
-    Engines.PICOVOICE_CHEETAH_FAST: "Picovoice\nCheetah\nFast",
     Engines.PICOVOICE_LEOPARD: "Picovoice\nLeopard",
+    Engines.VOSK_STREAMING_SMALL: "Vosk\nSmall",
+    Engines.VOSK_STREAMING_LARGE: "Vosk\nLarge",
+    Engines.MOONSHINE_STREAMING_TINY: "Moonshine\nTiny",
+    Engines.MOONSHINE_STREAMING_SMALL: "Moonshine\nSmall",
+    Engines.MOONSHINE_STREAMING_MEDIUM: "Moonshine\nMedium",
+    Engines.WHISPER_CPP_STREAMING_TINY: "Whisper.cpp\nTiny",
+    Engines.WHISPER_CPP_STREAMING_BASE: "Whisper.cpp\nBase",
+    Engines.WHISPER_CPP_STREAMING_SMALL: "Whisper.cpp\nSmall",
+    Engines.WHISPER_CPP_STREAMING_MEDIUM: "Whisper.cpp\nMedium",
+    Engines.WHISPER_CPP_STREAMING_LARGE_V3: "Whisper.cpp\nLarge-v3",
+    Engines.WHISPER_CPP_STREAMING_LARGE_TURBO: "Whisper.cpp\nTurbo",
 }
 
 ENGINE_COLORS = {
@@ -70,7 +79,17 @@ ENGINE_COLORS = {
     Engines.WHISPER_TINY: GREY1,
     Engines.PICOVOICE_LEOPARD: BLUE,
     Engines.PICOVOICE_CHEETAH: BLUE,
-    Engines.PICOVOICE_CHEETAH_FAST: BLUE,
+    Engines.VOSK_STREAMING_SMALL: GREY1,
+    Engines.VOSK_STREAMING_LARGE: GREY1,
+    Engines.MOONSHINE_STREAMING_TINY: GREY1,
+    Engines.MOONSHINE_STREAMING_SMALL: GREY1,
+    Engines.MOONSHINE_STREAMING_MEDIUM: GREY1,
+    Engines.WHISPER_CPP_STREAMING_TINY: GREY1,
+    Engines.WHISPER_CPP_STREAMING_BASE: GREY1,
+    Engines.WHISPER_CPP_STREAMING_SMALL: GREY1,
+    Engines.WHISPER_CPP_STREAMING_MEDIUM: GREY1,
+    Engines.WHISPER_CPP_STREAMING_LARGE_V3: GREY1,
+    Engines.WHISPER_CPP_STREAMING_LARGE_TURBO: GREY1,
 }
 
 
@@ -133,8 +152,10 @@ def _plot_error_rate(
     plt.close()
 
 
-def _plot_cpu(save_folder: str, show: bool, dataset: Datasets = Datasets.LIBRI_SPEECH_TEST_CLEAN) -> None:
-    fig, ax = plt.subplots(figsize=(6, 6))
+def _plot_cpu(save_folder: str, show: bool, dataset: Datasets = Datasets.TED_LIUM) -> None:
+    num_engines = len(RTF)
+    fig_height = max(6, num_engines * 0.6 + 1)
+    fig, ax = plt.subplots(figsize=(10, fig_height))
     x_limit = 0
     for engine_type, engine_value in RTF.items():
         core_hour = engine_value[dataset] * 100
@@ -148,29 +169,34 @@ def _plot_cpu(save_folder: str, show: bool, dataset: Datasets = Datasets.LIBRI_S
             edgecolor="none",
             label=ENGINE_PRINT_NAMES[engine_type],
         )
+
+    text_offset = x_limit * 0.03
+    for engine_type, engine_value in RTF.items():
+        core_hour = round(engine_value[dataset] * 100, 1)
         ax.text(
-            core_hour + 30,
+            core_hour + text_offset,
             ENGINE_PRINT_NAMES[engine_type],
-            f"{core_hour:.1f}\nCore-hour",
-            ha="center",
+            f"{core_hour:.1f} Core-hour",
+            ha="left",
             va="center",
-            fontsize=12,
+            fontsize=11,
             color=ENGINE_COLORS[engine_type],
         )
 
     ax.spines["top"].set_visible(False)
     ax.spines["bottom"].set_visible(False)
     ax.spines["right"].set_visible(False)
-    plt.xlim([0, x_limit + 50])
+    plt.xlim([0, x_limit * 1.25])
     ax.set_xticks([])
-    ax.set_ylim([-0.5, 6.5])
+    ax.set_ylim([-0.5, num_engines - 0.5])
+    plt.subplots_adjust(left=0.15)
     plt.title(
         "Core-hour required to process 100 hours of audio (lower is better)",
         fontsize=12,
     )
     plot_path = os.path.join(save_folder, "cpu_usage_comparison.png")
     os.makedirs(os.path.dirname(plot_path), exist_ok=True)
-    plt.savefig(plot_path)
+    plt.savefig(plot_path, bbox_inches="tight")
     print(f"Saved plot to `{plot_path}`")
 
     if show:
@@ -180,7 +206,9 @@ def _plot_cpu(save_folder: str, show: bool, dataset: Datasets = Datasets.LIBRI_S
 
 
 def _plot_latency(save_folder: str, show: bool, dataset: Datasets = Datasets.LIBRI_SPEECH_TEST_CLEAN) -> None:
-    fig, ax = plt.subplots(figsize=(6, 6))
+    num_engines = len(LATENCIES)
+    fig_height = max(6, num_engines * 0.6 + 1)
+    fig, ax = plt.subplots(figsize=(10, fig_height))
     x_limit = 0
     for engine_type, engine_value in LATENCIES.items():
         latency = int(engine_value[dataset])
@@ -193,22 +221,26 @@ def _plot_latency(save_folder: str, show: bool, dataset: Datasets = Datasets.LIB
             edgecolor="none",
             label=ENGINE_PRINT_NAMES[engine_type],
         )
+
+    text_offset = x_limit * 0.03
+    for engine_type, engine_value in LATENCIES.items():
+        latency = int(engine_value[dataset])
         ax.text(
-            latency + 80,
+            latency + text_offset,
             ENGINE_PRINT_NAMES[engine_type],
             f"{latency}ms",
-            ha="center",
+            ha="left",
             va="center",
-            fontsize=12,
+            fontsize=11,
             color=ENGINE_COLORS[engine_type],
         )
 
     ax.spines["top"].set_visible(False)
     ax.spines["bottom"].set_visible(False)
     ax.spines["right"].set_visible(False)
-    plt.xlim([0, x_limit + 100])
+    plt.xlim([0, x_limit * 1.25])
     ax.set_xticks([])
-    ax.set_ylim([-0.5, 3.5])
+    ax.set_ylim([-0.5, num_engines - 0.5])
     plt.subplots_adjust(left=0.15)
     plt.title(
         "Average word emission latency (lower is better)",
@@ -216,7 +248,7 @@ def _plot_latency(save_folder: str, show: bool, dataset: Datasets = Datasets.LIB
     )
     plot_path = os.path.join(save_folder, "latency_comparison.png")
     os.makedirs(os.path.dirname(plot_path), exist_ok=True)
-    plt.savefig(plot_path)
+    plt.savefig(plot_path, bbox_inches="tight")
     print(f"Saved plot to `{plot_path}`")
 
     if show:
@@ -225,14 +257,12 @@ def _plot_latency(save_folder: str, show: bool, dataset: Datasets = Datasets.LIB
     plt.close()
 
 
-def _plot_error_rate_latency_grid(
-    save_folder: str, show: bool
-):
-    fig, ax = plt.subplots(figsize=(8, 6))
+def _plot_error_rate_latency_grid(save_folder: str, show: bool):
+    fig, ax = plt.subplots(figsize=(10, 8))
 
     engines = list(LATENCIES.keys())
 
-    error_rates= []
+    error_rates = []
     latencies = []
     colors = []
     for e in engines:
@@ -243,14 +273,23 @@ def _plot_error_rate_latency_grid(
     ax.scatter(error_rates, latencies, color=colors, s=150, alpha=0.8, edgecolors="black", linewidth=2)
 
     for i, engine in enumerate(engines):
+        if engine in [
+            Engines.MOONSHINE_STREAMING_SMALL,
+            Engines.MOONSHINE_STREAMING_MEDIUM,
+            Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING,
+        ]:
+            y_offset = -20
+        else:
+            y_offset = 20
+
         ax.annotate(
-            ENGINE_PRINT_NAMES[engine].replace("\n", " ", 1),
+            ENGINE_PRINT_NAMES[engine],
             (error_rates[i], latencies[i]),
-            xytext=(0, 20),
+            xytext=(0, y_offset),
             textcoords="offset points",
             ha="center",
             va="center",
-            fontsize=10,
+            fontsize=9,
             color=colors[i],
             weight="bold",
         )
@@ -258,8 +297,16 @@ def _plot_error_rate_latency_grid(
     ax.set_xlabel("Word Error Rate", fontsize=12)
     ax.set_ylabel("Latency", fontsize=12)
 
-    ax.set_xlim(4, 13)
-    ax.set_ylim(400, 1000)
+    wer_min = min(error_rates) + 1
+    wer_max = max(error_rates) - 1
+    lat_min = min(latencies)
+    lat_max = max(latencies) - 150
+    wer_pad = max((wer_max - wer_min) * 0.15, 1)
+    lat_pad = max((lat_max - lat_min) * 0.15, 50)
+    ax.set_xlim(wer_min - wer_pad, wer_max + wer_pad)
+    ax.set_ylim(lat_min - lat_pad, lat_max + lat_pad)
+
+    ax.grid(True, which="major", alpha=0.3, linestyle="-", linewidth=1.5)
 
     ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f"{x:.0f}%"))
     ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f"{x:.0f}ms"))
@@ -267,11 +314,139 @@ def _plot_error_rate_latency_grid(
     ax.invert_xaxis()
     ax.invert_yaxis()
 
-    ax.grid(True, alpha=0.3, linestyle="-", linewidth=0.5)
+    ax.set_axisbelow(True)
+    ax.grid(True, which="major", alpha=0.6, linestyle="-", linewidth=1.5)
+    ax.grid(True, which="minor", alpha=0.3, linestyle="-", linewidth=1.5)
 
     plot_path = os.path.join(save_folder, "wer_vs_latency_comparison.png")
     os.makedirs(os.path.dirname(plot_path), exist_ok=True)
-    plt.savefig(plot_path)
+    plt.savefig(plot_path, bbox_inches="tight")
+    print(f"Saved plot to `{plot_path}`")
+
+    if show:
+        plt.show()
+
+    return fig
+
+
+def _plot_error_rate_size_grid(save_folder: str, show: bool):
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    engines = [e for e in SIZE if e in StreamingEngines and e in WER_EN]
+
+    error_rates = []
+    sizes = []
+    colors = []
+    for e in engines:
+        error_rates.append(round(sum(w for w in WER_EN[e].values()) / len(WER_EN[e]) + 1e-9, 1))
+        sizes.append(SIZE[e])
+        colors.append(ENGINE_COLORS[e])
+
+    ax.scatter(error_rates, sizes, color=colors, s=150, alpha=0.8, edgecolors="black", linewidth=2)
+
+    for i, engine in enumerate(engines):
+        y_offset = 20
+
+        ax.annotate(
+            ENGINE_PRINT_NAMES[engine],
+            (error_rates[i], sizes[i]),
+            xytext=(0, y_offset),
+            textcoords="offset points",
+            ha="center",
+            va="center",
+            fontsize=9,
+            color=colors[i],
+            weight="bold",
+        )
+
+    ax.set_xlabel("Word Error Rate", fontsize=12)
+    ax.set_ylabel("Model Size (MB)", fontsize=12)
+
+    wer_min = min(error_rates)
+    wer_max = max(error_rates)
+    wer_pad = max((wer_max - wer_min) * 0.15, 1)
+    ax.set_xlim(wer_min - wer_pad, wer_max + wer_pad)
+
+    ax.set_yscale("log")
+    ax.set_ylim(10, 10000)
+    ax.yaxis.set_major_locator(plt.FixedLocator([10, 100, 1000, 10000]))
+
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f"{x:.0f}%"))
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f"{x:.0f} MB"))
+
+    ax.invert_xaxis()
+    ax.invert_yaxis()
+
+    ax.set_axisbelow(True)
+    ax.grid(True, which="major", alpha=0.6, linestyle="-", linewidth=1.5)
+    ax.grid(True, which="minor", alpha=0.3, linestyle="-", linewidth=1.5)
+
+    plot_path = os.path.join(save_folder, "wer_vs_size_comparison.png")
+    os.makedirs(os.path.dirname(plot_path), exist_ok=True)
+    plt.savefig(plot_path, bbox_inches="tight")
+    print(f"Saved plot to `{plot_path}`")
+
+    if show:
+        plt.show()
+
+    return fig
+
+
+def _plot_error_rate_core_hour_grid(save_folder: str, show: bool):
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    engines = [e for e in RTF if e in StreamingEngines and e in WER_EN]
+
+    error_rates = []
+    core_hours = []
+    colors = []
+    for e in engines:
+        error_rates.append(round(sum(w for w in WER_EN[e].values()) / len(WER_EN[e]) + 1e-9, 1))
+        core_hours.append(RTF[e][Datasets.LIBRI_SPEECH_TEST_CLEAN])
+        colors.append(ENGINE_COLORS[e])
+
+    ax.scatter(error_rates, core_hours, color=colors, s=150, alpha=0.8, edgecolors="black", linewidth=2)
+
+    for i, engine in enumerate(engines):
+        y_offset = 20
+
+        ax.annotate(
+            ENGINE_PRINT_NAMES[engine],
+            (error_rates[i], core_hours[i]),
+            xytext=(0, y_offset),
+            textcoords="offset points",
+            ha="center",
+            va="center",
+            fontsize=9,
+            color=colors[i],
+            weight="bold",
+        )
+
+    ax.set_xlabel("Word Error Rate", fontsize=12)
+    ax.set_ylabel("Core-Hour", fontsize=12)
+
+    wer_min = min(error_rates)
+    wer_max = max(error_rates)
+    wer_pad = max((wer_max - wer_min) * 0.15, 1)
+    ax.set_xlim(wer_min - wer_pad, wer_max + wer_pad)
+
+    ax.set_yscale("log")
+    ax.set_ylim(0.01, 10)
+    ax.yaxis.set_major_locator(plt.FixedLocator([0.01, 0.1, 1, 10]))
+
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f"{x:.0f}%"))
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f"{x:g}"))
+
+    ax.invert_xaxis()
+    ax.invert_yaxis()
+
+    ax.set_axisbelow(True)
+    ax.grid(True, which="major", alpha=0.6, linestyle="-", linewidth=1.5)
+    ax.grid(True, which="minor", alpha=0.3, linestyle="-", linewidth=1.5)
+
+    plot_path = os.path.join(save_folder, "wer_vs_core_hour_comparison.png")
+    os.makedirs(os.path.dirname(plot_path), exist_ok=True)
+    plt.savefig(plot_path, bbox_inches="tight")
     print(f"Saved plot to `{plot_path}`")
 
     if show:
@@ -300,7 +475,9 @@ def main() -> None:
     _plot_error_rate(WER_PT, save_path=os.path.join(save_folder, "WER_PT.png"), streaming=False, show=args.show)
     _plot_error_rate(WER_PT, save_path=os.path.join(save_folder, "WER_PT_ST.png"), streaming=True, show=args.show)
 
-    _plot_error_rate(PER_EN, save_path=os.path.join(save_folder, "PER_ST.png"), streaming=True, punctuation=True, show=args.show)
+    _plot_error_rate(
+        PER_EN, save_path=os.path.join(save_folder, "PER_ST.png"), streaming=True, punctuation=True, show=args.show
+    )
     _plot_error_rate(PER_FR, save_path=os.path.join(save_folder, "PER_FR_ST.png"), streaming=True, punctuation=True, show=args.show)
     _plot_error_rate(PER_DE, save_path=os.path.join(save_folder, "PER_DE_ST.png"), streaming=True, punctuation=True, show=args.show)
     _plot_error_rate(PER_ES, save_path=os.path.join(save_folder, "PER_ES_ST.png"), streaming=True, punctuation=True, show=args.show)
@@ -312,6 +489,10 @@ def main() -> None:
     _plot_latency(save_folder=save_folder, show=args.show, dataset=Datasets.LIBRI_SPEECH_TEST_CLEAN)
 
     _plot_error_rate_latency_grid(save_folder, show=args.show)
+
+    _plot_error_rate_size_grid(save_folder, show=args.show)
+
+    _plot_error_rate_core_hour_grid(save_folder, show=args.show)
 
 
 if __name__ == "__main__":

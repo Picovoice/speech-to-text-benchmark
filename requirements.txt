@@ -7,11 +7,14 @@ huggingface-hub==0.34.6
 ibm_watson==10.0.0
 inflect
 matplotlib
+moonshine-voice==0.0.49
 numpy
 openai-whisper==20250625
 psutil
-pvcheetah==3.0.1
+pvcheetah==4.0.0
 pvleopard==3.0.0
 pytube
 requests
 soundfile
+vosk==0.3.45
+pywhispercpp==1.4.1

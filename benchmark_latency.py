@@ -205,7 +205,7 @@ def main():
     parser.add_argument("--engine", required=True, choices=[x.value for x in StreamingEngines])
     parser.add_argument("--dataset-folder", required=True)
     parser.add_argument("--language", required=True, choices=[x.value for x in Languages])
-    parser.add_argument("--chunk-size-ms", type=int, default=32)
+    parser.add_argument("--chunk-size-ms", type=int, default=None)
     parser.add_argument("--aws-profile")
     parser.add_argument("--aws-location")
     parser.add_argument("--azure-speech-key")
@@ -225,21 +225,30 @@ def main():
     num_workers = args.num_workers
 
     engine_params = dict()
-    if engine_name == Engines.AMAZON_TRANSCRIBE_STREAMING:
+    if engine_name is Engines.AMAZON_TRANSCRIBE_STREAMING:
         if args.aws_location is None or args.aws_profile is None:
             raise ValueError("`aws-location` and `aws-profile` is required")
         os.environ["AWS_PROFILE"] = args.aws_profile
         engine_params["aws_location"] = args.aws_location
-    elif engine_name == Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME:
+        engine_params["apply_delay"] = True
+        engine_params["ignore_punctuation"] = True
+        engine_params["chunk_size_ms"] = args.chunk_size_ms
+    elif engine_name is Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME:
         if args.azure_speech_key is None or args.azure_speech_location is None:
             raise ValueError("`azure-speech-key` and `azure-speech-location` are required")
         engine_params["azure_speech_key"] = args.azure_speech_key
         engine_params["azure_speech_location"] = args.azure_speech_location
+        engine_params["chunk_size_ms"] = args.chunk_size_ms
+        engine_params["apply_delay"] = True
+        engine_params["ignore_punctuation"] = True
     elif engine_name in [Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING, Engines.GOOGLE_SPEECH_TO_TEXT_ENHANCED_STREAMING]:
         if args.google_application_credentials is None:
             raise ValueError("`google-application-credentials` is required")
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = args.google_application_credentials
-    elif engine_name in [Engines.PICOVOICE_CHEETAH, Engines.PICOVOICE_CHEETAH_FAST]:
+        engine_params["chunk_size_ms"] = args.chunk_size_ms
+        engine_params["apply_delay"] = True
+        engine_params["ignore_punctuation"] = True
+    elif engine_name is Engines.PICOVOICE_CHEETAH:
         if args.picovoice_access_key is None:
             raise ValueError("`picovoice-access-key` is required")
         if args.picovoice_model_path is None and args.language != Languages.EN.value:
@@ -248,13 +257,28 @@ def main():
         engine_params["model_path"] = args.picovoice_model_path
         engine_params["library_path"] = args.picovoice_library_path
         engine_params["punctuation"] = False
-
-    if engine_name not in [Engines.PICOVOICE_CHEETAH, Engines.PICOVOICE_CHEETAH_FAST]:
-        if args.chunk_size_ms is None:
-            raise ValueError("`chunk-size-ms` is required")
-        engine_params["apply_delay"] = True
-        engine_params["ignore_punctuation"] = True
+    elif engine_name in [
+        Engines.VOSK_STREAMING_SMALL,
+        Engines.VOSK_STREAMING_LARGE,
+    ]:
         engine_params["chunk_size_ms"] = args.chunk_size_ms
+    elif engine_name in [
+        Engines.MOONSHINE_STREAMING_TINY,
+        Engines.MOONSHINE_STREAMING_SMALL,
+        Engines.MOONSHINE_STREAMING_MEDIUM,
+    ]:
+        engine_params["chunk_size_ms"] = args.chunk_size_ms
+        engine_params["ignore_punctuation"] = True
+    elif engine_name in [
+        Engines.WHISPER_CPP_STREAMING_TINY,
+        Engines.WHISPER_CPP_STREAMING_BASE,
+        Engines.WHISPER_CPP_STREAMING_SMALL,
+        Engines.WHISPER_CPP_STREAMING_MEDIUM,
+        Engines.WHISPER_CPP_STREAMING_LARGE_V3,
+        Engines.WHISPER_CPP_STREAMING_LARGE_TURBO,
+    ]:
+        engine_params["chunk_size_ms"] = args.chunk_size_ms
+        engine_params["ignore_punctuation"] = True
 
     examples = load_alignment_data(dataset_folder)
     random.shuffle(list(examples))
