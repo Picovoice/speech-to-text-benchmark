@@ -15,6 +15,7 @@ from normalizer import SUPPORTED_PUNCTUATION_SET
 
 class Metrics(Enum):
     WER = "WER"
+    CER = "CER"
     PER = "PER"
 
 
@@ -23,11 +24,13 @@ class Metric:
         raise NotImplementedError()
 
     @classmethod
-    def create(cls, x: Metrics):
+    def create(cls, x: Metrics, split_on_space: bool = True):
         if x is Metrics.WER:
             return WordErrorRate()
+        elif x is Metrics.CER:
+            return CharacterErrorRate()
         elif x is Metrics.PER:
-            return PunctuationErrorRate()
+            return PunctuationErrorRate(split_on_space)
         else:
             raise ValueError(f"Cannot create {cls.__name__} of type `{x}`")
 
@@ -43,8 +46,21 @@ class WordErrorRate(Metric):
         return error_count, token_count
 
 
+class CharacterErrorRate(Metric):
+    def calculate(self, prediction: str, reference: str) -> Tuple[int, int]:
+        ref_tokens = list(reference.replace(" ", ""))
+        pred_tokens = list(prediction.replace(" ", ""))
+
+        error_count = editdistance.eval(ref_tokens, pred_tokens)
+        token_count = len(ref_tokens)
+
+        return error_count, token_count
+
+
 class PunctuationErrorRate(Metric):
     """Reference: https://arxiv.org/abs/2310.02943"""
+    def __init__(self, split_on_space: bool):
+        self._split_on_space = split_on_space
 
     @staticmethod
     def _get_punctuation_indices(tokens: Sequence[str], punctuation: str) -> List[int]:
@@ -116,8 +132,12 @@ class PunctuationErrorRate(Metric):
     def calculate(
         self, prediction: str, reference: str, punctuation: str = SUPPORTED_PUNCTUATION_SET
     ) -> Tuple[int, int]:
-        pred_tokens = [token for token in re.findall(rf"[{punctuation}]|[^{punctuation}\s]+", prediction)]
-        ref_tokens = [token for token in re.findall(rf"[{punctuation}]|[^{punctuation}\s]+", reference)]
+        if self._split_on_space:
+            pred_tokens = [token for token in re.findall(rf"[{punctuation}]|[^{punctuation}\s]+", prediction)]
+            ref_tokens = [token for token in re.findall(rf"[{punctuation}]|[^{punctuation}\s]+", reference)]
+        else:
+            pred_tokens = list(re.sub(r"\s", "", prediction))
+            ref_tokens = list(re.sub(r"\s", "", reference))
 
         pred_punct_indices = self._get_punctuation_indices(pred_tokens, punctuation)
         ref_punct_indices = self._get_punctuation_indices(ref_tokens, punctuation)

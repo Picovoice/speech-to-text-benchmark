@@ -1,13 +1,19 @@
 # Speech-to-Text Benchmark Scripts
 
-## Fleurs Dataset Download
+## Dataset Download
 
-We provide a script to download the Fleurs dataset into its expected format.
-Replace `${LANGUAGES}` with a space separated list of supported languages and `${DOWNLOAD_FOLDER}` with the output download folder path.
+We provide a script to download HuggingFace hosted datasets into the expected format.
+The script supports the following dataset:
+
+- Fleurs
+- JSUT BASIC
+
+Replace `${DATASET}` with a supported dataset (`FLEURS`, `JSUT_BASIC`), `${LANGUAGE}` with a supported language and `${DOWNLOAD_FOLDER}` with the output download folder path.
 
 ```
-python3 -m script.download_fleurs \
---languages ${LANGUAGES} \
+python3 -m script.download_datasets \
+--dataset ${DATASET} \
+--language ${LANGUAGE} \
 --download-folder ${DOWNLOAD_FOLDER}
 ```
 

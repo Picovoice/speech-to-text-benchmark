@@ -61,6 +61,7 @@ ENGINE_PRINT_NAMES = {
     Engines.WHISPER_CPP_STREAMING_MEDIUM: "Whisper.cpp\nMedium",
     Engines.WHISPER_CPP_STREAMING_LARGE_V3: "Whisper.cpp\nLarge-v3",
     Engines.WHISPER_CPP_STREAMING_LARGE_TURBO: "Whisper.cpp\nTurbo",
+    Engines.NEMOTRON_3_5_ASR_STREAMING: "Nemotron 3.5\nASR Streaming",
 }
 
 ENGINE_COLORS = {
@@ -90,6 +91,7 @@ ENGINE_COLORS = {
     Engines.WHISPER_CPP_STREAMING_MEDIUM: GREY1,
     Engines.WHISPER_CPP_STREAMING_LARGE_V3: GREY1,
     Engines.WHISPER_CPP_STREAMING_LARGE_TURBO: GREY1,
+    Engines.NEMOTRON_3_5_ASR_STREAMING: GREY1,
 }
 
 
@@ -277,6 +279,8 @@ def _plot_error_rate_latency_grid(save_folder: str, show: bool):
             Engines.MOONSHINE_STREAMING_SMALL,
             Engines.MOONSHINE_STREAMING_MEDIUM,
             Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING,
+            Engines.PICOVOICE_CHEETAH,
+            Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME,
         ]:
             y_offset = -20
         else:
@@ -474,6 +478,8 @@ def main() -> None:
     _plot_error_rate(WER_IT, save_path=os.path.join(save_folder, "WER_IT_ST.png"), streaming=True, show=args.show)
     _plot_error_rate(WER_PT, save_path=os.path.join(save_folder, "WER_PT.png"), streaming=False, show=args.show)
     _plot_error_rate(WER_PT, save_path=os.path.join(save_folder, "WER_PT_ST.png"), streaming=True, show=args.show)
+    _plot_error_rate(CER_JA, save_path=os.path.join(save_folder, "CER_JA_ST.png"), streaming=True, show=args.show)
+    _plot_error_rate(CER_KO, save_path=os.path.join(save_folder, "CER_KO_ST.png"), streaming=True, show=args.show)
 
     _plot_error_rate(
         PER_EN, save_path=os.path.join(save_folder, "PER_ST.png"), streaming=True, punctuation=True, show=args.show
@@ -483,6 +489,8 @@ def main() -> None:
     _plot_error_rate(PER_ES, save_path=os.path.join(save_folder, "PER_ES_ST.png"), streaming=True, punctuation=True, show=args.show)
     _plot_error_rate(PER_IT, save_path=os.path.join(save_folder, "PER_IT_ST.png"), streaming=True, punctuation=True, show=args.show)
     _plot_error_rate(PER_PT, save_path=os.path.join(save_folder, "PER_PT_ST.png"), streaming=True, punctuation=True, show=args.show)
+    _plot_error_rate(PER_JA, save_path=os.path.join(save_folder, "PER_JA_ST.png"), streaming=True, punctuation=True, show=args.show)
+    _plot_error_rate(PER_KO, save_path=os.path.join(save_folder, "PER_KO_ST.png"), streaming=True, punctuation=True, show=args.show)
 
     _plot_cpu(save_folder=save_folder, show=args.show, dataset=Datasets.LIBRI_SPEECH_TEST_CLEAN)
 

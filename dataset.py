@@ -16,11 +16,14 @@ from normalizer import Normalizer
 class Datasets(Enum):
     COMMON_VOICE = "COMMON_VOICE"
     FLEURS = "FLEURS"
+    JSUT_BASIC = "JSUT_BASIC"
     LIBRI_SPEECH_TEST_CLEAN = "LIBRI_SPEECH_TEST_CLEAN"
     LIBRI_SPEECH_TEST_OTHER = "LIBRI_SPEECH_TEST_OTHER"
     MLS = "MLS"
     TED_LIUM = "TED_LIUM"
     VOX_POPULI = "VOX_POPULI"
+    PANSORI = "PANSORI"
+    ZEROTH_KOREAN = "ZEROTH_KOREAN"
 
 
 class Dataset(object):
@@ -57,6 +60,8 @@ class Dataset(object):
 
         if x is Datasets.COMMON_VOICE:
             return CommonVoiceDataset(folder, language, punctuation, normalizer)
+        elif x is Datasets.JSUT_BASIC:
+            return JsutBasicDataset(folder, language, punctuation, normalizer)
         elif x is Datasets.LIBRI_SPEECH_TEST_CLEAN:
             return LibriSpeechTestCleanDataset(folder, language, punctuation, normalizer)
         elif x is Datasets.LIBRI_SPEECH_TEST_OTHER:
@@ -69,6 +74,10 @@ class Dataset(object):
             return VoxPopuliDataset(folder, language, punctuation, normalizer)
         elif x is Datasets.FLEURS:
             return FleursDataset(folder, language, punctuation, normalizer)
+        elif x is Datasets.ZEROTH_KOREAN:
+            return ZerothKoreanDataset(folder, language, punctuation, normalizer)
+        elif x is Datasets.PANSORI:
+            return PansoriDataset(folder, language, punctuation, normalizer)
         else:
             raise ValueError(f"Cannot create {cls.__name__} of type `{x}`")
 
@@ -80,6 +89,8 @@ class CommonVoiceDataset(Dataset):
         Languages.ES,
         Languages.FR,
         Languages.IT,
+        Languages.JA,
+        Languages.KO,
         Languages.PT_BR,
         Languages.PT_PT,
     ]
@@ -117,7 +128,7 @@ class CommonVoiceDataset(Dataset):
                     except RuntimeError:
                         continue
 
-                    if punctuation and transcript[-1] not in [".", "?"]:
+                    if punctuation and transcript[-1] not in [".", "?", "。", "？"]:
                         continue
 
                     self._data.append((flac_path, transcript))
@@ -468,6 +479,59 @@ class VoxPopuliDataset(Dataset):
         return f"Vox Populi {self._language.value}"
 
 
+class JsutBasicDataset(Dataset):
+    SUPPORTED_LANGUAGES = [Languages.JA]
+    SUPPORTS_PUNCTUATION = False
+
+    def __init__(self, folder: str, language: Languages, punctuation: bool, normalizer: Normalizer):
+        super().__init__(language, punctuation, Datasets.JSUT_BASIC.value)
+
+        self._language = language
+        self._data = list()
+        with open(os.path.join(folder, "transcript_utf8.txt")) as f:
+            lines = f.readlines()
+            lines = [line.strip().split(':') for line in lines]
+            for line in lines:
+                filename = line[0]
+                transcript = line[1]
+                wav_path = os.path.join(folder, "wav", filename) + '.wav'
+
+                assert os.path.exists(wav_path)
+
+                flac_path = wav_path.replace('.wav', '.flac')
+                if not os.path.exists(flac_path):
+                    args = [
+                        "ffmpeg",
+                        "-i",
+                        wav_path,
+                        "-ac",
+                        "1",
+                        "-ar",
+                        "16000",
+                        flac_path,
+                    ]
+                    subprocess.check_output(args)
+
+                try:
+                    self._data.append(
+                        (
+                            flac_path,
+                            normalizer.normalize(transcript, raise_error_on_invalid_sentence=True),
+                        )
+                    )
+                except RuntimeError:
+                    continue
+
+    def size(self) -> int:
+        return len(self._data)
+
+    def get(self, index: int) -> Tuple[str, str]:
+        return self._data[index]
+
+    def __str__(self) -> str:
+        return f"JSUT BASIC {self._language.value}"
+
+
 class FleursDataset(Dataset):
     SUPPORTED_LANGUAGES = [
         Languages.DE,
@@ -475,6 +539,8 @@ class FleursDataset(Dataset):
         Languages.ES,
         Languages.FR,
         Languages.IT,
+        Languages.JA,
+        Languages.KO,
         Languages.PT_BR,
         Languages.PT_PT,
     ]
@@ -517,7 +583,7 @@ class FleursDataset(Dataset):
                             ),
                         )
                     )
-                except RuntimeError as e:
+                except RuntimeError:
                     continue
 
     def size(self) -> int:
@@ -528,6 +594,78 @@ class FleursDataset(Dataset):
 
     def __str__(self) -> str:
         return f"Fleurs {self._language.value}"
+
+
+class PansoriDataset(Dataset):
+    SUPPORTED_LANGUAGES = [Languages.KO]
+
+    def __init__(self, folder: str, language: Languages, punctuation: bool, normalizer: Normalizer):
+        super().__init__(language, punctuation, Datasets.PANSORI.value)
+
+        self._language = language
+
+        self._data = list()
+        subfolders = [sub for sub in os.listdir(folder) if os.path.isdir(os.path.join(folder, sub))]
+        for subfolder in subfolders:
+            subfolder_path = os.path.join(folder, subfolder)
+            audio_folder = os.listdir(subfolder_path)[0]
+            audio_folder_path = os.path.join(subfolder_path, audio_folder)
+            transcripts_file_path = os.path.join(subfolder_path, audio_folder, f"{subfolder}-{audio_folder}.trans.txt")
+            with open(transcripts_file_path) as f:
+                lines = [line.strip().split(" ", 1) for line in f.readlines()]
+                for line in lines:
+                    try:
+                        transcript = normalizer.normalize(line[1], raise_error_on_invalid_sentence=True)
+                    except RuntimeError:
+                        continue
+                    flac_filename = line[0] + '.flac'
+                    flac_path = os.path.join(audio_folder_path, flac_filename)
+
+                    self._data.append((flac_path, transcript))
+
+    def size(self) -> int:
+        return len(self._data)
+
+    def get(self, index: int) -> Tuple[str, str]:
+        return self._data[index]
+
+    def __str__(self) -> str:
+        return "Pansori"
+
+
+class ZerothKoreanDataset(Dataset):
+    SUPPORTED_LANGUAGES = [Languages.KO]
+
+    def __init__(self, folder: str, language: Languages, punctuation: bool, normalizer: Normalizer):
+        super().__init__(language, punctuation, Datasets.ZEROTH_KOREAN.value)
+
+        self._language = language
+
+        test_folder_path = os.path.join(folder, "test_data_01", "003")
+        self._data = list()
+        for subfolder in os.listdir(test_folder_path):
+            transcripts_filename = '_'.join([subfolder, '003']) + '.trans.txt'
+            transcripts_file_path = os.path.join(test_folder_path, subfolder, transcripts_filename)
+            with open(transcripts_file_path) as f:
+                lines = [line.strip().split(" ", 1) for line in f.readlines()]
+                for line in lines:
+                    try:
+                        transcript = normalizer.normalize(line[1], raise_error_on_invalid_sentence=True)
+                    except RuntimeError:
+                        continue
+                    flac_filename = line[0] + '.flac'
+                    flac_path = os.path.join(test_folder_path, subfolder, flac_filename)
+
+                    self._data.append((flac_path, transcript))
+
+    def size(self) -> int:
+        return len(self._data)
+
+    def get(self, index: int) -> Tuple[str, str]:
+        return self._data[index]
+
+    def __str__(self) -> str:
+        return "Zeroth-Korean"
 
 
 __all__ = [

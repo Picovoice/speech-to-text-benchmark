@@ -7,6 +7,8 @@ class Languages(Enum):
     ES = "ES"
     FR = "FR"
     IT = "IT"
+    JA = "JA"
+    KO = "KO"
     PT_PT = "PT-PT"
     PT_BR = "PT-BR"
 
@@ -17,6 +19,8 @@ LANGUAGE_TO_CODE = {
     Languages.ES: "es-ES",
     Languages.FR: "fr-FR",
     Languages.IT: "it-IT",
+    Languages.JA: "ja-JP",
+    Languages.KO: "ko-KR",
     Languages.PT_PT: "pt-PT",
     Languages.PT_BR: "pt-BR",
 }
