@@ -6,7 +6,7 @@ RTF = {
         Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.026,
     },
     Engines.PICOVOICE_CHEETAH: {
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.083,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.087,
     },
     Engines.VOSK_STREAMING_SMALL: {
         Datasets.LIBRI_SPEECH_TEST_CLEAN: 0.117,
@@ -38,17 +38,26 @@ RTF = {
     Engines.MOONSHINE_STREAMING_SMALL: {
         Datasets.LIBRI_SPEECH_TEST_CLEAN: 2.22,
     },
+    Engines.NEMOTRON_3_5_ASR_STREAMING: {
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 2.43,
+    },
     Engines.MOONSHINE_STREAMING_MEDIUM: {
         Datasets.LIBRI_SPEECH_TEST_CLEAN: 3.36,
     },
 }
 
 LATENCIES = {
+    Engines.AMAZON_TRANSCRIBE_STREAMING: {
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 290,
+    },
+    Engines.NEMOTRON_3_5_ASR_STREAMING: {
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 450,
+    },
     Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME: {
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 530,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 520,
     },
     Engines.PICOVOICE_CHEETAH: {
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 590,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 560,
     },
     Engines.MOONSHINE_STREAMING_MEDIUM: {
         Datasets.LIBRI_SPEECH_TEST_CLEAN: 640,
@@ -61,9 +70,6 @@ LATENCIES = {
     },
     Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING: {
         Datasets.LIBRI_SPEECH_TEST_CLEAN: 830,
-    },
-    Engines.AMAZON_TRANSCRIBE_STREAMING: {
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 920,
     },
     Engines.VOSK_STREAMING_SMALL: {
         Datasets.LIBRI_SPEECH_TEST_CLEAN: 920,
@@ -93,6 +99,7 @@ SIZE = {
     Engines.MOONSHINE_STREAMING_MEDIUM: 290,
     Engines.VOSK_STREAMING_SMALL: 68,
     Engines.VOSK_STREAMING_LARGE: 2733,
+    Engines.NEMOTRON_3_5_ASR_STREAMING: 2210,
 }
 
 WER_EN = {
@@ -103,10 +110,10 @@ WER_EN = {
         Datasets.TED_LIUM: 4.0,
     },
     Engines.AMAZON_TRANSCRIBE_STREAMING: {
-        Datasets.COMMON_VOICE: 9.4,
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 2.6,
-        Datasets.LIBRI_SPEECH_TEST_OTHER: 5.5,
-        Datasets.TED_LIUM: 4.8,
+        Datasets.COMMON_VOICE: 8.2,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 2.5,
+        Datasets.LIBRI_SPEECH_TEST_OTHER: 5.1,
+        Datasets.TED_LIUM: 5.2,
     },
     Engines.AZURE_SPEECH_TO_TEXT: {
         Datasets.COMMON_VOICE: 8.4,
@@ -115,10 +122,10 @@ WER_EN = {
         Datasets.TED_LIUM: 4.6,
     },
     Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME: {
-        Datasets.COMMON_VOICE: 10.7,
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 4.9,
-        Datasets.LIBRI_SPEECH_TEST_OTHER: 8.5,
-        Datasets.TED_LIUM: 8.7,
+        Datasets.COMMON_VOICE: 9.0,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 3.4,
+        Datasets.LIBRI_SPEECH_TEST_OTHER: 6.7,
+        Datasets.TED_LIUM: 4.5,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT: {
         Datasets.COMMON_VOICE: 14.3,
@@ -127,10 +134,16 @@ WER_EN = {
         Datasets.TED_LIUM: 5.5,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING: {
-        Datasets.COMMON_VOICE: 16.8,
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 8.6,
-        Datasets.LIBRI_SPEECH_TEST_OTHER: 14.3,
-        Datasets.TED_LIUM: 7.9,
+        Datasets.COMMON_VOICE: 14.4,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 5.3,
+        Datasets.LIBRI_SPEECH_TEST_OTHER: 10.6,
+        Datasets.TED_LIUM: 5.5,
+    },
+    Engines.NEMOTRON_3_5_ASR_STREAMING: {
+        Datasets.COMMON_VOICE: 15.0,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 3.4,
+        Datasets.LIBRI_SPEECH_TEST_OTHER: 7.8,
+        Datasets.TED_LIUM: 4.9,
     },
     Engines.IBM_WATSON_SPEECH_TO_TEXT: {
         Datasets.COMMON_VOICE: 39.38,
@@ -139,10 +152,10 @@ WER_EN = {
         Datasets.TED_LIUM: 11.71,
     },
     Engines.PICOVOICE_CHEETAH: {
-        Datasets.COMMON_VOICE: 17.0,
-        Datasets.LIBRI_SPEECH_TEST_CLEAN: 5.4,
-        Datasets.LIBRI_SPEECH_TEST_OTHER: 11.4,
-        Datasets.TED_LIUM: 6.4,
+        Datasets.COMMON_VOICE: 14.4,
+        Datasets.LIBRI_SPEECH_TEST_CLEAN: 3.3,
+        Datasets.LIBRI_SPEECH_TEST_OTHER: 7.9,
+        Datasets.TED_LIUM: 5.1,
     },
     Engines.PICOVOICE_LEOPARD: {
         Datasets.COMMON_VOICE: 16.1,
@@ -231,9 +244,9 @@ WER_FR = {
         Datasets.VOX_POPULI: 8.6,
     },
     Engines.AMAZON_TRANSCRIBE_STREAMING: {
-        Datasets.COMMON_VOICE: 9.8,
+        Datasets.COMMON_VOICE: 9.7,
         Datasets.MLS: 7.7,
-        Datasets.VOX_POPULI: 10.4,
+        Datasets.VOX_POPULI: 10.7,
     },
     Engines.AZURE_SPEECH_TO_TEXT: {
         Datasets.COMMON_VOICE: 11.1,
@@ -241,9 +254,9 @@ WER_FR = {
         Datasets.VOX_POPULI: 11.8,
     },
     Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME: {
-        Datasets.COMMON_VOICE: 13.3,
-        Datasets.MLS: 14.1,
-        Datasets.VOX_POPULI: 20.0,
+        Datasets.COMMON_VOICE: 11.5,
+        Datasets.MLS: 8.9,
+        Datasets.VOX_POPULI: 13.1,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT: {
         Datasets.COMMON_VOICE: 14.3,
@@ -251,14 +264,19 @@ WER_FR = {
         Datasets.VOX_POPULI: 15.1,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING: {
-        Datasets.COMMON_VOICE: 16.9,
-        Datasets.MLS: 19.4,
-        Datasets.VOX_POPULI: 19.1,
+        Datasets.COMMON_VOICE: 15.0,
+        Datasets.MLS: 14.5,
+        Datasets.VOX_POPULI: 15.3,
+    },
+    Engines.NEMOTRON_3_5_ASR_STREAMING: {
+        Datasets.COMMON_VOICE: 11.3,
+        Datasets.MLS: 8.0,
+        Datasets.VOX_POPULI: 11.4,
     },
     Engines.PICOVOICE_CHEETAH: {
-        Datasets.COMMON_VOICE: 14.1,
-        Datasets.MLS: 13.2,
-        Datasets.VOX_POPULI: 13.5,
+        Datasets.COMMON_VOICE: 10.6,
+        Datasets.MLS: 7.5,
+        Datasets.VOX_POPULI: 11.1,
     },
     Engines.PICOVOICE_LEOPARD: {
         Datasets.COMMON_VOICE: 15.9,
@@ -299,9 +317,9 @@ WER_ES = {
         Datasets.VOX_POPULI: 8.7,
     },
     Engines.AMAZON_TRANSCRIBE_STREAMING: {
-        Datasets.COMMON_VOICE: 5.3,
-        Datasets.MLS: 5.0,
-        Datasets.VOX_POPULI: 8.9,
+        Datasets.COMMON_VOICE: 5.2,
+        Datasets.MLS: 4.8,
+        Datasets.VOX_POPULI: 8.7,
     },
     Engines.AZURE_SPEECH_TO_TEXT: {
         Datasets.COMMON_VOICE: 6.3,
@@ -309,9 +327,9 @@ WER_ES = {
         Datasets.VOX_POPULI: 9.4,
     },
     Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME: {
-        Datasets.COMMON_VOICE: 7.1,
-        Datasets.MLS: 7.1,
-        Datasets.VOX_POPULI: 13.9,
+        Datasets.COMMON_VOICE: 6.4,
+        Datasets.MLS: 6.1,
+        Datasets.VOX_POPULI: 9.4,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT: {
         Datasets.COMMON_VOICE: 6.6,
@@ -319,14 +337,19 @@ WER_ES = {
         Datasets.VOX_POPULI: 11.6,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING: {
-        Datasets.COMMON_VOICE: 7.4,
-        Datasets.MLS: 11.3,
-        Datasets.VOX_POPULI: 16.2,
+        Datasets.COMMON_VOICE: 6.6,
+        Datasets.MLS: 9.2,
+        Datasets.VOX_POPULI: 11.6,
+    },
+    Engines.NEMOTRON_3_5_ASR_STREAMING: {
+        Datasets.COMMON_VOICE: 7.2,
+        Datasets.MLS: 5.4,
+        Datasets.VOX_POPULI: 8.5,
     },
     Engines.PICOVOICE_CHEETAH: {
-        Datasets.COMMON_VOICE: 7.8,
-        Datasets.MLS: 7.3,
-        Datasets.VOX_POPULI: 10.6,
+        Datasets.COMMON_VOICE: 7.5,
+        Datasets.MLS: 5.5,
+        Datasets.VOX_POPULI: 9.8,
     },
     Engines.PICOVOICE_LEOPARD: {
         Datasets.COMMON_VOICE: 7.6,
@@ -367,9 +390,9 @@ WER_DE = {
         Datasets.VOX_POPULI: 14.6,
     },
     Engines.AMAZON_TRANSCRIBE_STREAMING: {
-        Datasets.COMMON_VOICE: 6.4,
-        Datasets.MLS: 6.8,
-        Datasets.VOX_POPULI: 12.1,
+        Datasets.COMMON_VOICE: 6.1,
+        Datasets.MLS: 6.5,
+        Datasets.VOX_POPULI: 11.6,
     },
     Engines.AZURE_SPEECH_TO_TEXT: {
         Datasets.COMMON_VOICE: 6.9,
@@ -377,9 +400,9 @@ WER_DE = {
         Datasets.VOX_POPULI: 13.1,
     },
     Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME: {
-        Datasets.COMMON_VOICE: 6.9,
-        Datasets.MLS: 6.6,
-        Datasets.VOX_POPULI: 16.5,
+        Datasets.COMMON_VOICE: 6.4,
+        Datasets.MLS: 5.1,
+        Datasets.VOX_POPULI: 13.4,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT: {
         Datasets.COMMON_VOICE: 9.2,
@@ -387,14 +410,19 @@ WER_DE = {
         Datasets.VOX_POPULI: 17.2,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING: {
-        Datasets.COMMON_VOICE: 10.7,
-        Datasets.MLS: 16.7,
-        Datasets.VOX_POPULI: 20.9,
+        Datasets.COMMON_VOICE: 9.4,
+        Datasets.MLS: 14.0,
+        Datasets.VOX_POPULI: 17.5,
+    },
+    Engines.NEMOTRON_3_5_ASR_STREAMING: {
+        Datasets.COMMON_VOICE: 10.2,
+        Datasets.MLS: 9.0,
+        Datasets.VOX_POPULI: 14.3,
     },
     Engines.PICOVOICE_CHEETAH: {
-        Datasets.COMMON_VOICE: 9.4,
-        Datasets.MLS: 10.4,
-        Datasets.VOX_POPULI: 15.8,
+        Datasets.COMMON_VOICE: 7.3,
+        Datasets.MLS: 7.6,
+        Datasets.VOX_POPULI: 13.3,
     },
     Engines.PICOVOICE_LEOPARD: {
         Datasets.COMMON_VOICE: 8.2,
@@ -435,9 +463,9 @@ WER_IT = {
         Datasets.VOX_POPULI: 16.1,
     },
     Engines.AMAZON_TRANSCRIBE_STREAMING: {
-        Datasets.COMMON_VOICE: 5.2,
-        Datasets.MLS: 12.6,
-        Datasets.VOX_POPULI: 16.6,
+        Datasets.COMMON_VOICE: 4.9,
+        Datasets.MLS: 10.8,
+        Datasets.VOX_POPULI: 20.7,
     },
     Engines.AZURE_SPEECH_TO_TEXT: {
         Datasets.COMMON_VOICE: 5.8,
@@ -445,9 +473,9 @@ WER_IT = {
         Datasets.VOX_POPULI: 17.8,
     },
     Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME: {
-        Datasets.COMMON_VOICE: 8.2,
-        Datasets.MLS: 21.3,
-        Datasets.VOX_POPULI: 26.1,
+        Datasets.COMMON_VOICE: 5.9,
+        Datasets.MLS: 14.2,
+        Datasets.VOX_POPULI: 19.4,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT: {
         Datasets.COMMON_VOICE: 5.5,
@@ -455,14 +483,19 @@ WER_IT = {
         Datasets.VOX_POPULI: 18.7,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING: {
-        Datasets.COMMON_VOICE: 6.6,
-        Datasets.MLS: 25.2,
-        Datasets.VOX_POPULI: 22.2,
+        Datasets.COMMON_VOICE: 5.9,
+        Datasets.MLS: 14.2,
+        Datasets.VOX_POPULI: 19.4,
+    },
+    Engines.NEMOTRON_3_5_ASR_STREAMING: {
+        Datasets.COMMON_VOICE: 8.4,
+        Datasets.MLS: 18.5,
+        Datasets.VOX_POPULI: 23.5,
     },
     Engines.PICOVOICE_CHEETAH: {
-        Datasets.COMMON_VOICE: 8.3,
-        Datasets.MLS: 16.0,
-        Datasets.VOX_POPULI: 18.7,
+        Datasets.COMMON_VOICE: 7.7,
+        Datasets.MLS: 13.2,
+        Datasets.VOX_POPULI: 17.7,
     },
     Engines.PICOVOICE_LEOPARD: {
         Datasets.COMMON_VOICE: 13.0,
@@ -502,28 +535,32 @@ WER_PT = {
         Datasets.MLS: 7.8,
     },
     Engines.AMAZON_TRANSCRIBE_STREAMING: {
-        Datasets.COMMON_VOICE: 7.0,
-        Datasets.MLS: 9.0,
+        Datasets.COMMON_VOICE: 6.2,
+        Datasets.MLS: 9.4,
     },
     Engines.AZURE_SPEECH_TO_TEXT: {
         Datasets.COMMON_VOICE: 7.4,
         Datasets.MLS: 9.0,
     },
     Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME: {
-        Datasets.COMMON_VOICE: 8.3,
-        Datasets.MLS: 11.0,
+        Datasets.COMMON_VOICE: 7.5,
+        Datasets.MLS: 8.7,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT: {
         Datasets.COMMON_VOICE: 8.8,
         Datasets.MLS: 14.2,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING: {
-        Datasets.COMMON_VOICE: 9.1,
-        Datasets.MLS: 16.5,
+        Datasets.COMMON_VOICE: 9.0,
+        Datasets.MLS: 14.0,
+    },
+    Engines.NEMOTRON_3_5_ASR_STREAMING: {
+        Datasets.COMMON_VOICE: 10.2,
+        Datasets.MLS: 8.3,
     },
     Engines.PICOVOICE_CHEETAH: {
-        Datasets.COMMON_VOICE: 10.6,
-        Datasets.MLS: 14.0,
+        Datasets.COMMON_VOICE: 8.1,
+        Datasets.MLS: 10.3,
     },
     Engines.PICOVOICE_LEOPARD: {
         Datasets.COMMON_VOICE: 17.1,
@@ -551,6 +588,67 @@ WER_PT = {
     },
 }
 
+CER_KO = {
+    Engines.AMAZON_TRANSCRIBE_STREAMING: {
+        Datasets.COMMON_VOICE: 14.8,
+        Datasets.ZEROTH_KOREAN: 13.3,
+        Datasets.PANSORI: 12.1,
+    },
+    Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME: {
+        Datasets.COMMON_VOICE: 8.1,
+        Datasets.ZEROTH_KOREAN: 8.6,
+        Datasets.PANSORI: 5.1,
+    },
+    Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING: {
+        Datasets.COMMON_VOICE: 32.0,
+        Datasets.ZEROTH_KOREAN: 33.7,
+        Datasets.PANSORI: 13.5,
+    },
+    Engines.VOSK_STREAMING_SMALL: {
+        Datasets.COMMON_VOICE: 39.0,
+        Datasets.ZEROTH_KOREAN: 12.7,
+        Datasets.PANSORI: 40.7,
+    },
+    Engines.PICOVOICE_CHEETAH: {
+        Datasets.COMMON_VOICE: 7.0,
+        Datasets.ZEROTH_KOREAN: 3.7,
+        Datasets.PANSORI: 6.5,
+    },
+}
+
+CER_JA = {
+    Engines.AMAZON_TRANSCRIBE_STREAMING: {
+        Datasets.JSUT_BASIC: 10.0,
+        Datasets.FLEURS: 10.7,
+        Datasets.COMMON_VOICE: 23.2,
+    },
+    Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME: {
+        Datasets.JSUT_BASIC: 7.6,
+        Datasets.FLEURS: 6.2,
+        Datasets.COMMON_VOICE: 16.6,
+    },
+    Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING: {
+        Datasets.JSUT_BASIC: 9.3,
+        Datasets.FLEURS: 8.6,
+        Datasets.COMMON_VOICE: 20.1,
+    },
+    Engines.PICOVOICE_CHEETAH: {
+        Datasets.JSUT_BASIC: 8.6,
+        Datasets.FLEURS: 7.8,
+        Datasets.COMMON_VOICE: 14.1,
+    },
+    Engines.VOSK_STREAMING_LARGE: {
+        Datasets.JSUT_BASIC: 7.1,
+        Datasets.FLEURS: 17.5,
+        Datasets.COMMON_VOICE: 23.6,
+    },
+    Engines.VOSK_STREAMING_SMALL: {
+        Datasets.JSUT_BASIC: 11.9,
+        Datasets.FLEURS: 21.4,
+        Datasets.COMMON_VOICE: 31.1,
+    },
+}
+
 PER_EN = {
     Engines.AMAZON_TRANSCRIBE: {
         Datasets.VOX_POPULI: 19.1,
@@ -558,9 +656,9 @@ PER_EN = {
         Datasets.COMMON_VOICE: 3.8,
     },
     Engines.AMAZON_TRANSCRIBE_STREAMING: {
-        Datasets.VOX_POPULI: 35.5,
-        Datasets.FLEURS: 24.4,
-        Datasets.COMMON_VOICE: 13.2,
+        Datasets.VOX_POPULI: 23.5,
+        Datasets.FLEURS: 27.4,
+        Datasets.COMMON_VOICE: 8.1,
     },
     Engines.AZURE_SPEECH_TO_TEXT: {
         Datasets.VOX_POPULI: 23.2,
@@ -568,9 +666,9 @@ PER_EN = {
         Datasets.COMMON_VOICE: 5.5,
     },
     Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME: {
-        Datasets.VOX_POPULI: 25.9,
-        Datasets.FLEURS: 17.6,
-        Datasets.COMMON_VOICE: 5.6,
+        Datasets.VOX_POPULI: 28.6,
+        Datasets.FLEURS: 21.5,
+        Datasets.COMMON_VOICE: 6.2,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT: {
         Datasets.VOX_POPULI: 45.7,
@@ -578,14 +676,19 @@ PER_EN = {
         Datasets.COMMON_VOICE: 21.3,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING: {
-        Datasets.VOX_POPULI: 45.0,
-        Datasets.FLEURS: 42.7,
-        Datasets.COMMON_VOICE: 20.2,
+        Datasets.VOX_POPULI: 43.0,
+        Datasets.FLEURS: 45.3,
+        Datasets.COMMON_VOICE: 20.5,
+    },
+    Engines.NEMOTRON_3_5_ASR_STREAMING: {
+        Datasets.VOX_POPULI: 27.6,
+        Datasets.FLEURS: 26.7,
+        Datasets.COMMON_VOICE: 20.5,
     },
     Engines.PICOVOICE_CHEETAH: {
-        Datasets.VOX_POPULI: 27.4,
-        Datasets.FLEURS: 14.4,
-        Datasets.COMMON_VOICE: 6.5,
+        Datasets.VOX_POPULI: 17.9,
+        Datasets.FLEURS: 14.8,
+        Datasets.COMMON_VOICE: 4.8,
     },
     Engines.WHISPER_TINY: {
         Datasets.VOX_POPULI: 24.7,
@@ -646,9 +749,9 @@ PER_FR = {
         Datasets.COMMON_VOICE: 11.2,
     },
     Engines.AMAZON_TRANSCRIBE_STREAMING: {
-        Datasets.VOX_POPULI: 21.9,
-        Datasets.FLEURS: 17.0,
-        Datasets.COMMON_VOICE: 7.4,
+        Datasets.VOX_POPULI: 23.7,
+        Datasets.FLEURS: 20.2,
+        Datasets.COMMON_VOICE: 8.1,
     },
     Engines.AZURE_SPEECH_TO_TEXT: {
         Datasets.VOX_POPULI: 25.8,
@@ -656,9 +759,9 @@ PER_FR = {
         Datasets.COMMON_VOICE: 6.2,
     },
     Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME: {
-        Datasets.VOX_POPULI: 28.4,
-        Datasets.FLEURS: 18.8,
-        Datasets.COMMON_VOICE: 6.7,
+        Datasets.VOX_POPULI: 31.2,
+        Datasets.FLEURS: 20.1,
+        Datasets.COMMON_VOICE: 7.6,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT: {
         Datasets.VOX_POPULI: 30.7,
@@ -666,9 +769,14 @@ PER_FR = {
         Datasets.COMMON_VOICE: 26.6,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING: {
-        Datasets.VOX_POPULI: 28.6,
-        Datasets.FLEURS: 22.3,
-        Datasets.COMMON_VOICE: 26.4,
+        Datasets.VOX_POPULI: 28.4,
+        Datasets.FLEURS: 22.7,
+        Datasets.COMMON_VOICE: 26.5,
+    },
+    Engines.NEMOTRON_3_5_ASR_STREAMING: {
+        Datasets.VOX_POPULI: 28.2,
+        Datasets.FLEURS: 30.6,
+        Datasets.COMMON_VOICE: 20.2,
     },
     Engines.WHISPER_LARGE: {
         Datasets.VOX_POPULI: 23.8,
@@ -696,9 +804,9 @@ PER_FR = {
         Datasets.COMMON_VOICE: 15.0,
     },
     Engines.PICOVOICE_CHEETAH: {
-        Datasets.VOX_POPULI: 29.9,
-        Datasets.FLEURS: 19.6,
-        Datasets.COMMON_VOICE: 7.0,
+        Datasets.VOX_POPULI: 30.4,
+        Datasets.FLEURS: 17.2,
+        Datasets.COMMON_VOICE: 5.2,
     },
 }
 
@@ -709,9 +817,9 @@ PER_ES = {
         Datasets.COMMON_VOICE: 5.6,
     },
     Engines.AMAZON_TRANSCRIBE_STREAMING: {
-        Datasets.VOX_POPULI: 23.9,
-        Datasets.FLEURS: 21.2,
-        Datasets.COMMON_VOICE: 5.7,
+        Datasets.VOX_POPULI: 25.0,
+        Datasets.FLEURS: 18.7,
+        Datasets.COMMON_VOICE: 6.3,
     },
     Engines.AZURE_SPEECH_TO_TEXT: {
         Datasets.VOX_POPULI: 26.9,
@@ -719,9 +827,9 @@ PER_ES = {
         Datasets.COMMON_VOICE: 3.9,
     },
     Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME: {
-        Datasets.VOX_POPULI: 27.2,
-        Datasets.FLEURS: 20.3,
-        Datasets.COMMON_VOICE: 3.9,
+        Datasets.VOX_POPULI: 27.3,
+        Datasets.FLEURS: 18.6,
+        Datasets.COMMON_VOICE: 4.4,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT: {
         Datasets.VOX_POPULI: 42.3,
@@ -730,8 +838,13 @@ PER_ES = {
     },
     Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING: {
         Datasets.VOX_POPULI: 41.9,
-        Datasets.FLEURS: 45.1,
-        Datasets.COMMON_VOICE: 58.6,
+        Datasets.FLEURS: 45.0,
+        Datasets.COMMON_VOICE: 58.7,
+    },
+    Engines.NEMOTRON_3_5_ASR_STREAMING: {
+        Datasets.VOX_POPULI: 32.0,
+        Datasets.FLEURS: 20.0,
+        Datasets.COMMON_VOICE: 19.2,
     },
     Engines.WHISPER_LARGE: {
         Datasets.VOX_POPULI: 26.4,
@@ -759,9 +872,9 @@ PER_ES = {
         Datasets.COMMON_VOICE: 18.9,
     },
     Engines.PICOVOICE_CHEETAH: {
-        Datasets.VOX_POPULI: 35.1,
-        Datasets.FLEURS: 21.7,
-        Datasets.COMMON_VOICE: 4.0,
+        Datasets.VOX_POPULI: 35.5,
+        Datasets.FLEURS: 18.5,
+        Datasets.COMMON_VOICE: 3.1,
     },
 }
 
@@ -772,9 +885,9 @@ PER_DE = {
         Datasets.COMMON_VOICE: 3.1,
     },
     Engines.AMAZON_TRANSCRIBE_STREAMING: {
-        Datasets.VOX_POPULI: 20.6,
-        Datasets.FLEURS: 23.5,
-        Datasets.COMMON_VOICE: 3.1,
+        Datasets.VOX_POPULI: 20.1,
+        Datasets.FLEURS: 23.4,
+        Datasets.COMMON_VOICE: 3.6,
     },
     Engines.AZURE_SPEECH_TO_TEXT: {
         Datasets.VOX_POPULI: 30.2,
@@ -782,9 +895,9 @@ PER_DE = {
         Datasets.COMMON_VOICE: 8.3,
     },
     Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME: {
-        Datasets.VOX_POPULI: 25.8,
-        Datasets.FLEURS: 28.4,
-        Datasets.COMMON_VOICE: 2.3,
+        Datasets.VOX_POPULI: 28.6,
+        Datasets.FLEURS: 29.3,
+        Datasets.COMMON_VOICE: 5.7,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT: {
         Datasets.VOX_POPULI: 29.4,
@@ -792,9 +905,14 @@ PER_DE = {
         Datasets.COMMON_VOICE: 15.9,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING: {
-        Datasets.VOX_POPULI: 28.6,
-        Datasets.FLEURS: 27.1,
-        Datasets.COMMON_VOICE: 15.8,
+        Datasets.VOX_POPULI: 28.5,
+        Datasets.FLEURS: 27.5,
+        Datasets.COMMON_VOICE: 16.4,
+    },
+    Engines.NEMOTRON_3_5_ASR_STREAMING: {
+        Datasets.VOX_POPULI: 31.0,
+        Datasets.FLEURS: 26.1,
+        Datasets.COMMON_VOICE: 17.2,
     },
     Engines.WHISPER_LARGE: {
         Datasets.VOX_POPULI: 20.5,
@@ -822,9 +940,9 @@ PER_DE = {
         Datasets.COMMON_VOICE: 9.3,
     },
     Engines.PICOVOICE_CHEETAH: {
-        Datasets.VOX_POPULI: 30.7,
-        Datasets.FLEURS: 22.6,
-        Datasets.COMMON_VOICE: 3.0,
+        Datasets.VOX_POPULI: 25.1,
+        Datasets.FLEURS: 24.9,
+        Datasets.COMMON_VOICE: 2.1,
     },
 }
 
@@ -835,9 +953,9 @@ PER_IT = {
         Datasets.COMMON_VOICE: 6.5,
     },
     Engines.AMAZON_TRANSCRIBE_STREAMING: {
-        Datasets.VOX_POPULI: 34.6,
-        Datasets.FLEURS: 46.4,
-        Datasets.COMMON_VOICE: 5,
+        Datasets.VOX_POPULI: 34.7,
+        Datasets.FLEURS: 27.7,
+        Datasets.COMMON_VOICE: 4.2,
     },
     Engines.AZURE_SPEECH_TO_TEXT: {
         Datasets.VOX_POPULI: 26.9,
@@ -845,9 +963,9 @@ PER_IT = {
         Datasets.COMMON_VOICE: 3.5,
     },
     Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME: {
-        Datasets.VOX_POPULI: 40.8,
-        Datasets.FLEURS: 28.8,
-        Datasets.COMMON_VOICE: 5.5,
+        Datasets.VOX_POPULI: 41.6,
+        Datasets.FLEURS: 28.6,
+        Datasets.COMMON_VOICE: 6.1,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT: {
         Datasets.VOX_POPULI: 46.9,
@@ -855,9 +973,14 @@ PER_IT = {
         Datasets.COMMON_VOICE: 27.9,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING: {
-        Datasets.VOX_POPULI: 46,
-        Datasets.FLEURS: 23.5,
-        Datasets.COMMON_VOICE: 27.4,
+        Datasets.VOX_POPULI: 45.0,
+        Datasets.FLEURS: 23.3,
+        Datasets.COMMON_VOICE: 27.3,
+    },
+    Engines.NEMOTRON_3_5_ASR_STREAMING: {
+        Datasets.VOX_POPULI: 42.3,
+        Datasets.FLEURS: 23.2,
+        Datasets.COMMON_VOICE: 23.9,
     },
     Engines.WHISPER_LARGE: {
         Datasets.VOX_POPULI: 36.4,
@@ -885,9 +1008,9 @@ PER_IT = {
         Datasets.COMMON_VOICE: 27.4,
     },
     Engines.PICOVOICE_CHEETAH: {
-        Datasets.VOX_POPULI: 46.4,
-        Datasets.FLEURS: 35.7,
-        Datasets.COMMON_VOICE: 4.3,
+        Datasets.VOX_POPULI: 47.4,
+        Datasets.FLEURS: 25.0,
+        Datasets.COMMON_VOICE: 2.6,
     },
 }
 
@@ -897,24 +1020,28 @@ PER_PT = {
         Datasets.COMMON_VOICE: 15.8,
     },
     Engines.AMAZON_TRANSCRIBE_STREAMING: {
-        Datasets.FLEURS: 27.6,
-        Datasets.COMMON_VOICE: 11.1,
+        Datasets.FLEURS: 28.8,
+        Datasets.COMMON_VOICE: 10.0,
     },
     Engines.AZURE_SPEECH_TO_TEXT: {
         Datasets.FLEURS: 19.4,
         Datasets.COMMON_VOICE: 11.9,
     },
     Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME: {
-        Datasets.FLEURS: 28.6,
-        Datasets.COMMON_VOICE: 13.3,
+        Datasets.FLEURS: 28.2,
+        Datasets.COMMON_VOICE: 13.6,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT: {
         Datasets.FLEURS: 32.1,
         Datasets.COMMON_VOICE: 31.3,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING: {
-        Datasets.FLEURS: 31.9,
+        Datasets.FLEURS: 31.7,
         Datasets.COMMON_VOICE: 30.9,
+    },
+    Engines.NEMOTRON_3_5_ASR_STREAMING: {
+        Datasets.FLEURS: 39.2,
+        Datasets.COMMON_VOICE: 38.8,
     },
     Engines.WHISPER_LARGE: {
         Datasets.FLEURS: 16.6,
@@ -937,8 +1064,46 @@ PER_PT = {
         Datasets.COMMON_VOICE: 22.2,
     },
     Engines.PICOVOICE_CHEETAH: {
-        Datasets.FLEURS: 31.6,
-        Datasets.COMMON_VOICE: 11.2,
+        Datasets.FLEURS: 24.4,
+        Datasets.COMMON_VOICE: 7.7,
+    },
+}
+
+PER_KO = {
+    Engines.AMAZON_TRANSCRIBE_STREAMING: {
+        Datasets.COMMON_VOICE: 6.5,
+        Datasets.FLEURS: 9.4,
+    },
+    Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME: {
+        Datasets.COMMON_VOICE: 11.7,
+        Datasets.FLEURS: 11.6,
+    },
+    Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING: {
+        Datasets.COMMON_VOICE: 12.1,
+        Datasets.FLEURS: 9.3,
+    },
+    Engines.PICOVOICE_CHEETAH: {
+        Datasets.COMMON_VOICE: 12.5,
+        Datasets.FLEURS: 2.9,
+    },
+}
+
+PER_JA = {
+    Engines.AMAZON_TRANSCRIBE_STREAMING: {
+        Datasets.FLEURS: 5.5,
+        Datasets.COMMON_VOICE: 20.7,
+    },
+    Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME: {
+        Datasets.FLEURS: 20.0,
+        Datasets.COMMON_VOICE: 23.7,
+    },
+    Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING: {
+        Datasets.FLEURS: 22.3,
+        Datasets.COMMON_VOICE: 28.6,
+    },
+    Engines.PICOVOICE_CHEETAH: {
+        Datasets.FLEURS: 2.6,
+        Datasets.COMMON_VOICE: 26.3,
     },
 }
 
@@ -951,6 +1116,8 @@ __all__ = [
     "PER_FR",
     "PER_IT",
     "PER_PT",
+    "PER_JA",
+    "PER_KO",
     "RTF",
     "SIZE",
     "WER_DE",
@@ -959,4 +1126,6 @@ __all__ = [
     "WER_FR",
     "WER_IT",
     "WER_PT",
+    "CER_JA",
+    "CER_KO",
 ]

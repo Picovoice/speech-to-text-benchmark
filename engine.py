@@ -1,7 +1,10 @@
 import asyncio
+import contextlib
+import io
 import json
 import os
 import time
+import unicodedata
 import uuid
 import warnings
 from enum import Enum
@@ -9,6 +12,7 @@ from threading import Event
 from typing import (
     Any,
     ByteString,
+    ClassVar,
     Generator,
     List,
     Optional,
@@ -33,7 +37,6 @@ from amazon_transcribe.model import (
 )
 from azure.cognitiveservices.speech import SpeechRecognitionEventArgs
 from google.cloud import speech
-from huggingface_hub import hf_hub_download
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from ibm_watson import SpeechToTextV1
 from moonshine_voice import ModelArch
@@ -49,6 +52,12 @@ from languages import (
     LANGUAGE_TO_CODE,
     Languages
 )
+
+with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+    import nemo.collections.asr as nemo_asr
+    from nemo.collections.asr.parts.utils.streaming_utils import (
+        CacheAwareStreamingAudioBuffer
+    )
 
 warnings.filterwarnings("ignore", message="FP16 is not supported on CPU; using FP32 instead")
 warnings.filterwarnings("ignore", message="Performing inference on CPU when CUDA is available")
@@ -95,6 +104,7 @@ class Engines(Enum):
     MOONSHINE_STREAMING_MEDIUM = "MOONSHINE_STREAMING_MEDIUM"
     VOSK_STREAMING_SMALL = "VOSK_STREAMING_SMALL"
     VOSK_STREAMING_LARGE = "VOSK_STREAMING_LARGE"
+    NEMOTRON_3_5_ASR_STREAMING = "NEMOTRON_3_5_ASR_STREAMING"
     PICOVOICE_CHEETAH = "PICOVOICE_CHEETAH"
     PICOVOICE_LEOPARD = "PICOVOICE_LEOPARD"
 
@@ -115,6 +125,7 @@ StreamingEngines = [
     Engines.MOONSHINE_STREAMING_MEDIUM,
     Engines.VOSK_STREAMING_SMALL,
     Engines.VOSK_STREAMING_LARGE,
+    Engines.NEMOTRON_3_5_ASR_STREAMING,
     Engines.PICOVOICE_CHEETAH,
 ]
 
@@ -131,6 +142,20 @@ class Engine(object):
 
     def delete(self) -> None:
         raise NotImplementedError()
+
+    @staticmethod
+    def split(transcript: str, language: Languages) -> List[str]:
+        if language is Languages.JA:
+            return list(transcript)
+        else:
+            return transcript.split()
+
+    @staticmethod
+    def join(words: List[str], language: Languages) -> str:
+        if language is Languages.JA:
+            return "".join(words)
+        else:
+            return " ".join(words)
 
     def __str__(self) -> str:
         raise NotImplementedError()
@@ -188,9 +213,11 @@ class Engine(object):
         elif x is Engines.MOONSHINE_STREAMING_MEDIUM:
             return MoonshineStreamingMediumEngine(language=language, **kwargs)
         elif x is Engines.VOSK_STREAMING_SMALL:
-            return VoskStreamingSmallEngine(language=language, **kwargs)
+            return VoskStreamingSmallEngine(language=language)
         elif x is Engines.VOSK_STREAMING_LARGE:
-            return VoskStreamingLargeEngine(language=language, **kwargs)
+            return VoskStreamingLargeEngine(language=language)
+        elif x is Engines.NEMOTRON_3_5_ASR_STREAMING:
+            return Nemotron3_5ASRStreamingEngine(language=language, **kwargs)
         elif x is Engines.PICOVOICE_CHEETAH:
             return PicovoiceCheetahEngine(**kwargs)
         elif x is Engines.PICOVOICE_LEOPARD:
@@ -231,7 +258,7 @@ class StreamingEngine(Engine):
 
     def transcribe(self, path: str) -> str:
         words, _, _ = self.measure_word_latency(path, alignments=None)
-        return " ".join(words)
+        return self.join(words, self.get_language())
 
     def get_chunk_size_ms(self) -> int:
         raise NotImplementedError()
@@ -245,6 +272,28 @@ class StreamingEngine(Engine):
     def get_chunk_size_bytes(self) -> int:
         chunk_ms = self.get_chunk_size_ms()
         return int((chunk_ms / 1000) * (SAMPLE_RATE * BYTES_PER_SAMPLE))
+
+    def get_language(self) -> Languages:
+        raise NotImplementedError()
+
+    @staticmethod
+    def update_partial_words(
+        new_words: List[str],
+        previous_words: List[str],
+        previous_timings: List[float],
+        current_time: float,
+    ) -> Tuple[List[str], List[float]]:
+        if len(new_words) == 0:
+            return previous_words, previous_timings
+
+        fixed_words = previous_words[:-1]
+
+        new_tail = new_words[len(fixed_words):]
+        tail_timings = [current_time] * len(new_tail)
+        if new_tail and previous_words and new_tail[0] == previous_words[-1]:
+            tail_timings[0] = previous_timings[-1]
+
+        return fixed_words + new_tail, previous_timings[:-1] + tail_timings
 
 
 class AmazonTranscribeEngine(Engine):
@@ -330,6 +379,7 @@ class AmazonTranscribeStreamingEngine(StreamingEngine):
         aws_location: str = "us-west-2",
     ) -> None:
         super().__init__()
+        self._language = language
         self._language_code = LANGUAGE_TO_CODE[language]
         self._chunk_size_ms = chunk_size_ms if chunk_size_ms is not None else self.DEFAULT_CHUNK_SIZE_MS
         self._apply_delay = apply_delay
@@ -345,6 +395,9 @@ class AmazonTranscribeStreamingEngine(StreamingEngine):
     def get_chunk_size_ms(self) -> int:
         return self._chunk_size_ms
 
+    def get_language(self) -> Languages:
+        return self._language
+
     async def _measure_word_latency_async(
         self, path: str, alignments: Optional[Sequence[Tuple[float, float]]]
     ) -> WordLatencyOutputType:
@@ -353,7 +406,7 @@ class AmazonTranscribeStreamingEngine(StreamingEngine):
         if alignments is None and os.path.exists(cache_path):
             with open(cache_path) as f:
                 res = f.read()
-            return res.split(), [], []
+            return self.split(res, self._language), [], []
 
         stream = await self._client.start_stream_transcription(
             language_code=self._language_code,
@@ -361,7 +414,11 @@ class AmazonTranscribeStreamingEngine(StreamingEngine):
             media_encoding="pcm",
         )
 
-        handler = AmazonTranscribeStreamingHandler(stream.output_stream, ignore_punctuation=self._ignore_punctuation)
+        handler = AmazonTranscribeStreamingHandler(
+            stream.output_stream,
+            self._language,
+            ignore_punctuation=self._ignore_punctuation,
+        )
         send_timings = []
 
         async def write_chunks():
@@ -394,9 +451,15 @@ class AmazonTranscribeStreamingEngine(StreamingEngine):
 
         await asyncio.gather(write_chunks(), handler.handle_events())
 
+        if len(handler._process_words) > 0:
+            handler._emitted_words.extend(handler._process_words)
+            handler._receive_timings.extend(handler._process_timings)
+            handler._process_words = []
+            handler._process_timings = []
+
         if alignments is None:
             with open(cache_path, "w") as f:
-                f.write(" ".join(handler._emitted_words))
+                f.write(self.join(handler._emitted_words, self._language))
 
         return handler._emitted_words, handler._receive_timings, send_timings
 
@@ -414,14 +477,21 @@ class AmazonTranscribeStreamingEngine(StreamingEngine):
 
 
 class AmazonTranscribeStreamingHandler(TranscriptResultStreamHandler):
-    def __init__(self, transcript_result_stream: TranscriptResultStream, ignore_punctuation: bool) -> None:
+    def __init__(
+        self,
+        transcript_result_stream: TranscriptResultStream,
+        langugae: Languages,
+        ignore_punctuation: bool,
+    ) -> None:
         super().__init__(transcript_result_stream)
         self._emitted_words = []
+        self._process_words = []
+        self._process_timings = []
         self._receive_timings = []
-        self._last_word_index = 0
 
         self._ignore_punctuation = ignore_punctuation
-        self._punctuation_trans = str.maketrans({".": "", ",": "", "?": ""})
+        self._language = langugae
+        self._punctuation_trans = str.maketrans({"。": "", "、": "", "？": "", ".": "", ",": "", "?": ""})
 
     async def handle_transcript_event(self, transcript_event: TranscriptEvent) -> None:
         current_time = time.time()
@@ -431,28 +501,24 @@ class AmazonTranscribeStreamingHandler(TranscriptResultStreamHandler):
             if result.alternatives:
                 for alt in result.alternatives:
                     if alt.transcript:
+                        alt_transcript = alt.transcript
                         if self._ignore_punctuation:
-                            words = alt.transcript.translate(self._punctuation_trans).split()
-                        else:
-                            words = alt.transcript.split()
+                            alt_transcript = alt_transcript.translate(self._punctuation_trans)
 
-                        partial_transcript_reset = len(words) < self._last_word_index
-                        if partial_transcript_reset:
-                            self._last_word_index = 0
+                        words = Engine.split(alt_transcript, self._language)
 
-                        if self._last_word_index > 0:
-                            last_emitted_word_changed = self._emitted_words[-1] != words[self._last_word_index - 1]
-                            if last_emitted_word_changed:
-                                self._emitted_words[-1] = words[self._last_word_index - 1]
-                                self._receive_timings[-1] = current_time
+                        self._process_words, self._process_timings = StreamingEngine.update_partial_words(
+                            new_words=words,
+                            previous_words=self._process_words,
+                            previous_timings=self._process_timings,
+                            current_time=current_time
+                        )
 
-                        if len(words) > self._last_word_index:
-                            new_words = words[self._last_word_index :]
-                            for word in new_words:
-                                self._emitted_words.append(word)
-                                self._receive_timings.append(current_time)
-
-                            self._last_word_index = len(words)
+            if not (result.is_partial):
+                self._emitted_words.extend(self._process_words)
+                self._receive_timings.extend(self._process_timings)
+                self._process_words = []
+                self._process_timings = []
 
 
 class AzureSpeechToTextEngine(Engine):
@@ -546,6 +612,7 @@ class AzureSpeechToTextRealTimeEngine(StreamingEngine):
         chunk_size_ms: Optional[int] = None,
     ) -> None:
         super().__init__()
+        self._language = language
         self._language_code = LANGUAGE_TO_CODE[language]
         self._chunk_size_ms = chunk_size_ms if chunk_size_ms is not None else self.DEFAULT_CHUNK_SIZE_MS
         self._apply_delay = apply_delay
@@ -560,6 +627,9 @@ class AzureSpeechToTextRealTimeEngine(StreamingEngine):
     def get_chunk_size_ms(self) -> int:
         return self._chunk_size_ms
 
+    def get_language(self) -> Languages:
+        return self._language
+
     async def _measure_word_latency_async(
         self, path: str, alignments: Optional[Sequence[Tuple[float, float]]]
     ) -> WordLatencyOutputType:
@@ -568,7 +638,7 @@ class AzureSpeechToTextRealTimeEngine(StreamingEngine):
         if alignments is None and os.path.exists(cache_path):
             with open(cache_path, "r") as f:
                 res = f.read()
-            return res.split(), [], []
+            return self.split(res, self._language), [], []
 
         speech_config = speechsdk.SpeechConfig(
             subscription=self._azure_speech_key,
@@ -582,7 +652,10 @@ class AzureSpeechToTextRealTimeEngine(StreamingEngine):
 
         speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
 
-        handler = AzureSpeechToTextRealTimeHandler(ignore_punctuation=self._ignore_punctuation)
+        handler = AzureSpeechToTextRealTimeHandler(
+            language=self._language,
+            ignore_punctuation=self._ignore_punctuation,
+        )
         speech_recognizer.recognizing.connect(handler.recognizing_cb)
         speech_recognizer.recognized.connect(handler.recognized_cb)
         speech_recognizer.session_stopped.connect(handler.session_stopped_cb)
@@ -624,10 +697,15 @@ class AzureSpeechToTextRealTimeEngine(StreamingEngine):
         await asyncio.get_event_loop().run_in_executor(None, handler._done_event.wait, 10)
 
         speech_recognizer.stop_continuous_recognition_async()
+        if len(handler._process_words) > 0:
+            handler._emitted_words.extend(handler._process_words)
+            handler._receive_timings.extend(handler._process_timings)
+            handler._process_words = []
+            handler._process_timings = []
 
         if alignments is None:
             with open(cache_path, "w") as f:
-                f.write(" ".join(handler._emitted_words))
+                f.write(self.join(handler._emitted_words, self._language))
 
         return handler._emitted_words, handler._receive_timings, send_timings
 
@@ -645,49 +723,45 @@ class AzureSpeechToTextRealTimeEngine(StreamingEngine):
 
 
 class AzureSpeechToTextRealTimeHandler:
-    def __init__(self, ignore_punctuation: bool) -> None:
+    def __init__(self, language: Languages, ignore_punctuation: bool) -> None:
+        self._language = language
         self._emitted_words = []
         self._receive_timings = []
-        self._last_word_index = 0
+        self._process_words = []
+        self._process_timings = []
         self._done_event = Event()
 
         self._ignore_punctuation = ignore_punctuation
-        self._punctuation_trans = str.maketrans({".": "", ",": "", "?": ""})
+        self._punctuation_trans = str.maketrans({"。": "", "、": "", "？": "", ".": "", ",": "", "?": ""})
 
-    def _recognize_helper(self, evt: SpeechRecognitionEventArgs) -> None:
+    def _recognize_helper(self, evt: SpeechRecognitionEventArgs, recognized: bool) -> None:
         current_time = time.time()
+        evt_result_text = evt.result.text
         if self._ignore_punctuation:
-            words = evt.result.text.translate(self._punctuation_trans).split()
-        else:
-            words = evt.result.text.split()
+            evt_result_text = evt_result_text.translate(self._punctuation_trans)
+        words = Engine.split(evt_result_text, self._language)
 
-        partial_transcript_reset = len(words) < self._last_word_index
-        if partial_transcript_reset:
-            self._last_word_index = 0
-
-        if self._last_word_index > 0:
-            last_emitted_word_changed = self._emitted_words[-1] != words[self._last_word_index - 1]
-            if last_emitted_word_changed:
-                self._emitted_words[-1] = words[self._last_word_index - 1]
-                self._receive_timings[-1] = current_time
-
-        if len(words) > self._last_word_index:
-            new_words = words[self._last_word_index :]
-            for word in new_words:
-                self._emitted_words.append(word)
-                self._receive_timings.append(current_time)
-
-            self._last_word_index = len(words)
+        self._process_words, self._process_timings = StreamingEngine.update_partial_words(
+            new_words=words,
+            previous_words=self._process_words,
+            previous_timings=self._process_timings,
+            current_time=current_time
+        )
+        if recognized:
+            self._emitted_words.extend(self._process_words)
+            self._receive_timings.extend(self._process_timings)
+            self._process_words = []
+            self._process_timings = []
 
     def recognized_cb(self, evt: SpeechRecognitionEventArgs) -> None:
         if evt.result.reason == speechsdk.ResultReason.RecognizedSpeech:
             if evt.result.text:
-                self._recognize_helper(evt)
+                self._recognize_helper(evt, recognized=True)
 
     def recognizing_cb(self, evt: SpeechRecognitionEventArgs) -> None:
         if evt.result.reason == speechsdk.ResultReason.RecognizingSpeech:
             if evt.result.text:
-                self._recognize_helper(evt)
+                self._recognize_helper(evt, recognized=False)
 
     def session_stopped_cb(self, evt: SpeechRecognitionEventArgs) -> None:
         self._done_event.set()
@@ -772,6 +846,7 @@ class GoogleSpeechToTextStreamingEngine(StreamingEngine):
         model: Optional[str] = None,
     ) -> None:
         super().__init__()
+        self._language = language
         self._language_code = LANGUAGE_TO_CODE[language]
         self._chunk_size_ms = chunk_size_ms if chunk_size_ms is not None else self.DEFAULT_CHUNK_SIZE_MS
         self._apply_delay = apply_delay
@@ -799,6 +874,9 @@ class GoogleSpeechToTextStreamingEngine(StreamingEngine):
     def get_chunk_size_ms(self) -> int:
         return self._chunk_size_ms
 
+    def get_language(self) -> Languages:
+        return self._language
+
     def _measure_word_latency(
         self, path: str, alignments: Optional[Sequence[Tuple[float, float]]]
     ) -> WordLatencyOutputType:
@@ -806,7 +884,7 @@ class GoogleSpeechToTextStreamingEngine(StreamingEngine):
         if alignments is None and os.path.exists(cache_path):
             with open(cache_path) as f:
                 res = f.read()
-            return res.split(), [], []
+            return self.split(res, self._language), [], []
 
         word_timings = [aln[-1] for aln in alignments] if alignments is not None else []
         pcm = self.load_pcm(path)
@@ -818,7 +896,10 @@ class GoogleSpeechToTextStreamingEngine(StreamingEngine):
             chunk_size_ms=self._chunk_size_ms,
             apply_delay=self._apply_delay,
         )
-        handler = GoogleSpeechToTextStreamingHandler(ignore_punctuation=self._ignore_punctuation)
+        handler = GoogleSpeechToTextStreamingHandler(
+            language=self._language,
+            ignore_punctuation=self._ignore_punctuation,
+        )
 
         def request_generator():
             yield from streamer.stream_generator()
@@ -829,14 +910,19 @@ class GoogleSpeechToTextStreamingEngine(StreamingEngine):
             if len(response.results) == 0:
                 continue
 
-            if response.results[0].is_final or len(response.results) == 2:
-                handler._process_result(response.results[0])
+            handler._process_result(response.results[0])
 
         streamer.stop()
 
+        if len(handler._process_words) > 0:
+            handler._emitted_words.extend(handler._process_words)
+            handler._receive_timings.extend(handler._process_timings)
+            handler._process_words = []
+            handler._process_timings = []
+
         if alignments is None:
             with open(cache_path, "w") as f:
-                f.write(" ".join(handler._emitted_words))
+                f.write(self.join(handler._emitted_words, self._language))
 
         return handler._emitted_words, handler._receive_timings, streamer._send_timings
 
@@ -922,13 +1008,15 @@ class GoogleSpeechToTextStreamingAudioGenerator(object):
 
 
 class GoogleSpeechToTextStreamingHandler(object):
-    def __init__(self, ignore_punctuation: bool) -> None:
+    def __init__(self, language: Languages, ignore_punctuation: bool) -> None:
+        self._language = language
         self._emitted_words = []
+        self._process_words = []
+        self._process_timings = []
         self._receive_timings = []
-        self._last_word_index = 0
 
         self._ignore_punctuation = ignore_punctuation
-        self._punctuation_trans = str.maketrans({".": "", ",": "", "?": ""})
+        self._punctuation_trans = str.maketrans({"。": "", "、": "", "？": "", ".": "", ",": "", "?": ""})
 
     def _process_result(self, result) -> None:
         current_time = time.time()
@@ -941,27 +1029,22 @@ class GoogleSpeechToTextStreamingHandler(object):
             return
 
         if self._ignore_punctuation:
-            words = transcript.translate(self._punctuation_trans).split()
-        else:
-            words = transcript.split()
+            transcript = transcript.translate(self._punctuation_trans)
 
-        partial_transcript_reset = len(words) < self._last_word_index
-        if partial_transcript_reset:
-            self._last_word_index = 0
+        words = Engine.split(transcript, self._language)
 
-        if self._last_word_index > 0:
-            last_emitted_word_changed = self._emitted_words[-1] != words[self._last_word_index - 1]
-            if last_emitted_word_changed:
-                self._emitted_words[-1] = words[self._last_word_index - 1]
-                self._receive_timings[-1] = current_time
+        self._process_words, self._process_timings = StreamingEngine.update_partial_words(
+            new_words=words,
+            previous_words=self._process_words,
+            previous_timings=self._process_timings,
+            current_time=current_time
+        )
 
-        if len(words) > self._last_word_index:
-            new_words = words[self._last_word_index :]
-            for word in new_words:
-                self._emitted_words.append(word)
-                self._receive_timings.append(current_time)
-
-            self._last_word_index = len(words)
+        if result.is_final:
+            self._emitted_words.extend(self._process_words)
+            self._receive_timings.extend(self._process_timings)
+            self._process_words = []
+            self._process_timings = []
 
 
 class IBMWatsonSpeechToTextEngine(Engine):
@@ -1021,6 +1104,8 @@ class WhisperEngine(Engine):
         Languages.ES: "es",
         Languages.FR: "fr",
         Languages.IT: "it",
+        Languages.JA: "ja",
+        Languages.KO: "ko",
         Languages.PT_PT: "pt",
         Languages.PT_BR: "pt",
     }
@@ -1318,9 +1403,16 @@ class WhisperCppStreamingLargeTurboEngine(WhisperCppStreamingEngine):
 
 
 class VoskStreamingEngine(StreamingEngine):
-    def __init__(self, model_name: str, cache_extension: str, chunk_size_ms: Optional[int] = None):
+    def __init__(
+        self,
+        model_name: str,
+        language: Languages,
+        cache_extension: str,
+        chunk_size_ms: Optional[int] = None
+    ):
         self._model = VoskModel(model_name=model_name)
         self._cache_extension = cache_extension
+        self._language = language
         self._chunk_size_ms = chunk_size_ms if chunk_size_ms is not None else self.DEFAULT_CHUNK_SIZE_MS
         self._chunk_size_samples = int((self._chunk_size_ms / 1000) * SAMPLE_RATE)
         self._audio_sec = 0.0
@@ -1356,7 +1448,8 @@ class VoskStreamingEngine(StreamingEngine):
         if len(text) > 0:
             segments.append(text)
 
-        res = " ".join(segments)
+        res = self.join(segments, self._language)
+
         self._proc_sec += time.time() - start_sec
 
         with open(cache_path, "w") as f:
@@ -1365,7 +1458,12 @@ class VoskStreamingEngine(StreamingEngine):
         return res
 
     @staticmethod
-    def _update_timings(new_words: Sequence[str], time: float, emitted_words: List[str], receive_timings: List[float]) -> Tuple[List[str], List[float]]:
+    def _update_timings(
+        new_words: Sequence[str],
+        time: float,
+        emitted_words: List[str],
+        receive_timings: List[float]
+    ) -> Tuple[List[str], List[float]]:
         i = 0
         while i < len(emitted_words) and i < len(new_words) and emitted_words[i] == new_words[i]:
             i += 1
@@ -1436,20 +1534,49 @@ class VoskStreamingEngine(StreamingEngine):
 
 
 class VoskStreamingSmallEngine(VoskStreamingEngine):
-    def __init__(self, language: Languages, chunk_size_ms: Optional[int] = None, **kwargs):
-        if language != Languages.EN:
-            raise ValueError(f"{Engines.VOSK_STREAMING_SMALL.value} engine only supports EN language")
-        super().__init__(model_name="vosk-model-small-en-us-0.15", cache_extension=".vks", chunk_size_ms=chunk_size_ms)
+    LANGUAGE_TO_MODEL_NAME = {
+        Languages.EN: "vosk-model-small-en-us-0.15",
+        Languages.KO: "vosk-model-small-ko-0.22",
+        Languages.JA: "vosk-model-small-ja-0.22",
+    }
+    SUPPORED_LANGUAGES = [lang.value for lang in LANGUAGE_TO_MODEL_NAME.keys()]
+
+    def __init__(self, language: Languages, chunk_size_ms: Optional[int] = None):
+        if language.value not in self.SUPPORED_LANGUAGES:
+            raise ValueError(
+                f"{Engines.VOSK_STREAMING_SMALL.value} engine only supports {self.SUPPORED_LANGUAGES} languages"
+            )
+        model_name = self.LANGUAGE_TO_MODEL_NAME[language]
+        super().__init__(
+            model_name=model_name,
+            language=language,
+            cache_extension=".vks",
+            chunk_size_ms=chunk_size_ms
+        )
 
     def __str__(self) -> str:
         return "Vosk Streaming Small"
 
 
 class VoskStreamingLargeEngine(VoskStreamingEngine):
-    def __init__(self, language: Languages, chunk_size_ms: Optional[int] = None, **kwargs):
-        if language != Languages.EN:
-            raise ValueError(f"{Engines.VOSK_STREAMING_LARGE.value} engine only supports EN language")
-        super().__init__(model_name="vosk-model-en-us-0.22", cache_extension=".vkl", chunk_size_ms=chunk_size_ms)
+    LANGUAGE_TO_MODEL_NAME = {
+        Languages.EN: "vosk-model-en-us-0.22",
+        Languages.JA: "vosk-model-ja-0.22",
+    }
+    SUPPORED_LANGUAGES = [lang.value for lang in LANGUAGE_TO_MODEL_NAME.keys()]
+
+    def __init__(self, language: Languages, chunk_size_ms: Optional[int] = None):
+        if language.value not in self.SUPPORED_LANGUAGES:
+            raise ValueError(
+                f"{Engines.VOSK_STREAMING_SMALL.value} engine only supports {self.SUPPORED_LANGUAGES} languages"
+            )
+        model_name = self.LANGUAGE_TO_MODEL_NAME[language]
+        super().__init__(
+            model_name=model_name,
+            language=language,
+            cache_extension=".vkl",
+            chunk_size_ms=chunk_size_ms
+        )
 
     def __str__(self) -> str:
         return "Vosk Streaming Large"
@@ -1646,6 +1773,210 @@ class MoonshineStreamingMediumEngine(MoonshineStreamingEngine):
 
     def __str__(self) -> str:
         return "Moonshine Streaming Medium"
+
+
+class NemotronStreamingEngine(StreamingEngine):
+    DEFAULT_CHUNK_SIZE_MS = 560
+    INPUT_BLOCK_SIZE_MS = 80
+
+    SUPPORTED_CHUNK_SIZES_MS: ClassVar[Tuple[int, ...]]
+    LEFT_CONTEXT: ClassVar[int]
+    SUPPORTED_LANGUAGES: ClassVar[Tuple[Languages, ...]]
+
+    def __init__(
+        self,
+        model_name: str,
+        cache_extension: str,
+        language: Languages,
+        chunk_size_ms: Optional[int] = None,
+    ):
+        if language not in self.SUPPORTED_LANGUAGES:
+            raise ValueError(f"{model_name} does not support {language.value}")
+
+        self._chunk_size_ms = chunk_size_ms if chunk_size_ms is not None else self.DEFAULT_CHUNK_SIZE_MS
+        if self._chunk_size_ms not in self.SUPPORTED_CHUNK_SIZES_MS:
+            raise ValueError(f"{model_name} supports chunk sizes `{self.SUPPORTED_CHUNK_SIZES_MS}`")
+
+        self._language = language
+        self._cache_extension = cache_extension
+        self._audio_sec = 0.0
+        self._proc_sec = 0.0
+
+    @property
+    def is_async(self) -> bool:
+        return False
+
+    def get_language(self) -> Languages:
+        return self._language
+
+    def get_chunk_size_ms(self) -> int:
+        return self._chunk_size_ms
+
+    @staticmethod
+    def _trim_feature_buffer(streaming_buffer: CacheAwareStreamingAudioBuffer) -> None:
+        pre_encode_cache = streaming_buffer.streaming_cfg.pre_encode_cache_size
+        if isinstance(pre_encode_cache, list):
+            pre_encode_cache = pre_encode_cache[1]
+
+        keep_frames = max(1, int(pre_encode_cache))
+        discard = min(
+            max(0, streaming_buffer.buffer_idx - keep_frames),
+            max(0, streaming_buffer.buffer.shape[-1] - keep_frames),
+        )
+        if discard > 0:
+            with torch.inference_mode():
+                streaming_buffer.buffer = streaming_buffer.buffer[:, :, discard:]
+                streaming_buffer.streams_length -= discard
+                streaming_buffer.buffer_idx -= discard
+
+    def _stream_hypotheses(self, path: str) -> Generator[Tuple[str, float], None, None]:
+        input_block_samples = self.INPUT_BLOCK_SIZE_MS * SAMPLE_RATE // 1000
+        model_chunk_samples = self._chunk_size_ms * SAMPLE_RATE // 1000
+
+        with soundfile.SoundFile(path) as audio_file:
+            streaming_buffer = CacheAwareStreamingAudioBuffer(model=self._model, online_normalization=True)
+            cache_last_channel, cache_last_time, cache_last_channel_len = (
+                self._model.encoder.get_initial_cache_state(batch_size=1)
+            )
+            previous_hypotheses = None
+            step = 0
+            stream_id = -1
+
+            while True:
+                audio_block = audio_file.read(input_block_samples, dtype="float32")
+                if len(audio_block) == 0:
+                    break
+
+                with torch.inference_mode():
+                    features, feature_lengths = streaming_buffer.preprocess_audio(audio_block)
+                    valid_frames = int(feature_lengths.reshape(-1)[0])
+                    if valid_frames > 0:
+                        streaming_buffer.append_processed_signal(features[:, :, :valid_frames], stream_id=stream_id)
+                        stream_id = 0
+
+                input_end_samples = audio_file.tell()
+                end_of_file = input_end_samples == audio_file.frames
+
+                while stream_id == 0 and (input_end_samples >= (step + 1) * model_chunk_samples or end_of_file):
+                    next_chunk = next(iter(streaming_buffer), None)
+                    if next_chunk is None:
+                        break
+
+                    chunk, chunk_lengths = next_chunk
+                    drop_extra_pre_encoded = (
+                        0 if step == 0 else self._model.encoder.streaming_cfg.drop_extra_pre_encoded
+                    )
+
+                    with torch.inference_mode():
+                        (
+                            _,
+                            _,
+                            cache_last_channel,
+                            cache_last_time,
+                            cache_last_channel_len,
+                            best_hyp,
+                        ) = self._model.conformer_stream_step(
+                            processed_signal=chunk,
+                            processed_signal_length=chunk_lengths,
+                            cache_last_channel=cache_last_channel,
+                            cache_last_time=cache_last_time,
+                            cache_last_channel_len=cache_last_channel_len,
+                            keep_all_outputs=end_of_file and streaming_buffer.is_buffer_empty(),
+                            previous_hypotheses=previous_hypotheses,
+                            drop_extra_pre_encoded=drop_extra_pre_encoded,
+                        )
+                    previous_hypotheses = best_hyp
+                    step += 1
+                    self._trim_feature_buffer(streaming_buffer)
+
+                    if best_hyp and best_hyp[0].text:
+                        yield best_hyp[0].text.strip(), input_end_samples / SAMPLE_RATE
+
+    def _cache_path(self, path: str) -> str:
+        return f"{path.replace('.flac', self._cache_extension)}.{self._chunk_size_ms}ms"
+
+    def transcribe(self, path: str) -> str:
+        info = soundfile.info(path)
+        self._audio_sec += info.frames / info.samplerate
+
+        cache_path = self._cache_path(path)
+        if os.path.exists(cache_path):
+            with open(cache_path) as f:
+                return f.read()
+
+        start_sec = time.time()
+        transcript = ""
+        for text, _ in self._stream_hypotheses(path):
+            transcript = text
+        self._proc_sec += time.time() - start_sec
+
+        with open(cache_path, "w") as f:
+            f.write(transcript)
+
+        return transcript
+
+    def _measure_word_latency(
+        self, path: str, alignments: Optional[Sequence[Tuple[float, float]]]
+    ) -> WordLatencyOutputType:
+        send_timings = [end for _, end in alignments] if alignments is not None else []
+        emitted_words = []
+        receive_timings = []
+
+        for text, input_end_sec in self._stream_hypotheses(path):
+            words = []
+            for word in text.casefold().split():
+                word = "".join(
+                    char for char in word if not unicodedata.category(char).startswith("P") or char in "'’"
+                )
+                if len(word) > 0:
+                    words.append(word)
+
+            i = 0
+            while i < len(emitted_words) and i < len(words) and emitted_words[i] == words[i]:
+                i += 1
+
+            emitted_words = emitted_words[:i] + words[i:]
+            receive_timings = receive_timings[:i] + [input_end_sec] * (len(words) - i)
+
+        return emitted_words, receive_timings, send_timings
+
+    def audio_sec(self) -> float:
+        return self._audio_sec
+
+    def process_sec(self) -> float:
+        return self._proc_sec
+
+    def delete(self) -> None:
+        pass
+
+
+class Nemotron3_5ASRStreamingEngine(NemotronStreamingEngine):
+    DEFAULT_CHUNK_SIZE_MS = 560
+    SUPPORTED_CHUNK_SIZES_MS = (80, 160, 320, 560, 1120)
+    LEFT_CONTEXT = 56
+    SUPPORTED_LANGUAGES = tuple(LANGUAGE_TO_CODE)
+
+    def __init__(self, language: Languages, chunk_size_ms: Optional[int] = None):
+        super().__init__(
+            model_name=str(self),
+            cache_extension=".nemo35",
+            language=language,
+            chunk_size_ms=chunk_size_ms,
+        )
+
+        self._model = nemo_asr.models.EncDecRNNTBPEModelWithPrompt.from_pretrained(
+            "nvidia/nemotron-3.5-asr-streaming-0.6b",
+            map_location="cpu",
+        )
+        self._model.eval()
+        self._model.encoder.set_default_att_context_size(
+            [self.LEFT_CONTEXT, (self._chunk_size_ms // self.INPUT_BLOCK_SIZE_MS) - 1]
+        )
+        self._model.set_inference_prompt(LANGUAGE_TO_CODE[language])
+        self._model.decoding.set_strip_lang_tags(True)
+
+    def __str__(self) -> str:
+        return "Nemotron 3.5 ASR Streaming"
 
 
 class PicovoiceCheetahEngine(StreamingEngine):

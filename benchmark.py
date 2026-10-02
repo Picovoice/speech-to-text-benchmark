@@ -55,12 +55,12 @@ def process(
     )
     normalizer = Normalizer.create(language=language, keep_punctuation=punctuation, punctuation_set=punctuation_set)
 
-    metrics = {m: Metric.create(m) for m in metric_names}
+    split_on_space = False if language is Languages.JA else True
+    metrics = {m: Metric.create(m, split_on_space) for m in metric_names}
     results = {m: {"num_errors": 0, "num_tokens": 0} for m in metric_names}
 
     for index in indices:
         audio_path, ref_transcript = dataset.get(index)
-
         transcript = engine.transcribe(audio_path)
         norm_transcript = normalizer.normalize(transcript)
 
@@ -102,7 +102,7 @@ def main():
     parser.add_argument("--dataset-folder", required=True)
     parser.add_argument("--language", required=True, choices=[x.value for x in Languages])
     parser.add_argument("--punctuation", action="store_true")
-    parser.add_argument("--punctuation-set", type=str, default=".?")
+    parser.add_argument("--punctuation-set", type=str, default=".?。？")
     parser.add_argument("--streaming-chunk-size-ms", type=int, default=None)
     parser.add_argument("--aws-profile")
     parser.add_argument("--aws-location")
@@ -199,7 +199,12 @@ def main():
 
     chunk = math.ceil(len(indices) / num_workers)
 
-    metrics = [Metrics.PER] if punctuation else [Metrics.WER]
+    if punctuation:
+        metrics = [Metrics.PER]
+    elif language in [Languages.JA, Languages.KO]:
+        metrics = [Metrics.CER]
+    else:
+        metrics = [Metrics.WER]
 
     print(f"Processing {len(indices)} examples...")
     futures = []

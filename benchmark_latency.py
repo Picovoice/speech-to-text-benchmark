@@ -257,6 +257,8 @@ def main():
         engine_params["model_path"] = args.picovoice_model_path
         engine_params["library_path"] = args.picovoice_library_path
         engine_params["punctuation"] = False
+    elif engine_name is Engines.NEMOTRON_3_5_ASR_STREAMING:
+        engine_params["chunk_size_ms"] = args.chunk_size_ms
     elif engine_name in [
         Engines.VOSK_STREAMING_SMALL,
         Engines.VOSK_STREAMING_LARGE,

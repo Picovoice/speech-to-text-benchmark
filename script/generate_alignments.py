@@ -1,13 +1,19 @@
-from dataset import Datasets, Dataset
 import json
-import subprocess
-import random
-from argparse import ArgumentParser
 import os
-from typing import Sequence, Tuple
-import tempfile
+import random
 import shutil
+import subprocess
+import tempfile
+from argparse import ArgumentParser
+from typing import (
+    Sequence,
+    Tuple
+)
 
+from dataset import (
+    Dataset,
+    Datasets
+)
 from languages import Languages
 
 
@@ -31,12 +37,12 @@ def run_mfa_alignment(corpus_folder: str, work_folder: str, num_workers: int) ->
         "english_us_arpa",
         work_folder,
         "--clean",
-        "--num-jobs",
+        "--num_jobs",
         str(num_workers),
     ]
-    print(f"Running MFA alignment: {' '.join(args)}")
-    subprocess.run(args, check=True, capture_output=True, text=True)
-    print(f"Done MFA alignment: {' '.join(args)}")
+    print(f"Running MFA alignment: {' '.join(args)}", flush=True)
+    subprocess.run(args, check=True)
+    print(f"Done MFA alignment: {' '.join(args)}", flush=True)
 
 
 def parse_textgrid(textgrid_file: str) -> Sequence[Tuple[float, float, str]]:
@@ -89,15 +95,20 @@ def generate_alignments(indices: Sequence[int], dataset: Dataset, output_folder:
 
         run_mfa_alignment(corpus_folder=corpus_folder, work_folder=work_folder, num_workers=num_workers)
 
+        missing_textgrids = []
         for index in indices:
             audio_path, transcript = dataset.get(index)
-            basename, format = os.path.basename(audio_path).split(".")
+            basename, format = os.path.splitext(os.path.basename(audio_path))
 
             textgrid_path = os.path.join(work_folder, f"{basename}.TextGrid")
+            if not os.path.isfile(textgrid_path):
+                missing_textgrids.append(basename)
+                continue
+
             alignments = parse_textgrid(textgrid_path)
 
             data = {
-                "format": format,
+                "format": format.lstrip("."),
                 "transcript": transcript,
                 "alignments": [(start, end) for start, end, _ in alignments],
             }
@@ -105,12 +116,13 @@ def generate_alignments(indices: Sequence[int], dataset: Dataset, output_folder:
             with open(os.path.join(output_folder, f"{basename}.json"), "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
 
-            basename = os.path.basename(textgrid_path).split(".")[0]
-
             shutil.move(
                 os.path.join(corpus_folder, os.path.basename(audio_path)),
                 os.path.join(output_folder, os.path.basename(audio_path)),
             )
+
+        if missing_textgrids:
+            print(f"MFA failed on {len(missing_textgrids)} of {len(indices)} files")
 
 
 if __name__ == "__main__":
@@ -123,7 +135,7 @@ if __name__ == "__main__":
     parser.add_argument("--num-workers", type=int, default=os.cpu_count())
     args = parser.parse_args()
 
-    dataset = args.dataset
+    dataset = Datasets(args.dataset)
     data_folder = args.dataset_folder
     language = Languages(args.language)
     output_folder = args.output_folder

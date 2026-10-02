@@ -1,12 +1,17 @@
 import re
 import string
 import unicodedata
+from typing import (
+    List,
+    Optional
+)
 
 import inflect
+import num2words
 
 from languages import Languages
 
-SUPPORTED_PUNCTUATION_SET = ",.?"
+SUPPORTED_PUNCTUATION_SET = ",.?、。？"
 
 
 class Normalizer(object):
@@ -26,6 +31,10 @@ class Normalizer(object):
     ):
         if language == Languages.EN:
             return EnglishNormalizer(keep_punctuation, punctuation_set)
+        elif language == Languages.JA:
+            return JapaneseNormalizer(keep_punctuation, punctuation_set)
+        elif language == Languages.KO:
+            return KoreanNormalizer(keep_punctuation, punctuation_set)
         elif language in [
             Languages.DE,
             Languages.ES,
@@ -217,10 +226,17 @@ class EnglishNormalizer(Normalizer):
             ]
         )
 
+    @staticmethod
+    def strip_accents(sentence: str) -> str:
+        decomposed = unicodedata.normalize("NFD", sentence)
+        return "".join(c for c in decomposed if not unicodedata.combining(c))
+
     def normalize(self, sentence: str, raise_error_on_invalid_sentence: bool = False) -> str:
         p = inflect.engine()
 
         sentence = sentence.lower()
+
+        sentence = self.strip_accents(sentence)
 
         for c in "-/–—":
             sentence = sentence.replace(c, " ")
@@ -230,6 +246,7 @@ class EnglishNormalizer(Normalizer):
 
         sentence = sentence.replace("!", ".")
         sentence = sentence.replace("...", "")
+        sentence = sentence.replace("…", "")
 
         if self._keep_punctuation:
             removable_punctuation = "".join(set(SUPPORTED_PUNCTUATION_SET) - set(self._punctuation_set))
@@ -265,4 +282,140 @@ class EnglishNormalizer(Normalizer):
         return sentence
 
 
-__all__ = ["Normalizer"]
+class JapaneseNormalizer(Normalizer):
+    def __init__(self, keep_punctuation: bool, punctuation_set: str = SUPPORTED_PUNCTUATION_SET) -> None:
+        super().__init__(keep_punctuation, punctuation_set)
+        self._number_re = re.compile(r"\d+(?:\.\d+)?")
+
+    def _normalize_numbers(self, text: str) -> str:
+        def convert(match: "re.Match[str]") -> str:
+            token = match.group(0)
+            try:
+                value = float(token) if "." in token else int(token)
+                return num2words.num2words(value, lang='ja')
+            except OverflowError:
+                return token
+
+        return self._number_re.sub(convert, text)
+
+    def _expand_repeater(self, text: str) -> str:
+        res: List[str] = []
+        for ch in text:
+            if ch == "々" and res:
+                res.append(res[-1])
+            else:
+                res.append(ch)
+        return "".join(res)
+
+    def _strip_punct_space(self, text: str) -> str:
+        chars: List[str] = []
+        for ch in text:
+            category = unicodedata.category(ch)
+            if ch.isspace() or category.startswith("Z"):
+                continue
+            if category.startswith("P"):
+                if self._keep_punctuation and ch in self._punctuation_set:
+                    chars.append(ch)
+                continue
+            chars.append(ch)
+        return "".join(chars)
+
+    @staticmethod
+    def _is_japanese_char(ch: str) -> bool:
+        code = ord(ch)
+        if 0x3040 <= code <= 0x309F:      # Hiragana
+            return True
+        if 0x30A0 <= code <= 0x30FF:      # Katakana
+            return True
+        if 0x31F0 <= code <= 0x31FF:      # Katakana Phonetic Extensions
+            return True
+        if 0x4E00 <= code <= 0x9FFF:      # CJK Unified Ideographs
+            return True
+        if 0x3400 <= code <= 0x4DBF:      # CJK Extension A
+            return True
+        if 0x20000 <= code <= 0x3134F:    # CJK Extensions B-G
+            return True
+        if 0xF900 <= code <= 0xFAFF:      # CJK Compatibility Ideographs
+            return True
+        if ch in {"々", "〆", "〇", "ヶ", "ゝ", "ゞ", "ヽ", "ヾ"}:
+            return True
+        return False
+
+    def _is_allowed_char(self, ch: str) -> bool:
+        if self._is_japanese_char(ch):
+            return True
+        if self._keep_punctuation and ch in self._punctuation_set:
+            return True
+        return False
+
+    def _validate(self, text: str, original: str) -> None:
+        invalid = [(i, ch) for i, ch in enumerate(text) if not self._is_allowed_char(ch)]
+        if invalid:
+            details = ", ".join(
+                f"index={i}, char={ch!r}, U+{ord(ch):04X}, "
+                f"name={unicodedata.name(ch, 'UNKNOWN')}, "
+                f"category={unicodedata.category(ch)}"
+                for i, ch in invalid
+            )
+            raise RuntimeError(
+                "Disallowed character(s) after normalization: "
+                f"{details}. Original: {original!r}. Cleaned: {text!r}"
+            )
+
+    def normalize(
+        self,
+        sentence: Optional[str],
+        raise_error_on_invalid_sentence: bool = False,
+    ) -> str:
+        if sentence is None:
+            if raise_error_on_invalid_sentence:
+                raise ValueError("Input text is None.")
+            return ""
+
+        original = str(sentence)
+        text = unicodedata.normalize("NFKC", original)
+
+        text = self._normalize_numbers(text)
+
+        text = self._expand_repeater(text)
+
+        text = self._strip_punct_space(text)
+
+        if raise_error_on_invalid_sentence:
+            self._validate(text, original)
+
+        return text
+
+
+class KoreanNormalizer(Normalizer):
+    def __init__(self, keep_punctuation: bool, punctuation_set: str = SUPPORTED_PUNCTUATION_SET) -> None:
+        super().__init__(keep_punctuation, punctuation_set)
+        self._korean_regex = re.compile(rf"^[가-힣\s{punctuation_set}]+$")
+
+    def normalize(self, sentence: str, raise_error_on_invalid_sentence: bool = False) -> str:
+        sentence = unicodedata.normalize("NFC", sentence)
+        sentence = re.sub(r"[<\[][^>\]]*[>\]]", "", sentence)
+        sentence = re.sub(r"\(([^)]+?)\)", "", sentence)
+        sentence = sentence.replace("!", ".")
+        sentence = sentence.replace("...", "")
+
+        if self._keep_punctuation:
+            removable_punctuation = "".join(set(SUPPORTED_PUNCTUATION_SET) - set(self._punctuation_set))
+        else:
+            removable_punctuation = SUPPORTED_PUNCTUATION_SET
+
+        for c in removable_punctuation:
+            sentence = sentence.replace(c, "")
+
+        sentence = re.sub(r"\s+", " ", sentence)
+
+        if raise_error_on_invalid_sentence:
+            if not bool(self._korean_regex.fullmatch(sentence)):
+                raise RuntimeError()
+
+        return sentence
+
+
+__all__ = [
+    "Normalizer",
+]
