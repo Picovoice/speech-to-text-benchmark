@@ -14,7 +14,7 @@ num2words==0.5.14
 numpy
 openai-whisper==20250625
 psutil
-pvcheetah==4.0.0
+pvcheetah==4.2.0
 pvleopard==3.0.0
 pytube
 pywhispercpp==1.4.1
