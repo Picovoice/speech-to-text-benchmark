@@ -20,5 +20,5 @@ pytube
 pywhispercpp==1.4.1
 requests
 soundfile
-torch==2.11.0+cpu
+torch==2.12.1+cpu
 vosk==0.3.45
