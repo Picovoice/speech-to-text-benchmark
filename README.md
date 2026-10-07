@@ -20,7 +20,7 @@ This repo is a minimalist and extensible framework for benchmarking different sp
 - [Multilingual LibriSpeech](https://openslr.org/94)
 - [VoxPopuli](https://github.com/facebookresearch/voxpopuli)
 - [Fleurs](https://huggingface.co/datasets/google/fleurs) ([Download instructions](script/README.md#dataset-download))
-- [JSUT_BASIC](https://huggingface.co/datasets/japanese-asr/ja_asr.jsut_basic5000) ([Download instructions](script/README.md#dataset-download))
+- [JSUT-BASIC](https://huggingface.co/datasets/japanese-asr/ja_asr.jsut_basic5000) ([Download instructions](script/README.md#dataset-download))
 - [Zeroth Korean](https://www.openslr.org/40/)
 - [Pansori-TEDxKR](https://www.openslr.org/58/)
 
@@ -33,9 +33,7 @@ of the speech-to-text engine to the number of words in the reference transcript.
 
 ### Character Error Rate
 
-Character error rate (CER) is the ratio of edit distance between characters in a reference transcript and the characters in the output
-of the speech-to-text engine to the number of characters in the reference transcript. CER is reported for Korean and Japanese following
-industry standards.
+Character error rate (CER) is the ratio of edit distance between characters in a reference transcript and the characters in the output of the speech-to-text engine to the number of characters in the reference transcript. CER is reported for Korean and Japanese following industry standards.
 
 ### Punctuation Error Rate
 
