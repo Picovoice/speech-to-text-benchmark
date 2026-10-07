@@ -483,9 +483,9 @@ WER_IT = {
         Datasets.VOX_POPULI: 18.7,
     },
     Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING: {
-        Datasets.COMMON_VOICE: 5.9,
-        Datasets.MLS: 14.2,
-        Datasets.VOX_POPULI: 19.4,
+        Datasets.COMMON_VOICE: 5.7,
+        Datasets.MLS: 20.1,
+        Datasets.VOX_POPULI: 18.8,
     },
     Engines.NEMOTRON_3_5_ASR_STREAMING: {
         Datasets.COMMON_VOICE: 8.4,
@@ -643,7 +643,7 @@ CER_JA = {
         Datasets.COMMON_VOICE: 23.6,
     },
     Engines.VOSK_STREAMING_SMALL: {
-        Datasets.JSUT_BASIC: 11.9,
+        Datasets.JSUT_BASIC: 11.0,
         Datasets.FLEURS: 21.4,
         Datasets.COMMON_VOICE: 31.1,
     },
