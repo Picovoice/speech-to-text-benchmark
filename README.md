@@ -20,7 +20,7 @@ This repo is a minimalist and extensible framework for benchmarking different sp
 - [Multilingual LibriSpeech](https://openslr.org/94)
 - [VoxPopuli](https://github.com/facebookresearch/voxpopuli)
 - [Fleurs](https://huggingface.co/datasets/google/fleurs) ([Download instructions](script/README.md#dataset-download))
-- [JSUT-BASIC](https://huggingface.co/datasets/japanese-asr/ja_asr.jsut_basic5000) ([Download instructions](script/README.md#dataset-download))
+- [JSUT_BASIC](https://huggingface.co/datasets/japanese-asr/ja_asr.jsut_basic5000) ([Download instructions](script/README.md#dataset-download))
 - [Zeroth Korean](https://www.openslr.org/40/)
 - [Pansori-TEDxKR](https://www.openslr.org/58/)
 
@@ -33,7 +33,9 @@ of the speech-to-text engine to the number of words in the reference transcript.
 
 ### Character Error Rate
 
-Character error rate (CER) is the ratio of edit distance between characters in a reference transcript and the characters in the output of the speech-to-text engine to the number of characters in the reference transcript. CER is reported for Korean and Japanese following industry standards.
+Character error rate (CER) is the ratio of edit distance between characters in a reference transcript and the characters in the output
+of the speech-to-text engine to the number of characters in the reference transcript. CER is reported for Korean and Japanese following
+industry standards.
 
 ### Punctuation Error Rate
 
@@ -42,7 +44,7 @@ Punctuation Error Rate (PER) is the ratio of punctuation-specific errors between
 ### Core-Hour
 
 The Core-Hour metric is used to evaluate the computational efficiency of the speech-to-text engine,
-indicating the number of CPU hours required to process one hour of audio. A speech-to-text
+indicating the number of CPU hours required to process one hundred hours of audio. A speech-to-text
 engine with lower Core-Hour is more computationally efficient. We omit this metric for cloud-based engines.
 
 ### Word Emission Latency
@@ -66,8 +68,8 @@ The aggregate size of models (acoustic and language), in MB. We omit this metric
 - [OpenAI Whisper](https://github.com/openai/whisper)
 - [Vosk](https://alphacephei.com/vosk/)
 - [Whisper.cpp](https://github.com/ggerganov/whisper.cpp)
-- [Picovoice Cheetah](https://picovoice.ai/)
-- [Picovoice Leopard](https://picovoice.ai/)
+- [Picovoice Cheetah](https://picovoice.ai/products/voice/streaming-speech-to-text/)
+- [Picovoice Leopard](https://picovoice.ai/products/voice/speech-to-text/)
 
 ## Usage
 
@@ -86,9 +88,10 @@ pip3 install -r requirements.txt
 
 In the following, we provide instructions for running the benchmark for each engine.
 The supported datasets are:
-`COMMON_VOICE`, `LIBRI_SPEECH_TEST_CLEAN`, `LIBRI_SPEECH_TEST_OTHER`, `TED_LIUM`, `MLS`, `VOX_POPULI`, `FLEURS`, `ZEROTH_KOREAN`, `PANSORI` and `JSUT_BASIC`.
+`COMMON_VOICE`, `LIBRI_SPEECH_TEST_CLEAN`, `LIBRI_SPEECH_TEST_OTHER`, `TED_LIUM`, `MLS`, `VOX_POPULI`, `FLEURS`,
+`ZEROTH_KOREAN`, `PANSORI` and `JSUT_BASIC`.
 The supported languages are:
-`EN`, `FR`, `DE`, `ES`, `IT`, `PT_BR`, `PT_PT`, `KO` and `JA`.
+`EN`, `FR`, `DE`, `ES`, `IT`, `PT-BR`, `PT-PT`, `KO` and `JA`.
 
 To evaluate Punctuation Error Rate, use the `--punctuation` flag.
 Use `--punctuation-set ${PUNCTUATION_SET}` to select which punctuation marks to calculate PER against, where `${PUNCTUATION_SET}` is one or more of `.`, `?` and `,` (default `.?`).
@@ -121,7 +124,7 @@ python3 benchmark.py \
 --dataset-folder ${DATASET_FOLDER} \
 --language ${LANGUAGE} \
 --engine AZURE_SPEECH_TO_TEXT \
---azure-speech-key ${AZURE_SPEECH_KEY}
+--azure-speech-key ${AZURE_SPEECH_KEY} \
 --azure-speech-location ${AZURE_SPEECH_LOCATION}
 ```
 
@@ -155,7 +158,7 @@ python3 benchmark.py \
 --dataset-folder ${DATASET_FOLDER} \
 --language EN \
 --engine IBM_WATSON_SPEECH_TO_TEXT \
---watson-speech-to-text-api-key ${WATSON_SPEECH_TO_TEXT_API_KEY}
+--watson-speech-to-text-api-key ${WATSON_SPEECH_TO_TEXT_API_KEY} \
 --watson-speech-to-text-url ${WATSON_SPEECH_TO_TEXT_URL}
 ```
 
@@ -163,7 +166,7 @@ python3 benchmark.py \
 
 Replace `${DATASET}` with one of the supported datasets, `${DATASET_FOLDER}` with the path to the dataset, `${LANGUAGE}` with the target language
 and `${WHISPER_MODEL}` with the whisper model type (`WHISPER_TINY`, `WHISPER_BASE`, `WHISPER_SMALL`,
-`WHISPER_MEDIUM`, `WHISPER_LARGE_V1`, `WHISPER_LARGE_V2`, `WHISPER_LARGE_V3` or `WHISPER_LARGE_TURBO`)
+`WHISPER_MEDIUM`, `WHISPER_LARGE`, `WHISPER_LARGE_V2`, `WHISPER_LARGE_V3` or `WHISPER_LARGE_TURBO`)
 
 ```console
 python3 benchmark.py \
@@ -183,7 +186,7 @@ and `${WHISPER_CPP_MODEL}` with the Whisper.cpp streaming model type (`WHISPER_C
 python3 benchmark.py \
 --engine ${WHISPER_CPP_MODEL} \
 --dataset ${DATASET} \
---dataset-folder ${DATASET_FOLDER}
+--dataset-folder ${DATASET_FOLDER} \
 --language ${LANGUAGE} \
 ```
 
@@ -197,7 +200,7 @@ This engine only supports English.
 python3 benchmark.py \
 --engine ${MOONSHINE_MODEL} \
 --dataset ${DATASET} \
---dataset-folder ${DATASET_FOLDER}
+--dataset-folder ${DATASET_FOLDER} \
 --language EN \
 ```
 
@@ -292,7 +295,7 @@ python3 benchmark_latency.py \
 --engine AZURE_SPEECH_TO_TEXT_REAL_TIME \
 --dataset-folder ${DATASET_FOLDER} \
 --language ${LANGUAGE} \
---azure-speech-key ${AZURE_SPEECH_KEY}
+--azure-speech-key ${AZURE_SPEECH_KEY} \
 --azure-speech-location ${AZURE_SPEECH_LOCATION}
 ```
 
@@ -338,13 +341,12 @@ python3 benchmark_latency.py \
 
 Replace `${DATASET_FOLDER}` with the path to an aligned dataset
 and `${VOSK_MODEL}` with the Vosk streaming model type (`VOSK_STREAMING_SMALL` or `VOSK_STREAMING_LARGE`).
-This engine only supports English.
 
 ```console
 python3 benchmark_latency.py \
 --engine ${VOSK_MODEL} \
 --dataset-folder ${DATASET_FOLDER} \
---language EN
+--language ${LANGUAGE}
 ```
 
 #### Nemotron 3.5 ASR Streaming Instructions
@@ -442,22 +444,22 @@ The measurement is carried out on an Ubuntu 22.04 machine with AMD CPU (`AMD Ryz
 
 ![](results/plots/cpu_usage_comparison.png)
 
-|            Engine             | Core-Hour | Model Size / MB |
-|:-----------------------------:|:---------:|:---------------:|
-|        Whisper Medium         |   1.52    |      1457       |
-|         Whisper Small         |   0.99    |       462       |
-|         Whisper Base          |   0.32    |       139       |
-|         Whisper Tiny          |   0.16    |       73        |
-|   Whisper.cpp Streaming Base  |   1.67    |       139       |
-|   Whisper.cpp Streaming Tiny  |   0.77    |       73        |
-|          Vosk Large           |   0.34    |      2733       |
-|          Vosk Small           |   0.12    |       68        |
-|   Moonshine Streaming Tiny    |   1.03    |       49        |
-|  Moonshine Streaming Small    |   2.22    |       158       |
-|  Moonshine Streaming Medium   |   3.36    |       290       |
-|  Nemotron 3.5 ASR Streaming   |   2.43    |      2210       |
-|      Picovoice Leopard        |   0.026   |       37        |
-|      Picovoice Cheetah        |   0.087   |       34        |
+|            Engine             | Core-Hours | Model Size / MB |
+|:-----------------------------:|:----------:|:---------------:|
+|        Whisper Medium         |   152.2    |      1457       |
+|         Whisper Small         |   98.8     |       462       |
+|         Whisper Base          |   32.3     |       139       |
+|         Whisper Tiny          |   15.8     |       73        |
+|   Whisper.cpp Streaming Base  |   166.8    |       139       |
+|   Whisper.cpp Streaming Tiny  |   76.7     |       73        |
+|          Vosk Large           |   33.6     |      2733       |
+|          Vosk Small           |   11.7     |       68        |
+|   Moonshine Streaming Tiny    |   103.0    |       49        |
+|  Moonshine Streaming Small    |   222.0    |       158       |
+|  Moonshine Streaming Medium   |   336.0    |       290       |
+|  Nemotron 3.5 ASR Streaming   |   243.0    |      2210       |
+|      Picovoice Leopard        |   2.6      |       37        |
+|      Picovoice Cheetah        |   8.7      |       34        |
 
 ![](results/plots/wer_vs_core_hour_comparison.png)
 
@@ -471,9 +473,9 @@ To obtain these results, we used 100 randomly selected files from the LibriSpeec
 
 |              Engine             | Latency (ms) |
 |:-------------------------------:|:------------:|
-|  Azure Speech-to-Text Real-time |     500      |
-|   Amazon Transcribe Streaming   |     300      |
-| Google Speech-to-Text Streaming |     890      |
+|  Azure Speech-to-Text Real-time |     520      |
+|   Amazon Transcribe Streaming   |     290      |
+| Google Speech-to-Text Streaming |     830      |
 |    Nemotron 3.5 ASR Streaming   |     450      |
 |    Whisper.cpp Streaming Tiny   |    1240      |
 |    Whisper.cpp Streaming Base   |    1240      |
@@ -567,7 +569,7 @@ To obtain these results, we used 100 randomly selected files from the LibriSpeec
 |:------------------------------:|:-----------:|:------:|:---------:|:-------:|
 |   Amazon Transcribe Streaming  |    3.6%     | 23.4%  |   20.1%   |  15.7%  |
 |  Azure Speech-to-Text Real Time|    5.7%     | 29.3%  |   28.6%   |  21.2%  |
-| Google Speech-to-Text Streaming|    6.4%     | 27.5%  |   28.5%   |  24.1%  |
+| Google Speech-to-Text Streaming|    16.4%    | 27.5%  |   28.5%   |  24.1%  |
 |   Nemotron 3.5 ASR Streaming   |    17.2%    | 26.1%  |   31.0%   |  24.8%  |
 |       Picovoice Cheetah        |    2.1%     | 24.9%  |   25.1%   |  17.4%  |
 
@@ -597,7 +599,7 @@ To obtain these results, we used 100 randomly selected files from the LibriSpeec
 |:------------------------------:|:-----------:|:-------------------------:|:---------:|:-------:|
 |   Amazon Transcribe Streaming  |    4.9%     |          10.8%            |   20.7%   |  12.1%  |
 |  Azure Speech-to-Text Real Time|    5.9%     |          14.2%            |   19.4%   |  13.2%  |
-| Google Speech-to-Text Streaming|    5.9%     |          14.2%            |   19.4%   |  13.2%  |
+| Google Speech-to-Text Streaming|    5.7%     |          20.1%            |   18.8%   |  14.9%  |
 |   Nemotron 3.5 ASR Streaming   |    8.4%     |          18.5%            |   23.5%   |  16.8%  |
 |       Picovoice Cheetah        |    7.7%     |          13.2%            |   17.7%   |  12.9%  |
 
@@ -707,8 +709,8 @@ For Amazon Transcribe, Azure Speech-to-Text, and Google Speech-to-Text, we repor
 
 |             Engine             | CommonVoice | Zeroth Korean | Pansori | Average |
 |:------------------------------:|:-----------:|:-------------:|:-------:|:-------:|
-|   Amazon Transcribe Streaming  |    14.8%    |     13.3%     |  5.1%   |  7.3%   |
-|  Azure Speech-to-Text Real Time|    8.1%     |     8.6%      |  12.1%  |  9.6%   |
+|   Amazon Transcribe Streaming  |    14.8%    |     13.3%     |  12.1%  |  13.4%  |
+|  Azure Speech-to-Text Real Time|    8.1%     |     8.6%      |  5.1%   |  7.3%   |
 | Google Speech-to-Text Streaming|    32.0%    |     33.7%     |  13.5%  |  26.4%  |
 |          Vosk Small            |    39.0%    |     12.7%     |  40.7%  |  30.8%  |
 |       Picovoice Cheetah        |    7.0%     |     3.7%      |  6.5%   |  5.7%   |
@@ -746,6 +748,6 @@ For Amazon Transcribe, Azure Speech-to-Text, and Google Speech-to-Text, we repor
 |             Engine              | CommonVoice | Fleurs | Average |
 |:-------------------------------:|:-----------:|:------:|:-------:|
 |   Amazon Transcribe Streaming   |    20.7%    |  5.5%  |  13.1%  |
-| Azure Speech-to-Text Real-time  |    23.7%    | 20.0%  |  21.8%  |
-| Google Speech-to-Text Streaming |    28.6%    | 22.3%  |  25.4%  |
+| Azure Speech-to-Text Real-time  |    23.7%    | 20.0%  |  21.9%  |
+| Google Speech-to-Text Streaming |    28.6%    | 22.3%  |  25.5%  |
 |        Picovoice Cheetah        |    26.3%    |  2.6%  |  14.5%  |
