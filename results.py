@@ -46,6 +46,19 @@ RTF = {
     },
 }
 
+MEMORY_USAGE = {
+    Engines.WHISPER_CPP_STREAMING_TINY: 150,
+    Engines.VOSK_STREAMING_SMALL: 165,
+    Engines.PICOVOICE_LEOPARD: 235,
+    Engines.WHISPER_CPP_STREAMING_BASE: 240,
+    Engines.PICOVOICE_CHEETAH: 260,
+    Engines.MOONSHINE_STREAMING_TINY: 295,
+    Engines.MOONSHINE_STREAMING_SMALL: 640,
+    Engines.MOONSHINE_STREAMING_MEDIUM: 1085,
+    Engines.NEMOTRON_3_5_ASR_STREAMING: 5060,
+    Engines.VOSK_STREAMING_LARGE: 7200,
+}
+
 LATENCIES = {
     Engines.AMAZON_TRANSCRIBE_STREAMING: {
         Datasets.LIBRI_SPEECH_TEST_CLEAN: 290,
@@ -649,6 +662,51 @@ CER_JA = {
     },
 }
 
+CER_ZH = {
+    Engines.AMAZON_TRANSCRIBE_STREAMING: {
+        Datasets.AISHELL2_IOS: 7.6,
+        Datasets.SPEECHIO: 9.7,
+        Datasets.FLEURS: 7.7,
+        Datasets.COMMON_VOICE: 16.4,
+    },
+    Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME: {
+        Datasets.AISHELL2_IOS: 5.4,
+        Datasets.SPEECHIO: 9.2,
+        Datasets.FLEURS: 5.2,
+        Datasets.COMMON_VOICE: 10.5,
+    },
+    Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING: {
+        Datasets.AISHELL2_IOS: 8.9,
+        Datasets.SPEECHIO: 20.7,
+        Datasets.FLEURS: 9.0,
+        Datasets.COMMON_VOICE: 17.1,
+    },
+    Engines.PICOVOICE_CHEETAH: {
+        Datasets.AISHELL2_IOS: 5.5,
+        Datasets.SPEECHIO: 7.0,
+        Datasets.FLEURS: 6.0,
+        Datasets.COMMON_VOICE: 10.1,
+    },
+    Engines.PARAFORMER_STREAMING: {
+        Datasets.AISHELL2_IOS: 6.2,
+        Datasets.SPEECHIO: 5.3,
+        Datasets.FLEURS: 6.7,
+        Datasets.COMMON_VOICE: 16.4,
+    },
+    Engines.VOSK_STREAMING_LARGE: {
+        Datasets.AISHELL2_IOS: 5.4,
+        Datasets.SPEECHIO: 15.0,
+        Datasets.FLEURS: 5.6,
+        Datasets.COMMON_VOICE: 16.3,
+    },
+    Engines.VOSK_STREAMING_SMALL: {
+        Datasets.AISHELL2_IOS: 10.4,
+        Datasets.SPEECHIO: 25.2,
+        Datasets.FLEURS: 13.4,
+        Datasets.COMMON_VOICE: 29.5,
+    },
+}
+
 PER_EN = {
     Engines.AMAZON_TRANSCRIBE: {
         Datasets.VOX_POPULI: 19.1,
@@ -1107,17 +1165,41 @@ PER_JA = {
     },
 }
 
+PER_ZH = {
+    Engines.AMAZON_TRANSCRIBE_STREAMING: {
+        Datasets.FLEURS: 23.9,
+        Datasets.COMMON_VOICE: 5.1,
+    },
+    Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME: {
+        Datasets.FLEURS: 22.2,
+        Datasets.COMMON_VOICE: 3.1,
+    },
+    Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING: {
+        Datasets.FLEURS: 17.2,
+        Datasets.COMMON_VOICE: 1.7,
+    },
+    Engines.PICOVOICE_CHEETAH: {
+        Datasets.FLEURS: 30.3,
+        Datasets.COMMON_VOICE: 5.2,
+    },
+}
+
 
 __all__ = [
+    "CER_JA",
+    "CER_KO",
+    "CER_ZH",
     "LATENCIES",
+    "MEMORY_USAGE",
     "PER_DE",
     "PER_EN",
     "PER_ES",
     "PER_FR",
     "PER_IT",
-    "PER_PT",
     "PER_JA",
     "PER_KO",
+    "PER_PT",
+    "PER_ZH",
     "RTF",
     "SIZE",
     "WER_DE",
@@ -1126,6 +1208,4 @@ __all__ = [
     "WER_FR",
     "WER_IT",
     "WER_PT",
-    "CER_JA",
-    "CER_KO",
 ]
