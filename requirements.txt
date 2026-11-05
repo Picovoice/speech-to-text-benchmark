@@ -102,7 +102,7 @@ langid==1.1.6
 lazy-loader==0.6
 lhotse==1.33.0
 librosa==0.11.0
-lightning==2.4.0
+lightning==2.6.6
 lightning-utilities==0.15.3
 llvmlite==0.50.0
 loguru==0.7.3
