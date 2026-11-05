@@ -19,7 +19,10 @@ from engine import (
     Engines,
     StreamingEngines
 )
-from languages import Languages
+from languages import (
+    CER_LANGUAGES,
+    Languages
+)
 from metric import (
     Metric,
     Metrics
@@ -201,7 +204,7 @@ def main():
 
     if punctuation:
         metrics = [Metrics.PER]
-    elif language in [Languages.JA, Languages.KO]:
+    elif language in CER_LANGUAGES:
         metrics = [Metrics.CER]
     else:
         metrics = [Metrics.WER]

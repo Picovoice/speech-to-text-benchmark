@@ -11,6 +11,10 @@ class Languages(Enum):
     KO = "KO"
     PT_PT = "PT-PT"
     PT_BR = "PT-BR"
+    ZH = "ZH"
+
+
+CER_LANGUAGES = (Languages.JA, Languages.KO, Languages.ZH)
 
 
 LANGUAGE_TO_CODE = {
@@ -23,9 +27,11 @@ LANGUAGE_TO_CODE = {
     Languages.KO: "ko-KR",
     Languages.PT_PT: "pt-PT",
     Languages.PT_BR: "pt-BR",
+    Languages.ZH: "zh-CN",
 }
 
 __all__ = [
     "LANGUAGE_TO_CODE",
+    "CER_LANGUAGES",
     "Languages",
 ]

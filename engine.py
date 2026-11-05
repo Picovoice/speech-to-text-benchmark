@@ -26,8 +26,11 @@ import numpy as np
 import pvcheetah
 import pvleopard
 import requests
+import sherpa_onnx
 import soundfile
 import torch
+import torchaudio
+import wenet
 import whisper
 from amazon_transcribe.client import TranscribeStreamingClient
 from amazon_transcribe.handlers import TranscriptResultStreamHandler
@@ -37,12 +40,14 @@ from amazon_transcribe.model import (
 )
 from azure.cognitiveservices.speech import SpeechRecognitionEventArgs
 from google.cloud import speech
+from huggingface_hub import hf_hub_download
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from ibm_watson import SpeechToTextV1
 from moonshine_voice import ModelArch
 from moonshine_voice import Transcriber as MoonshineTranscriber
 from moonshine_voice import TranscriptEventListener
 from moonshine_voice import get_model_for_language as moonshine_get_model
+from paddlespeech.cli.asr import ASRExecutor
 from pywhispercpp.model import Model as WhisperCppModel
 from vosk import KaldiRecognizer
 from vosk import Model as VoskModel
@@ -70,6 +75,15 @@ os.environ["MKL_NUM_THREADS"] = str(NUM_THREADS)
 os.environ["ORT_NUM_THREADS"] = str(NUM_THREADS)
 torch.set_num_threads(NUM_THREADS)
 torch.set_num_interop_threads(NUM_THREADS)
+
+
+def _soundfile_load(filepath, *args, **kwargs):
+    data, sample_rate = soundfile.read(filepath, dtype="float32", always_2d=True)
+    waveform = torch.from_numpy(data.T).contiguous()
+    return waveform, sample_rate
+
+
+torchaudio.load = _soundfile_load
 
 SAMPLE_RATE = 16000
 BYTES_PER_SAMPLE = 2
@@ -105,6 +119,7 @@ class Engines(Enum):
     VOSK_STREAMING_SMALL = "VOSK_STREAMING_SMALL"
     VOSK_STREAMING_LARGE = "VOSK_STREAMING_LARGE"
     NEMOTRON_3_5_ASR_STREAMING = "NEMOTRON_3_5_ASR_STREAMING"
+    PARAFORMER_STREAMING = "PARAFORMER_STREAMING"
     PICOVOICE_CHEETAH = "PICOVOICE_CHEETAH"
     PICOVOICE_LEOPARD = "PICOVOICE_LEOPARD"
 
@@ -126,6 +141,7 @@ StreamingEngines = [
     Engines.VOSK_STREAMING_SMALL,
     Engines.VOSK_STREAMING_LARGE,
     Engines.NEMOTRON_3_5_ASR_STREAMING,
+    Engines.PARAFORMER_STREAMING,
     Engines.PICOVOICE_CHEETAH,
 ]
 
@@ -145,14 +161,14 @@ class Engine(object):
 
     @staticmethod
     def split(transcript: str, language: Languages) -> List[str]:
-        if language is Languages.JA:
+        if language in (Languages.JA, Languages.ZH):
             return list(transcript)
         else:
             return transcript.split()
 
     @staticmethod
     def join(words: List[str], language: Languages) -> str:
-        if language is Languages.JA:
+        if language in (Languages.JA, Languages.ZH):
             return "".join(words)
         else:
             return " ".join(words)
@@ -218,6 +234,8 @@ class Engine(object):
             return VoskStreamingLargeEngine(language=language)
         elif x is Engines.NEMOTRON_3_5_ASR_STREAMING:
             return Nemotron3_5ASRStreamingEngine(language=language, **kwargs)
+        elif x is Engines.PARAFORMER_STREAMING:
+            return ParaformerStreamingEngine(language=language, **kwargs)
         elif x is Engines.PICOVOICE_CHEETAH:
             return PicovoiceCheetahEngine(**kwargs)
         elif x is Engines.PICOVOICE_LEOPARD:
@@ -491,7 +509,7 @@ class AmazonTranscribeStreamingHandler(TranscriptResultStreamHandler):
 
         self._ignore_punctuation = ignore_punctuation
         self._language = langugae
-        self._punctuation_trans = str.maketrans({"。": "", "、": "", "？": "", ".": "", ",": "", "?": ""})
+        self._punctuation_trans = str.maketrans({"。": "", "、": "", "？": "", ".": "", ",": "", "?": "", "，": "", "！": ""})
 
     async def handle_transcript_event(self, transcript_event: TranscriptEvent) -> None:
         current_time = time.time()
@@ -732,7 +750,7 @@ class AzureSpeechToTextRealTimeHandler:
         self._done_event = Event()
 
         self._ignore_punctuation = ignore_punctuation
-        self._punctuation_trans = str.maketrans({"。": "", "、": "", "？": "", ".": "", ",": "", "?": ""})
+        self._punctuation_trans = str.maketrans({"。": "", "、": "", "？": "", ".": "", ",": "", "?": "", "，": "", "！": ""})
 
     def _recognize_helper(self, evt: SpeechRecognitionEventArgs, recognized: bool) -> None:
         current_time = time.time()
@@ -863,8 +881,14 @@ class GoogleSpeechToTextStreamingEngine(StreamingEngine):
             enable_automatic_punctuation=True,
         )
 
+        if self._language is Languages.ZH:
+            # For Mandarin, this engine revises its hypotheses much more often than for other languages,
+            # therefore we only consider finalized transcriptions.
+            interim_results = False
+        else:
+            interim_results = True
         self._streaming_config = speech.StreamingRecognitionConfig(
-            config=self._config, interim_results=True, single_utterance=False
+            config=self._config, interim_results=interim_results, single_utterance=False
         )
 
     @property
@@ -1016,7 +1040,7 @@ class GoogleSpeechToTextStreamingHandler(object):
         self._receive_timings = []
 
         self._ignore_punctuation = ignore_punctuation
-        self._punctuation_trans = str.maketrans({"。": "", "、": "", "？": "", ".": "", ",": "", "?": ""})
+        self._punctuation_trans = str.maketrans({"。": "", "、": "", "？": "", ".": "", ",": "", "?": "", "，": "", "！": ""})
 
     def _process_result(self, result) -> None:
         current_time = time.time()
@@ -1108,6 +1132,7 @@ class WhisperEngine(Engine):
         Languages.KO: "ko",
         Languages.PT_PT: "pt",
         Languages.PT_BR: "pt",
+        Languages.ZH: "zh",
     }
 
     def __init__(self, cache_extension: str, model: str, language: Languages):
@@ -1252,7 +1277,7 @@ class WhisperCppStreamingEngine(StreamingEngine):
         self._chunk_size_ms = chunk_size_ms if chunk_size_ms is not None else self.DEFAULT_CHUNK_SIZE_MS
         self._chunk_size_samples = int((self._chunk_size_ms / 1000) * SAMPLE_RATE)
         self._ignore_punctuation = ignore_punctuation
-        self._punctuation_trans = str.maketrans({".": "", ",": "", "?": ""})
+        self._punctuation_trans = str.maketrans({"。": "", "、": "", "？": "", ".": "", ",": "", "?": "", "，": "", "！": ""})
         self._audio_sec = 0.0
         self._proc_sec = 0.0
 
@@ -1538,6 +1563,7 @@ class VoskStreamingSmallEngine(VoskStreamingEngine):
         Languages.EN: "vosk-model-small-en-us-0.15",
         Languages.KO: "vosk-model-small-ko-0.22",
         Languages.JA: "vosk-model-small-ja-0.22",
+        Languages.ZH: "vosk-model-small-cn-0.22",
     }
     SUPPORED_LANGUAGES = [lang.value for lang in LANGUAGE_TO_MODEL_NAME.keys()]
 
@@ -1562,6 +1588,7 @@ class VoskStreamingLargeEngine(VoskStreamingEngine):
     LANGUAGE_TO_MODEL_NAME = {
         Languages.EN: "vosk-model-en-us-0.22",
         Languages.JA: "vosk-model-ja-0.22",
+        Languages.ZH: "vosk-model-cn-0.22",
     }
     SUPPORED_LANGUAGES = [lang.value for lang in LANGUAGE_TO_MODEL_NAME.keys()]
 
@@ -1580,6 +1607,195 @@ class VoskStreamingLargeEngine(VoskStreamingEngine):
 
     def __str__(self) -> str:
         return "Vosk Streaming Large"
+
+
+class SherpaOnnxStreamingEngine(StreamingEngine):
+    def __init__(
+        self,
+        repo_id: str,
+        encoder: str,
+        decoder: str,
+        joiner: str,
+        tokens: str,
+        cache_extension: str,
+        chunk_size_ms: Optional[int] = None,
+    ):
+        encoder_path = hf_hub_download(repo_id, encoder)
+        decoder_path = hf_hub_download(repo_id, decoder)
+        joiner_path = hf_hub_download(repo_id, joiner)
+        tokens_path = hf_hub_download(repo_id, tokens)
+
+        self._recognizer = sherpa_onnx.OnlineRecognizer.from_transducer(
+            encoder=encoder_path,
+            decoder=decoder_path,
+            joiner=joiner_path,
+            tokens=tokens_path,
+            num_threads=NUM_THREADS,
+            sample_rate=SAMPLE_RATE,
+            feature_dim=80,
+            provider="cpu",
+        )
+
+        self._cache_extension = cache_extension
+        self._chunk_size_ms = chunk_size_ms if chunk_size_ms is not None else self.DEFAULT_CHUNK_SIZE_MS
+        self._chunk_size_samples = int((self._chunk_size_ms / 1000) * SAMPLE_RATE)
+        self._audio_sec = 0.0
+        self._proc_sec = 0.0
+
+    @property
+    def is_async(self) -> bool:
+        return False
+
+    def transcribe(self, path: str) -> str:
+        audio, sample_rate = soundfile.read(path, dtype="float32")
+        assert sample_rate == SAMPLE_RATE
+        self._audio_sec += audio.size / sample_rate
+
+        cache_path = path.replace(".flac", self._cache_extension)
+        if os.path.exists(cache_path):
+            with open(cache_path) as f:
+                res = f.read()
+            return res
+
+        stream = self._recognizer.create_stream()
+
+        start_sec = time.time()
+        for chunk_start in range(0, len(audio), self._chunk_size_samples):
+            chunk = audio[chunk_start : chunk_start + self._chunk_size_samples]
+            stream.accept_waveform(SAMPLE_RATE, chunk.tolist())
+            while self._recognizer.is_ready(stream):
+                self._recognizer.decode_stream(stream)
+
+        # Add zero padding to end:
+        # https://github.com/k2-fsa/sherpa-onnx/blob/master/python-api-examples/online-decode-files.py#L414
+        padding = np.zeros(int(0.66 * SAMPLE_RATE), dtype=np.float32)
+        stream.accept_waveform(SAMPLE_RATE, padding.tolist())
+
+        stream.input_finished()
+        while self._recognizer.is_ready(stream):
+            self._recognizer.decode_stream(stream)
+
+        res = self._recognizer.get_result(stream).strip().lower()
+        self._proc_sec += time.time() - start_sec
+
+        with open(cache_path, "w") as f:
+            f.write(res)
+
+        return res
+
+    @staticmethod
+    def _update_timings(
+        new_words: Sequence[str],
+        time: float,
+        emitted_words: List[str],
+        receive_timings: List[float]
+    ) -> Tuple[List[str], List[float]]:
+        i = 0
+        while i < len(emitted_words) and i < len(new_words) and emitted_words[i] == new_words[i]:
+            i += 1
+
+        emitted_words = emitted_words[:i]
+        receive_timings = receive_timings[:i]
+
+        while i < len(new_words):
+            emitted_words.append(new_words[i])
+            receive_timings.append(time)
+            i += 1
+
+        return emitted_words, receive_timings
+
+    def _measure_word_latency(
+        self, path: str, alignments: Optional[Sequence[Tuple[float, float]]]
+    ) -> WordLatencyOutputType:
+        send_timings = [aln[-1] for aln in alignments] if alignments is not None else []
+
+        audio, sample_rate = soundfile.read(path, dtype="float32")
+        if sample_rate != SAMPLE_RATE:
+            raise ValueError(f"Incorrect sample rate for `{path}`: expected {SAMPLE_RATE} got {sample_rate}")
+        total_samples = len(audio)
+
+        stream = self._recognizer.create_stream()
+
+        emitted_words = []
+        receive_timings = []
+
+        for chunk_start in range(0, total_samples, self._chunk_size_samples):
+            chunk_end = min(chunk_start + self._chunk_size_samples, len(audio))
+            chunk = audio[chunk_start:chunk_end]
+
+            stream.accept_waveform(SAMPLE_RATE, chunk.tolist())
+            while self._recognizer.is_ready(stream):
+                self._recognizer.decode_stream(stream)
+
+            text = self._recognizer.get_result(stream).strip().lower()
+            if len(text) > 0:
+                new_words = text.split()
+                emitted_words, receive_timings = self._update_timings(
+                    new_words=new_words,
+                    time=chunk_end / SAMPLE_RATE,
+                    emitted_words=emitted_words,
+                    receive_timings=receive_timings,
+                )
+
+        # Add zero padding to end:
+        # https://github.com/k2-fsa/sherpa-onnx/blob/master/python-api-examples/online-decode-files.py#L414
+        padding = np.zeros(int(0.66 * SAMPLE_RATE), dtype=np.float32)
+        stream.accept_waveform(SAMPLE_RATE, padding.tolist())
+
+        stream.input_finished()
+        while self._recognizer.is_ready(stream):
+            self._recognizer.decode_stream(stream)
+
+        text = self._recognizer.get_result(stream).strip().lower()
+        if len(text) > 0:
+            new_words = text.split()
+            emitted_words, receive_timings = self._update_timings(
+                new_words=new_words,
+                time=total_samples / SAMPLE_RATE,
+                emitted_words=emitted_words,
+                receive_timings=receive_timings,
+            )
+
+        return emitted_words, receive_timings, send_timings
+
+    def audio_sec(self) -> float:
+        return self._audio_sec
+
+    def process_sec(self) -> float:
+        return self._proc_sec
+
+    def delete(self) -> None:
+        pass
+
+
+class ParaformerStreamingEngine(SherpaOnnxStreamingEngine):
+    def __init__(self, language: Languages, chunk_size_ms: Optional[int] = None, **kwargs):
+        if language != Languages.ZH:
+            raise ValueError(f"{Engines.PARAFORMER_STREAMING.value} engine only supports ZH language")
+
+        repo_id = "csukuangfj/sherpa-onnx-streaming-paraformer-bilingual-zh-en"
+        encoder_path = hf_hub_download(repo_id, "encoder.int8.onnx")
+        decoder_path = hf_hub_download(repo_id, "decoder.int8.onnx")
+        tokens_path = hf_hub_download(repo_id, "tokens.txt")
+
+        self._recognizer = sherpa_onnx.OnlineRecognizer.from_paraformer(
+            encoder=encoder_path,
+            decoder=decoder_path,
+            tokens=tokens_path,
+            num_threads=NUM_THREADS,
+            sample_rate=SAMPLE_RATE,
+            feature_dim=80,
+            provider="cpu",
+        )
+
+        self._cache_extension = ".prfs"
+        self._chunk_size_ms = chunk_size_ms if chunk_size_ms is not None else self.DEFAULT_CHUNK_SIZE_MS
+        self._chunk_size_samples = int((self._chunk_size_ms / 1000) * SAMPLE_RATE)
+        self._audio_sec = 0.0
+        self._proc_sec = 0.0
+
+    def __str__(self) -> str:
+        return "Paraformer Streaming"
 
 
 class MoonshineStreamingEngine(StreamingEngine):
@@ -1662,7 +1878,7 @@ class MoonshineStreamingEngine(StreamingEngine):
                 super().__init__()
 
                 self._ignore_punctuation = ignore_punctuation
-                self._punctuation_trans = str.maketrans({".": "", ",": "", "?": "", "!": ""})
+                self._punctuation_trans = str.maketrans({"。": "", "、": "", "？": "", ".": "", ",": "", "?": "", "，": "", "！": ""})
 
             def _parse_words(self, event):
                 transcript = event.line.text

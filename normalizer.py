@@ -8,10 +8,11 @@ from typing import (
 
 import inflect
 import num2words
+import opencc
 
 from languages import Languages
 
-SUPPORTED_PUNCTUATION_SET = ",.?、。？"
+SUPPORTED_PUNCTUATION_SET = ",.?。、？，"
 
 
 class Normalizer(object):
@@ -35,6 +36,8 @@ class Normalizer(object):
             return JapaneseNormalizer(keep_punctuation, punctuation_set)
         elif language == Languages.KO:
             return KoreanNormalizer(keep_punctuation, punctuation_set)
+        elif language == Languages.ZH:
+            return MandarinNormalizer(keep_punctuation, punctuation_set)
         elif language in [
             Languages.DE,
             Languages.ES,
@@ -383,6 +386,94 @@ class JapaneseNormalizer(Normalizer):
 
         if raise_error_on_invalid_sentence:
             self._validate(text, original)
+
+        return text
+
+
+class MandarinNormalizer(Normalizer):
+    VALID_ZH_CHARS = frozenset(
+        {chr(i) for i in range(0x4E00, 0x9FFF)}  # CJK Unified Ideographs (main block)
+        | {chr(i) for i in range(0x3400, 0x4DBF)}  # Extension A
+        | {chr(i) for i in range(0x20000, 0x2A6DF)}  # Extension B
+        | {chr(i) for i in range(0xF900, 0xFAFF)}  # CJK Compatibility Ideographs
+    )
+
+    CHARACTER_TRANS = str.maketrans(
+        {
+            "。": ".",
+            "！": ".",
+            "!": ".",
+            "？": "?",
+            ",": "，",
+            "\u200b": "",
+        }
+    )
+
+    def __init__(self, keep_punctuation: bool, punctuation_set: str = SUPPORTED_PUNCTUATION_SET) -> None:
+        super().__init__(keep_punctuation, punctuation_set)
+
+        try:
+            from wetext import Normalizer as ZhNormalizer
+            self.normalizer = ZhNormalizer(
+                lang="zh",
+                operator="tn",
+                traditional_to_simple=False,  # opencc is more accurate for the t2s conversion.
+                remove_erhua=False,
+            )
+        except (RuntimeError, ValueError) as e:
+            raise RuntimeError(f"couldn't make the Mandarin Normalizer, error = `{e}`")
+
+        self.t2s_converter = opencc.OpenCC('t2s.json')
+
+    def _strip_punct_space(self, text: str) -> str:
+        chars: List[str] = []
+        for ch in text:
+            category = unicodedata.category(ch)
+            if ch.isspace() or category.startswith("Z"):
+                continue
+            if category.startswith("P"):
+                if self._keep_punctuation and ch in self._punctuation_set:
+                    chars.append(ch)
+                continue
+            chars.append(ch)
+        return "".join(chars)
+
+    def _is_valid(self, text: str) -> bool:
+        if len(text) == 0:
+            return False
+        for char in text:
+            if char not in self.VALID_ZH_CHARS:
+                if self._keep_punctuation and (char in self._punctuation_set):
+                    continue
+                return False
+        return True
+
+    def normalize(
+        self,
+        sentence: Optional[str],
+        raise_error_on_invalid_sentence: bool = False,
+    ) -> str:
+        if sentence is None:
+            if raise_error_on_invalid_sentence:
+                raise RuntimeError("Input text is None.")
+            return ""
+
+        original = str(sentence)
+        text = unicodedata.normalize("NFC", original)
+        text = self.t2s_converter.convert(text)
+        text = self.normalizer.normalize(text)
+        text = text.translate(self.CHARACTER_TRANS)
+        text = self._strip_punct_space(text)
+
+        if raise_error_on_invalid_sentence:
+            if self._is_valid(text):
+                return text
+            else:
+                raise RuntimeError(
+                    "Given setence is not valid, "
+                    f"transcript = `{text}`"
+                    f", invalid characters = `{', '.join(list(set(text) - self.VALID_ZH_CHARS))}`"
+                )
 
         return text
 

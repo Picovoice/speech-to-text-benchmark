@@ -1,4 +1,5 @@
 import csv
+import json
 import os
 import subprocess
 from enum import Enum
@@ -24,6 +25,8 @@ class Datasets(Enum):
     VOX_POPULI = "VOX_POPULI"
     PANSORI = "PANSORI"
     ZEROTH_KOREAN = "ZEROTH_KOREAN"
+    AISHELL2_IOS = "AISHELL2_IOS"
+    SPEECHIO = "SPEECHIO"
 
 
 class Dataset(object):
@@ -78,6 +81,10 @@ class Dataset(object):
             return ZerothKoreanDataset(folder, language, punctuation, normalizer)
         elif x is Datasets.PANSORI:
             return PansoriDataset(folder, language, punctuation, normalizer)
+        elif x is Datasets.AISHELL2_IOS:
+            return AiShell2iOSDataset(folder, language, punctuation, normalizer)
+        elif x is Datasets.SPEECHIO:
+            return SpeechIoDataset(folder, language, punctuation, normalizer)
         else:
             raise ValueError(f"Cannot create {cls.__name__} of type `{x}`")
 
@@ -93,6 +100,7 @@ class CommonVoiceDataset(Dataset):
         Languages.KO,
         Languages.PT_BR,
         Languages.PT_PT,
+        Languages.ZH,
     ]
     SUPPORTS_PUNCTUATION = True
 
@@ -120,7 +128,7 @@ class CommonVoiceDataset(Dataset):
                             flac_path,
                         ]
                         subprocess.check_output(args)
-                    elif soundfile.read(flac_path)[0].size > 16000 * 60:
+                    if soundfile.read(flac_path)[0].size > 16000 * 60:
                         continue
 
                     try:
@@ -145,7 +153,6 @@ class CommonVoiceDataset(Dataset):
 
 class LibriSpeechTestCleanDataset(Dataset):
     SUPPORTED_LANGUAGES = [Languages.EN]
-    SUPPORTS_PUNCTUATION = False
 
     def __init__(
         self,
@@ -407,7 +414,7 @@ class VoxPopuliDataset(Dataset):
                         flac_path,
                     ]
                     subprocess.check_output(args)
-                elif soundfile.read(flac_path)[0].size > 16000 * 60:
+                if soundfile.read(flac_path)[0].size > 16000 * 60:
                     continue
 
                 try:
@@ -446,7 +453,7 @@ class VoxPopuliDataset(Dataset):
                         flac_path,
                     ]
                     subprocess.check_output(args)
-                elif soundfile.read(flac_path)[0].size > 16000 * 60:
+                if soundfile.read(flac_path)[0].size > 16000 * 60:
                     continue
 
                 transcript = row["raw_text"]
@@ -481,7 +488,6 @@ class VoxPopuliDataset(Dataset):
 
 class JsutBasicDataset(Dataset):
     SUPPORTED_LANGUAGES = [Languages.JA]
-    SUPPORTS_PUNCTUATION = False
 
     def __init__(self, folder: str, language: Languages, punctuation: bool, normalizer: Normalizer):
         super().__init__(language, punctuation, Datasets.JSUT_BASIC.value)
@@ -543,6 +549,7 @@ class FleursDataset(Dataset):
         Languages.KO,
         Languages.PT_BR,
         Languages.PT_PT,
+        Languages.ZH,
     ]
     SUPPORTS_PUNCTUATION = True
 
@@ -570,7 +577,7 @@ class FleursDataset(Dataset):
                         flac_path,
                     ]
                     subprocess.check_output(args)
-                elif soundfile.read(flac_path)[0].size > 16000 * 60:
+                if soundfile.read(flac_path)[0].size > 16000 * 60:
                     continue
 
                 try:
@@ -666,6 +673,127 @@ class ZerothKoreanDataset(Dataset):
 
     def __str__(self) -> str:
         return "Zeroth-Korean"
+
+
+class AiShell2iOSDataset(Dataset):
+    SUPPORTED_LANGUAGES = [Languages.ZH]
+
+    def __init__(self, folder: str, language: Languages, punctuation: bool, normalizer: Normalizer):
+        super().__init__(language, punctuation, Datasets.AISHELL2_IOS.value)
+
+        self._language = language
+
+        self._data = list()
+        test_folder = os.path.join(folder, "iOS", "test")
+        transcript_file = os.path.join(test_folder, "trans.txt")
+        wav_paths_file = os.path.join(test_folder, "wav.scp")
+
+        wav_paths = dict()
+        with open(wav_paths_file, encoding="utf-8") as f:
+            for line in f:
+                line = line.rstrip("\n")
+                if len(line) == 0:
+                    continue
+                wav_id, wav_path = line.split(maxsplit=1)
+                wav_paths[wav_id] = wav_path
+
+        with open(transcript_file, encoding="utf-8") as f:
+            for line in f:
+                line = line.rstrip("\n")
+                if len(line) == 0:
+                    continue
+                file_id, transcript = line.split(maxsplit=1)
+
+                try:
+                    transcript = normalizer.normalize(transcript, raise_error_on_invalid_sentence=True)
+                except RuntimeError:
+                    continue
+
+                wav_path = os.path.join(test_folder, wav_paths[file_id])
+                flac_path = wav_path.replace(".wav", ".flac")
+                if not os.path.exists(flac_path):
+                    args = [
+                        "ffmpeg",
+                        "-i",
+                        wav_path,
+                        "-ac",
+                        "1",
+                        "-ar",
+                        "16000",
+                        flac_path,
+                    ]
+                    subprocess.check_output(args)
+
+                if soundfile.read(flac_path)[0].size > 16000 * 60:
+                    continue
+
+                self._data.append((flac_path, transcript))
+
+    def size(self) -> int:
+        return len(self._data)
+
+    def get(self, index: int) -> Tuple[str, str]:
+        return self._data[index]
+
+    def __str__(self) -> str:
+        return "AIShell-2 iOS"
+
+
+class SpeechIoDataset(Dataset):
+    SUPPORTED_LANGUAGES = [Languages.ZH]
+
+    def __init__(self, folder: str, language: Languages, punctuation: bool, normalizer: Normalizer):
+        super().__init__(language, punctuation, Datasets.SPEECHIO.value)
+
+        self._language = language
+
+        self._data = list()
+        data_folder = os.path.join(folder, "data")
+        jsonl_files = [
+            os.path.join(data_folder, file) for file in os.listdir(data_folder) if ".jsonl" in file
+        ]
+        for jsonl_file in jsonl_files:
+            with open(jsonl_file, encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if len(line) == 0:
+                        continue
+                    record = json.loads(line)
+
+                    transcript = record["supervisions"][0]["text"]
+                    try:
+                        transcript = normalizer.normalize(transcript, raise_error_on_invalid_sentence=True)
+                    except RuntimeError:
+                        continue
+
+                    wav_path = os.path.join(folder, record["recording"]["sources"][0]["source"])
+                    flac_path = wav_path.replace(".wav", ".flac")
+                    if not os.path.exists(flac_path):
+                        args = [
+                            "ffmpeg",
+                            "-i",
+                            wav_path,
+                            "-ac",
+                            "1",
+                            "-ar",
+                            "16000",
+                            flac_path,
+                        ]
+                        subprocess.check_output(args)
+
+                    if soundfile.read(flac_path)[0].size > 16000 * 60:
+                        continue
+
+                    self._data.append((flac_path, transcript))
+
+    def size(self) -> int:
+        return len(self._data)
+
+    def get(self, index: int) -> Tuple[str, str]:
+        return self._data[index]
+
+    def __str__(self) -> str:
+        return "SpeechIO"
 
 
 __all__ = [

@@ -7,6 +7,11 @@ from typing import (
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.ticker import (
+    FuncFormatter,
+    MaxNLocator,
+    NullLocator
+)
 
 from benchmark import RESULTS_FOLDER
 from dataset import Datasets
@@ -62,6 +67,7 @@ ENGINE_PRINT_NAMES = {
     Engines.WHISPER_CPP_STREAMING_LARGE_V3: "Whisper.cpp\nLarge-v3",
     Engines.WHISPER_CPP_STREAMING_LARGE_TURBO: "Whisper.cpp\nTurbo",
     Engines.NEMOTRON_3_5_ASR_STREAMING: "Nemotron 3.5\nASR Streaming",
+    Engines.PARAFORMER_STREAMING: "Paraformer\nStreaming",
 }
 
 ENGINE_COLORS = {
@@ -92,6 +98,7 @@ ENGINE_COLORS = {
     Engines.WHISPER_CPP_STREAMING_LARGE_V3: GREY1,
     Engines.WHISPER_CPP_STREAMING_LARGE_TURBO: GREY1,
     Engines.NEMOTRON_3_5_ASR_STREAMING: GREY1,
+    Engines.PARAFORMER_STREAMING: GREY1,
 }
 
 
@@ -101,6 +108,7 @@ def _plot_error_rate(
     streaming: bool,
     show: bool = False,
     punctuation: bool = False,
+    is_cer: bool = False,
 ) -> None:
     sorted_error_rates = sorted(
         [
@@ -142,10 +150,180 @@ def _plot_error_rate(
     if punctuation:
         plt.ylabel("Punctuation Error Rate (lower is better)")
     else:
-        plt.ylabel("Word Error Rate (lower is better)")
+        if is_cer:
+            plt.ylabel("Character Error Rate (lower is better)")
+        else:
+            plt.ylabel("Word Error Rate (lower is better)")
 
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     plt.savefig(save_path)
+    print(f"Saved plot to `{save_path}`")
+
+    if show:
+        plt.show()
+
+    plt.close()
+
+
+def _plot_memory_usage(
+    memory_usage: Dict[Engines, int],
+    save_path: str,
+    streaming: bool,
+    show: bool = False,
+) -> None:
+    sorted_memory_usage = sorted(memory_usage.items(), key=lambda x: x[1], reverse=True)
+    if streaming:
+        sorted_memory_usage = [(e, v) for e, v in sorted_memory_usage if e in StreamingEngines]
+    else:
+        sorted_memory_usage = [(e, v) for e, v in sorted_memory_usage if e not in StreamingEngines]
+    print("\n".join(f"{e.value}: {x}" for e, x in sorted_memory_usage))
+
+    if not sorted_memory_usage:
+        print("No engines to plot.")
+        return
+
+    num_engines = len(sorted_memory_usage)
+    fig_height = max(6, num_engines * 0.6 + 1)
+    _, ax = plt.subplots(figsize=(10, fig_height))
+
+    x_limit = max(memory for _, memory in sorted_memory_usage)
+    text_offset = x_limit * 0.03
+
+    for engine, memory in sorted_memory_usage:
+        color = ENGINE_COLORS[engine]
+        name = ENGINE_PRINT_NAMES[engine]
+        ax.barh(
+            name,
+            memory,
+            height=0.5,
+            color=color,
+            edgecolor="none",
+        )
+        ax.text(
+            memory + text_offset,
+            name,
+            f"{memory}MB",
+            ha="left",
+            va="center",
+            fontsize=11,
+            color=color,
+        )
+
+    ax.spines["top"].set_visible(False)
+    ax.spines["bottom"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    plt.xlim([0, x_limit * 1.25])
+    ax.set_xticks([])
+    # Reversed limits put the lowest memory usage at the top
+    ax.set_ylim([num_engines - 0.5, -0.5])
+    plt.subplots_adjust(left=0.15)
+    plt.title(
+        "Peak memory usage (lower is better)",
+        fontsize=12,
+    )
+
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    plt.savefig(save_path, bbox_inches="tight")
+    print(f"Saved plot to `{save_path}`")
+
+    if show:
+        plt.show()
+
+    plt.close()
+
+
+def _plot_memory_usage_error_rate_grid(
+    memory_usage: Dict[Engines, int],
+    error_rate: Dict[Engines, Dict[Datasets, float]],
+    save_path: str,
+    streaming: bool,
+    show: bool = False,
+) -> None:
+    if streaming:
+        selected = [(e, m) for e, m in memory_usage.items() if e in StreamingEngines]
+    else:
+        selected = [(e, m) for e, m in memory_usage.items() if e not in StreamingEngines]
+
+    engines = []
+    error_rates = []
+    peak_memory_uses = []
+    colors = []
+    for engine, peak_memory_use in selected:
+        rates = error_rate.get(engine)
+        if not rates:
+            continue
+        engines.append(engine)
+        error_rates.append(round(sum(rates.values()) / len(rates) + 1e-9, 1))
+        peak_memory_uses.append(peak_memory_use)
+        colors.append(ENGINE_COLORS[engine])
+
+    if len(engines) == 0:
+        print("No engines to plot.")
+        return
+
+    _, ax = plt.subplots(figsize=(10, 8))
+    ax.scatter(
+        error_rates,
+        peak_memory_uses,
+        color=colors,
+        s=150,
+        alpha=0.8,
+        edgecolors="black",
+        linewidth=2,
+        zorder=3,
+    )
+
+    for engine, x, y, color in zip(engines, error_rates, peak_memory_uses, colors):
+        if engine in [
+            Engines.MOONSHINE_STREAMING_SMALL,
+            Engines.MOONSHINE_STREAMING_MEDIUM,
+            Engines.GOOGLE_SPEECH_TO_TEXT_STREAMING,
+            Engines.PICOVOICE_CHEETAH,
+            Engines.AZURE_SPEECH_TO_TEXT_REAL_TIME,
+        ]:
+            y_offset = -20
+        else:
+            y_offset = 20
+
+        ax.annotate(
+            ENGINE_PRINT_NAMES[engine],
+            (x, y),
+            xytext=(0, y_offset),
+            textcoords="offset points",
+            ha="center",
+            va="center",
+            fontsize=9,
+            color=color,
+            weight="bold",
+        )
+
+    ax.set_yscale("log")
+    wer_pad = max((max(error_rates) - min(error_rates)) * 0.08, 1)
+    ax.set_xlim(max(error_rates) + wer_pad, min(error_rates) - wer_pad)
+    mem_lo = min(peak_memory_uses) / 1.6
+    mem_hi = max(peak_memory_uses) * 1.6
+    ax.set_ylim(mem_hi, mem_lo)
+
+    ax.xaxis.set_major_locator(MaxNLocator(nbins=10, integer=True))
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:.0f}%"))
+
+    candidate_ticks = [50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000]
+    ax.set_yticks([t for t in candidate_ticks if mem_lo <= t <= mem_hi])
+    ax.yaxis.set_major_formatter(
+        FuncFormatter(lambda v, _: f"{v / 1000:g} GB" if v >= 1000 else f"{v:g} MB")
+    )
+    ax.yaxis.set_minor_locator(NullLocator())
+
+    ax.set_xlabel("Average Word Error Rate (lower is better)", fontsize=12)
+    ax.set_ylabel("Peak Memory Usage (lower is better)", fontsize=12)
+
+    ax.grid(True, which="major", alpha=0.3, linestyle="-", linewidth=1)
+    ax.set_axisbelow(True)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    plt.savefig(save_path, bbox_inches="tight")
     print(f"Saved plot to `{save_path}`")
 
     if show:
@@ -478,8 +656,9 @@ def main() -> None:
     _plot_error_rate(WER_IT, save_path=os.path.join(save_folder, "WER_IT_ST.png"), streaming=True, show=args.show)
     _plot_error_rate(WER_PT, save_path=os.path.join(save_folder, "WER_PT.png"), streaming=False, show=args.show)
     _plot_error_rate(WER_PT, save_path=os.path.join(save_folder, "WER_PT_ST.png"), streaming=True, show=args.show)
-    _plot_error_rate(CER_JA, save_path=os.path.join(save_folder, "CER_JA_ST.png"), streaming=True, show=args.show)
-    _plot_error_rate(CER_KO, save_path=os.path.join(save_folder, "CER_KO_ST.png"), streaming=True, show=args.show)
+    _plot_error_rate(CER_JA, save_path=os.path.join(save_folder, "CER_JA_ST.png"), streaming=True, show=args.show, is_cer=True)
+    _plot_error_rate(CER_KO, save_path=os.path.join(save_folder, "CER_KO_ST.png"), streaming=True, show=args.show, is_cer=True)
+    _plot_error_rate(CER_ZH, save_path=os.path.join(save_folder, "CER_ZH_ST.png"), streaming=True, show=args.show, is_cer=True)
 
     _plot_error_rate(
         PER_EN, save_path=os.path.join(save_folder, "PER_ST.png"), streaming=True, punctuation=True, show=args.show
@@ -491,6 +670,10 @@ def main() -> None:
     _plot_error_rate(PER_PT, save_path=os.path.join(save_folder, "PER_PT_ST.png"), streaming=True, punctuation=True, show=args.show)
     _plot_error_rate(PER_JA, save_path=os.path.join(save_folder, "PER_JA_ST.png"), streaming=True, punctuation=True, show=args.show)
     _plot_error_rate(PER_KO, save_path=os.path.join(save_folder, "PER_KO_ST.png"), streaming=True, punctuation=True, show=args.show)
+    _plot_error_rate(PER_ZH, save_path=os.path.join(save_folder, "PER_ZH_ST.png"), streaming=True, punctuation=True, show=args.show)
+
+    _plot_memory_usage(MEMORY_USAGE, save_path=os.path.join(save_folder, "peak_memory_st.png"), streaming=True, show=args.show)
+    _plot_memory_usage_error_rate_grid(MEMORY_USAGE, WER_EN, save_path=os.path.join(save_folder, "wer_vs_peak_memory_comparison_st.png"), streaming=True)
 
     _plot_cpu(save_folder=save_folder, show=args.show, dataset=Datasets.LIBRI_SPEECH_TEST_CLEAN)
 

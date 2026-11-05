@@ -35,10 +35,10 @@ class Metric:
             raise ValueError(f"Cannot create {cls.__name__} of type `{x}`")
 
 
-class WordErrorRate(Metric):
+class CharacterErrorRate(Metric):
     def calculate(self, prediction: str, reference: str) -> Tuple[int, int]:
-        pred_tokens = prediction.split()
-        ref_tokens = reference.split()
+        ref_tokens = list(reference.replace(" ", ""))
+        pred_tokens = list(prediction.replace(" ", ""))
 
         error_count = editdistance.eval(ref_tokens, pred_tokens)
         token_count = len(ref_tokens)
@@ -46,10 +46,10 @@ class WordErrorRate(Metric):
         return error_count, token_count
 
 
-class CharacterErrorRate(Metric):
+class WordErrorRate(Metric):
     def calculate(self, prediction: str, reference: str) -> Tuple[int, int]:
-        ref_tokens = list(reference.replace(" ", ""))
-        pred_tokens = list(prediction.replace(" ", ""))
+        pred_tokens = prediction.split()
+        ref_tokens = reference.split()
 
         error_count = editdistance.eval(ref_tokens, pred_tokens)
         token_count = len(ref_tokens)
@@ -130,7 +130,10 @@ class PunctuationErrorRate(Metric):
         return num_insert, num_delete, num_sub, num_match
 
     def calculate(
-        self, prediction: str, reference: str, punctuation: str = SUPPORTED_PUNCTUATION_SET
+        self,
+        prediction: str,
+        reference: str,
+        punctuation: str = SUPPORTED_PUNCTUATION_SET
     ) -> Tuple[int, int]:
         if self._split_on_space:
             pred_tokens = [token for token in re.findall(rf"[{punctuation}]|[^{punctuation}\s]+", prediction)]
