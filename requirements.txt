@@ -61,7 +61,7 @@ flatbuffers==25.12.19
 flatten-dict==0.5.0
 fonttools==4.68.0
 frozenlist==1.8.0
-fsspec==2025.3.0
+fsspec==2026.6.0
 ftfy==6.3.1
 future==1.0.0
 g2p-en==2.1.0
