@@ -42,7 +42,7 @@ cuda-pathfinder==1.8.4
 cwevals==0.0.1b1
 cycler==0.12.1
 cytoolz==1.2.0
-datasets==3.6.0
+datasets==5.0.1
 decorator==5.3.1
 defusedxml==0.7.1
 dill==0.3.4
