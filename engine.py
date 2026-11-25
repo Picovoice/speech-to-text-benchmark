@@ -40,7 +40,10 @@ from amazon_transcribe.model import (
 )
 from azure.cognitiveservices.speech import SpeechRecognitionEventArgs
 from google.cloud import speech
-from huggingface_hub import hf_hub_download
+from huggingface_hub import (
+    hf_hub_download,
+    snapshot_download
+)
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from ibm_watson import SpeechToTextV1
 from moonshine_voice import ModelArch
@@ -120,6 +123,8 @@ class Engines(Enum):
     VOSK_STREAMING_LARGE = "VOSK_STREAMING_LARGE"
     NEMOTRON_3_5_ASR_STREAMING = "NEMOTRON_3_5_ASR_STREAMING"
     PARAFORMER_STREAMING = "PARAFORMER_STREAMING"
+    ORUK_FOURIER_2B = "ORUK_FOURIER_2B"
+    ORUK_FOURIER_2B_API = "ORUK_FOURIER_2B_API"
     PICOVOICE_CHEETAH = "PICOVOICE_CHEETAH"
     PICOVOICE_LEOPARD = "PICOVOICE_LEOPARD"
 
@@ -236,6 +241,10 @@ class Engine(object):
             return Nemotron3_5ASRStreamingEngine(language=language, **kwargs)
         elif x is Engines.PARAFORMER_STREAMING:
             return ParaformerStreamingEngine(language=language, **kwargs)
+        elif x is Engines.ORUK_FOURIER_2B:
+            return OrukFourier2BEngine(language=language, **kwargs)
+        elif x is Engines.ORUK_FOURIER_2B_API:
+            return OrukFourier2BAPIEngine(language=language, **kwargs)
         elif x is Engines.PICOVOICE_CHEETAH:
             return PicovoiceCheetahEngine(**kwargs)
         elif x is Engines.PICOVOICE_LEOPARD:
@@ -2318,6 +2327,218 @@ class PicovoiceLeopardEngine(Engine):
 
     def __str__(self):
         return "Picovoice Leopard"
+
+
+class OrukFourier2BEngine(Engine):
+    MODEL_ID: ClassVar[str] = "oruk/oruk-fourier-2b"
+    MODEL_REVISION: ClassVar[str] = "8c2a8871f1304aa2f634da4fb95e24438c4945b9"
+    NATIVE_ROOT_FILES: ClassVar[Tuple[str, ...]] = (
+        "chat_template.jinja",
+        "config.json",
+        "generation_config.json",
+        "model.safetensors",
+        "processor_config.json",
+        "tokenizer.json",
+        "tokenizer_config.json",
+    )
+    SUPPORTED_DEVICES: ClassVar[Tuple[str, ...]] = ("cpu", "cuda", "mps")
+
+    def __init__(
+        self,
+        language: Languages,
+        device: str = "cpu",
+        cache_dir: Optional[str] = None,
+    ):
+        if language != Languages.EN:
+            raise ValueError("ORUK_FOURIER_2B engine only supports EN language")
+        if device not in self.SUPPORTED_DEVICES:
+            raise ValueError(f"Unsupported device `{device}`; expected one of {self.SUPPORTED_DEVICES}")
+
+        try:
+            from transformers import (
+                AutoModelForMultimodalLM,
+                AutoProcessor
+            )
+        except ImportError as exc:
+            raise RuntimeError(
+                "ORUK_FOURIER_2B requires transformers>=5.21 with native qwen3_asr support "
+                "(pip install 'transformers>=5.21')."
+            ) from exc
+
+        local_dir = snapshot_download(
+            repo_id=self.MODEL_ID,
+            revision=self.MODEL_REVISION,
+            allow_patterns=list(self.NATIVE_ROOT_FILES),
+            cache_dir=cache_dir,
+        )
+
+        dtype = torch.bfloat16 if device in ("cuda", "mps") else torch.float32
+        try:
+            self._processor = AutoProcessor.from_pretrained(local_dir, local_files_only=True)
+            if not hasattr(self._processor, "apply_transcription_request"):
+                raise RuntimeError(
+                    "ORUK_FOURIER_2B requires transformers>=5.21 with native qwen3_asr "
+                    "`apply_transcription_request` support (pip install 'transformers>=5.21')."
+                )
+            self._model = (
+                AutoModelForMultimodalLM.from_pretrained(
+                    local_dir,
+                    local_files_only=True,
+                    dtype=dtype,
+                )
+                .to(device)
+                .eval()
+            )
+        except (KeyError, ValueError) as exc:
+            if "qwen3_asr" in str(exc):
+                raise RuntimeError(
+                    "ORUK_FOURIER_2B requires transformers>=5.21 with native qwen3_asr support "
+                    "(pip install 'transformers>=5.21')."
+                ) from exc
+            raise
+
+        self._device = device
+        self._cache_extension = ".oruk"
+        self._audio_sec = 0.0
+        self._proc_sec = 0.0
+
+    def _cache_path(self, path: str) -> str:
+        if path.endswith(".flac"):
+            return path.replace(".flac", self._cache_extension)
+        return f"{path}{self._cache_extension}"
+
+    def transcribe(self, path: str) -> str:
+        audio, sample_rate = soundfile.read(path, dtype="float32")
+        if sample_rate != SAMPLE_RATE:
+            raise ValueError(f"Incorrect sample rate for `{path}`: expected {SAMPLE_RATE} got {sample_rate}")
+        if audio.ndim == 2:
+            audio = audio.mean(axis=1)
+        audio = np.ascontiguousarray(audio, dtype=np.float32)
+        self._audio_sec += audio.size / sample_rate
+
+        cache_path = self._cache_path(path)
+        if os.path.exists(cache_path):
+            with open(cache_path, "r") as f:
+                return f.read()
+
+        start_sec = time.time()
+        with torch.inference_mode():
+            inputs = self._processor.apply_transcription_request(
+                audio=[audio],
+                language=["English"],
+                return_tensors="pt",
+                processor_kwargs={"padding": True},
+            ).to(self._device, self._model.dtype)
+            output_ids = self._model.generate(**inputs)
+            gen_ids = output_ids[:, inputs["input_ids"].shape[1]:]
+            texts = self._processor.decode(gen_ids, return_format="transcription_only")
+        self._proc_sec += time.time() - start_sec
+
+        if isinstance(texts, list):
+            res = str(texts[0]).strip() if texts else ""
+        else:
+            res = str(texts).strip()
+
+        with open(cache_path, "w") as f:
+            f.write(res)
+
+        return res
+
+    def audio_sec(self) -> float:
+        return self._audio_sec
+
+    def process_sec(self) -> float:
+        return self._proc_sec
+
+    def delete(self) -> None:
+        self._model = None
+        self._processor = None
+
+    def __str__(self) -> str:
+        return "Oruk Fourier 2B"
+
+
+class OrukFourier2BAPIEngine(Engine):
+    DEFAULT_API_URL: ClassVar[str] = "https://speech-api.oruk.ai/v1/audio/transcriptions"
+    DEFAULT_MODEL: ClassVar[str] = "oruk-fourier-2b"
+    CONTENT_TYPES: ClassVar[dict] = {
+        ".flac": "audio/flac",
+        ".wav": "audio/wav",
+        ".mp3": "audio/mpeg",
+        ".m4a": "audio/mp4",
+        ".ogg": "audio/ogg",
+        ".webm": "audio/webm",
+    }
+
+    def __init__(
+        self,
+        oruk_api_key: str,
+        language: Languages,
+        oruk_api_url: str = DEFAULT_API_URL,
+        model: str = DEFAULT_MODEL,
+        timeout_sec: float = 120.0,
+    ):
+        if language != Languages.EN:
+            raise ValueError("ORUK_FOURIER_2B_API engine only supports EN language")
+        if not oruk_api_key:
+            raise ValueError("`oruk_api_key` is required for ORUK_FOURIER_2B_API")
+        if not oruk_api_url.startswith(("https://", "http://")):
+            raise ValueError("`oruk_api_url` must start with http:// or https://")
+
+        self._api_key = oruk_api_key
+        self._api_url = oruk_api_url
+        self._model = model
+        self._timeout_sec = timeout_sec
+        self._cache_extension = ".oruk_api"
+        self._session = requests.Session()
+
+    def _cache_path(self, path: str) -> str:
+        if path.endswith(".flac"):
+            return path.replace(".flac", self._cache_extension)
+        return f"{path}{self._cache_extension}"
+
+    def transcribe(self, path: str) -> str:
+        cache_path = self._cache_path(path)
+        if os.path.exists(cache_path):
+            with open(cache_path, "r") as f:
+                return f.read()
+
+        ext = os.path.splitext(path)[1].lower()
+        content_type = self.CONTENT_TYPES.get(ext, "application/octet-stream")
+        with open(path, "rb") as f:
+            response = self._session.post(
+                self._api_url,
+                headers={"Authorization": f"Bearer {self._api_key}"},
+                files={"file": (os.path.basename(path), f, content_type)},
+                data={
+                    "model": self._model,
+                    "language": "en",
+                    "response_format": "json",
+                },
+                timeout=self._timeout_sec,
+            )
+        response.raise_for_status()
+        payload = response.json()
+        if not isinstance(payload, dict) or "text" not in payload:
+            raise ValueError("Unexpected Oruk API response: missing 'text' field")
+        res = str(payload["text"]).strip()
+
+        with open(cache_path, "w") as f:
+            f.write(res)
+
+        return res
+
+    def audio_sec(self) -> float:
+        return -1.0
+
+    def process_sec(self) -> float:
+        return -1.0
+
+    def delete(self) -> None:
+        self._session.close()
+
+    def __str__(self) -> str:
+        return "Oruk Fourier 2B API"
 
 
 __all__ = [

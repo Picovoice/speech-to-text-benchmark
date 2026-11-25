@@ -74,6 +74,7 @@ The aggregate size of models (acoustic and language), in MB. We omit this metric
 - [Moonshine](https://github.com/usefulsensors/moonshine)
 - [Nemotron 3.5 ASR Streaming](https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b)
 - [OpenAI Whisper](https://github.com/openai/whisper)
+- [Oruk Fourier 2B](https://huggingface.co/oruk/oruk-fourier-2b)
 - [Paraformer Streaming](https://huggingface.co/funasr/paraformer-zh-streaming)
 - [Picovoice Cheetah](https://picovoice.ai/products/voice/streaming-speech-to-text/)
 - [Picovoice Leopard](https://picovoice.ai/products/voice/speech-to-text/)
@@ -250,6 +251,33 @@ python3 benchmark.py \
 --dataset ${DATASET} \
 --dataset-folder ${DATASET_FOLDER} \
 --language ZH
+```
+
+#### Oruk Fourier 2B Instructions
+
+Replace `${DATASET}` with one of the supported datasets and `${DATASET_FOLDER}` with the path to the dataset.
+This engine only supports English (`--language EN`). Local weights (`oruk/oruk-fourier-2b`) are licensed under
+[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) and require `transformers>=5.21` with native
+`qwen3_asr` support. Pass `--oruk-device cpu|cuda|mps` to select the local device (defaults to `cpu`).
+
+```console
+python3 benchmark.py \
+--engine ORUK_FOURIER_2B \
+--dataset ${DATASET} \
+--dataset-folder ${DATASET_FOLDER} \
+--language EN
+```
+
+To benchmark the hosted API (`POST https://speech-api.oruk.ai/v1/audio/transcriptions`, `model=oruk-fourier-2b`),
+set `--engine ORUK_FOURIER_2B_API` and supply `${ORUK_API_KEY}` via `--oruk-api-key` or the `ORUK_API_KEY` environment variable:
+
+```console
+python3 benchmark.py \
+--engine ORUK_FOURIER_2B_API \
+--dataset ${DATASET} \
+--dataset-folder ${DATASET_FOLDER} \
+--language EN \
+--oruk-api-key ${ORUK_API_KEY}
 ```
 
 #### Picovoice Cheetah Instructions
