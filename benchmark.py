@@ -117,6 +117,9 @@ def main():
     parser.add_argument("--picovoice-library-path", default=None)
     parser.add_argument("--watson-speech-to-text-api-key")
     parser.add_argument("--watson-speech-to-text-url")
+    parser.add_argument("--oruk-api-key", default=None)
+    parser.add_argument("--oruk-api-url", default="https://speech-api.oruk.ai/v1/audio/transcriptions")
+    parser.add_argument("--oruk-device", default="cpu", choices=["cpu", "cuda", "mps"])
     parser.add_argument("--num-examples", type=int, default=None)
     parser.add_argument("--num-workers", type=int, default=os.cpu_count())
     args = parser.parse_args()
@@ -172,6 +175,14 @@ def main():
             raise ValueError("`watson-speech-to-text-api-key` and `watson-speech-to-text-url` are required")
         engine_params["watson_speech_to_text_api_key"] = args.watson_speech_to_text_api_key
         engine_params["watson_speech_to_text_url"] = args.watson_speech_to_text_url
+    elif engine_name is Engines.ORUK_FOURIER_2B:
+        engine_params["device"] = args.oruk_device
+    elif engine_name is Engines.ORUK_FOURIER_2B_API:
+        oruk_api_key = args.oruk_api_key or os.environ.get("ORUK_API_KEY")
+        if not oruk_api_key:
+            raise ValueError("`oruk-api-key` or `ORUK_API_KEY` environment variable is required")
+        engine_params["oruk_api_key"] = oruk_api_key
+        engine_params["oruk_api_url"] = args.oruk_api_url
     if engine_name in StreamingEngines:
         if engine_name is not Engines.PICOVOICE_CHEETAH:
             engine_params["chunk_size_ms"] = args.streaming_chunk_size_ms
